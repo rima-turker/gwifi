@@ -1,0 +1,15 @@
+/.gradle/
+/.settings/
+/bin/
+/log/
+*svn-base*
+*.txt
+/res/
+/target_2/
+*.class
+/build/
+.project
+.classpath
+/backup/
+/.svn/
+
