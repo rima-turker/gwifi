@@ -7,6 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class FileUtil {
 
@@ -15,6 +17,18 @@ public class FileUtil {
 			final FileWriter fw = new FileWriter(fileName, append);
 			for (String s : data) {
 				fw.write(s+"\n");
+			}
+			fw.close();
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void writeDataToFile(Map<String,Long> data,final String fileName,final boolean append) {
+		try {
+			final FileWriter fw = new FileWriter(fileName, append);
+			for (Entry<String, Long> s : data.entrySet()) {
+				fw.write(s.getKey()+"\t\t"+s.getValue()+"\n");
 			}
 			fw.close();
 		} catch (final IOException e) {

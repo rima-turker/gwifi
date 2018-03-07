@@ -13,13 +13,17 @@ apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'application'
 
+applicationDefaultJvmArgs = ["-Xmx50g", "-d64", "-XX:+UseParallelGC", "-server"]
+
 //group = 'edu.kit.aifb.annotation'
 //version = '1.0'
 
 description = """Graph-based Wikifier"""
 
 //mainClassName="edu.kit.aifb.gwifi.demo.ArticleDemo"
-mainClassName="org.fiz.ise.gwifi.dataset.DatasetGenerationLINE"
+//mainClassName="org.fiz.ise.gwifi.dataset.DatasetGenerationLINE_EntityEntity2"
+mainClassName="org.fiz.ise.gwifi.dataset.LINE.CategoryBased.DatasetGenerationCatBasedLINE_EntityEntity"
+
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -29,6 +33,8 @@ repositories {
 }
 
 dependencies {
+	//compile group: 'it.unimi.dsi', name: 'fastutil', version: '8.1.1'	
+
     compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version:'4.6'
     compile group: 'net.sf.trove4j', name: 'trove4j', version:'3.0.3'
     compile group: 'net.sf.jung', name: 'jung-graph-impl', version:'2.0.1'
