@@ -53,7 +53,7 @@ public class WikipediaSingleton {
     }
     public  Article getArticle(String title) {
 		if (wikipedia.getArticleByTitle(title) == null) {
-			System.out.println("Could not find exact match of an article for a given title " + title);
+			//System.out.println("Could not find exact match of an article for a given title " + title);
 			return null;
 		}
 		return wikipedia.getArticleByTitle(title);

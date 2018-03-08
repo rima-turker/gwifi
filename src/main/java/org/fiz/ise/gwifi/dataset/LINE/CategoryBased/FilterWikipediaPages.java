@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.fiz.ise.gwifi.Singleton.CategorySingleton;
+import org.fiz.ise.gwifi.Singleton.FilteredWikipediaPagesSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.categoryTree.CategorySeedLoaderFromMemory;
 import org.fiz.ise.gwifi.categoryTree.CategorySeedloader;
@@ -46,9 +47,10 @@ public class FilterWikipediaPages {
 	private final Integer DEPTH_OF_CAT_TREE= Config.getInt("DEPTH_OF_CAT_TREE", 0);
 
 	public FilterWikipediaPages() {
-		  WikipediaSingleton singleton = WikipediaSingleton.getInstance();
-		  wikipedia = singleton.wikipedia;
-		  CategorySingleton tree = CategorySingleton.getInstance();
+//		  WikipediaSingleton singleton = WikipediaSingleton.getInstance();
+//		  wikipedia = singleton.wikipedia;
+		FilteredWikipediaPagesSingleton singleton = FilteredWikipediaPagesSingleton.getInstance();
+		
 	}
 	public Set<String>  getCategoryTress() {
 		Set<String> setCategories = new HashSet<>();

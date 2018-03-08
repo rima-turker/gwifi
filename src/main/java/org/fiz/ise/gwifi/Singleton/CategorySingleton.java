@@ -38,6 +38,7 @@ public class CategorySingleton {
 		
 		WikipediaSingleton singleton = WikipediaSingleton.getInstance();
 		Wikipedia wikipedia = singleton.wikipedia;
+		System.out.println("Depth of the category Tree is "+DEPTH_OF_CAT_TREE );
 		final CategorySeedloader seedLoader = new CategorySeedLoaderFromMemory();
 		seedLoader.loadSeeds();
 		List<String> categories = new ArrayList<>(seedLoader.getSeeds());
@@ -52,10 +53,10 @@ public class CategorySingleton {
 			setAll.add(cat);
 			id++;
 		}
-		System.out.println(setAll);
+		//System.out.println(setAll);
 		Map<Category, Set<Category>> latest = new HashMap<>();
 		for (int j = 0; j < DEPTH_OF_CAT_TREE; j++) {
-			System.out.println("J: " + j);
+			//System.out.println("J: " + j);
 			if (j == 0) {
 				for (int i = 0; i < mainCats.length; i++) {
 					Set<Category> child = new HashSet<>(
@@ -80,7 +81,7 @@ public class CategorySingleton {
 					// System.out.println("After lstoriginalSet "+lstoriginalSet.size());
 					map.put(entry.getKey(), parent);
 					setAll.addAll(parent);
-					System.out.println(setAll.size());
+					//System.out.println(setAll.size());
 					// System.out.println("******************************************************************************");
 				}
 			}
