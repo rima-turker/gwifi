@@ -1,4 +1,4 @@
-package org.fiz.ise.gwifi.dataset;
+package org.fiz.ise.gwifi.dataset.train;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -32,7 +32,7 @@ public class DatasetGeneration_directedToUndirected {
 					String[] split = line.split("\t\t");
 					String[] entities = split[0].split("\t");
 					String weight = split[1];
-					String entity
+					//String entity
 					
 
 				}

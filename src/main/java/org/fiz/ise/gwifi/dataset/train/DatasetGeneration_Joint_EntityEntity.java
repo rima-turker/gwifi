@@ -1,4 +1,4 @@
-package org.fiz.ise.gwifi.dataset;
+package org.fiz.ise.gwifi.dataset.train;
 
 import java.io.File;
 import java.util.ArrayList;
