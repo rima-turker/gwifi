@@ -23,7 +23,17 @@ public class FileUtil {
 			e.printStackTrace();
 		}
 	}
-	
+	public static <K, V> void writeDataToFile(Map<K, V> map,final String fileName) {
+		try {
+			final FileWriter fw = new FileWriter(fileName, false);
+			for (Entry<K, V> s : map.entrySet()) {
+				fw.write(s.getKey()+"\t\t"+s.getValue()+"\n");
+			}
+			fw.close();
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
+	}
 	public static void writeDataToFile(Map<String,Long> data,final String fileName,final boolean append) {
 		try {
 			final FileWriter fw = new FileWriter(fileName, append);

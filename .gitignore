@@ -12,4 +12,6 @@
 .classpath
 /backup/
 /.svn/
-
+/lib/
+/src/main/java/TEST/
+/ag_news_csv/

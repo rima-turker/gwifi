@@ -11,6 +11,8 @@ public class TimeUtil {
 		switch (u) {
 		case SECONDS:
 			return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()-now);
+		case NANOSECONDS:
+			return TimeUnit.NANOSECONDS.toNanos(System.currentTimeMillis()-now);
 		default:
 			return 0;
 		}

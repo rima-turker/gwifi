@@ -65,8 +65,6 @@ public class FilterWikipediaPages {
 					String category = line.substring(0, line.indexOf("\t")).trim();
 					System.out.println(category);
 					setCategories.add(category);
-					//System.out.println("size of the map "+map.size()+" number of files: "+j++);
-					//System.out.println("main dk "+(TimeUtil.getEnd(TimeUnit.SECONDS, mainStart)/60)+" it took sn: "+TimeUtil.getEnd(TimeUnit.SECONDS, start));
 				} 
 
 			}

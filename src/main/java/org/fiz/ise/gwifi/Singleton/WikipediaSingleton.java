@@ -14,25 +14,6 @@ public class WikipediaSingleton {
  
     // variable of type String
     public Wikipedia wikipedia;
-    /*
-     * private Wikipedia wikipedia=null;
-	private File databaseDirectory=null;
-	PageIterator pageIterator = null;
-
-	public FilterWikipediaPages() {
-		try {
-			databaseDirectory = new File("configs/wikipedia-template-en.xml");
-			wikipedia = new Wikipedia(databaseDirectory, false);
-			System.out.println("The Wikipedia environment has been initialized.");
-			pageIterator = wikipedia.getPageIterator();
-
-		} catch (Exception e) {
-			System.out.println("Exception initializing Wikipedia");
-		}
-
-	}
-     */
- 
     // private constructor restricted to this class itself
     private WikipediaSingleton()
     {

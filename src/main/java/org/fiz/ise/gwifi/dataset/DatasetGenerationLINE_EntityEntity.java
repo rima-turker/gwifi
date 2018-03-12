@@ -26,7 +26,7 @@ import edu.kit.aifb.gwifi.model.Page;
 import edu.kit.aifb.gwifi.model.Wikipedia;
 import edu.kit.aifb.gwifi.model.Page.PageType;
 import edu.kit.aifb.gwifi.util.PageIterator;
-
+@Deprecated
 public class DatasetGenerationLINE_EntityEntity {
 	private static final Logger LOG = Logger.getLogger(DatasetGenerationLINE_EntityEntity.class);
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
@@ -112,6 +112,9 @@ public class DatasetGenerationLINE_EntityEntity {
 			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
 			while (pageIterator.hasNext()) {
 				Page page = pageIterator.next();
+				//1001917 1001919
+				System.out.println(wikipedia.getArticleById(1001919)+" "+wikipedia.getArticleById(1001917));
+				
 				if (page.getType().equals(PageType.article)) {
 					Article article = getArticle(page.getTitle());
 					if (article != null) {

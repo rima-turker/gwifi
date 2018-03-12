@@ -22,7 +22,7 @@ description = """Graph-based Wikifier"""
 
 //mainClassName="edu.kit.aifb.gwifi.demo.ArticleDemo"
 //mainClassName="org.fiz.ise.gwifi.dataset.DatasetGenerationLINE_EntityEntity2"
-mainClassName="org.fiz.ise.gwifi.dataset.LINE.CategoryBased.DatasetGenerationCatBasedLINE_EntityEntity"
+mainClassName="org.fiz.ise.gwifi.dataset.DatasetGeneration_Joint_EntityEntity"
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -33,7 +33,12 @@ repositories {
 }
 
 dependencies {
+	compile fileTree(dir: 'lib', include: ['*.jar'])
+compile group: 'net.sf.trove4j', name: 'trove4j', version: '3.0.3'
+	
 	//compile group: 'it.unimi.dsi', name: 'fastutil', version: '8.1.1'	
+	compile group: 'org.ejml', name: 'ejml-all', version: '0.33'
+
 
     compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version:'4.6'
     compile group: 'net.sf.trove4j', name: 'trove4j', version:'3.0.3'
@@ -119,6 +124,7 @@ task deployZip(dependsOn: distTar) {
 	            execute 'cd /home/rima/playground//JavaProjectsRun/ && tar -xvf gwifi.tar'            
 	            execute 'cd /home/rima/playground/JavaProjectsRun/ && chmod +x gwifi/bin/gwifi'
 	        	execute 'cp -r /home/rima/playground/GeneralFiles/gwifi/configs /home/rima/playground/JavaProjectsRun/gwifi/bin/.'
+	        	execute 'rm -rf /home/rima/playground/JavaProjectsRun/gwifi.tar'  
 	        }
     	}
     }
@@ -129,6 +135,7 @@ task deployOnlyJar(dependsOn: installDist)  {
         	execute 'rm -rf /home/rima/playground/JavaProjectsRun/gwifi/lib/gwifi.jar'
         	execute 'rm -rf /home/rima/playground/JavaProjectsRun/gwifi/bin/log'
             put from: './build/install/gwifi/lib/gwifi.jar', into: '/home/rima/playground/JavaProjectsRun/gwifi/lib'
+        
         }
     }
     }

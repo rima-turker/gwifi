@@ -12,32 +12,34 @@ import java.util.concurrent.TimeUnit;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.FileUtil;
 
-public class DatasetGenerationLINE_directedToUndirected {
+public class DatasetGeneration_directedToUndirected {
 
-	private final String DIRECTED_GRAPH_FOLDER = Config.getString("DIRECTED_GRAPH_FOLDER","");
-	
+	private final String DIRECTED_GRAPH_FILE = Config.getString("DIRECTED_GRAPH_FILE","");
+
 	public static void main(String[] args) {
 		//data.initializeVariables();
-//		data.generateDatasetEntityEntiy_parallel();
+		//		data.generateDatasetEntityEntiy_parallel();
 	}
 	private void convertDirectedToUndirected() {
-		final File[] listOfFolders = new File(DIRECTED_GRAPH_FOLDER).listFiles();
+		final File[] listOfFolders = new File(DIRECTED_GRAPH_FILE).listFiles();
 		Arrays.sort(listOfFolders);
 		final List<File> files = new ArrayList<>();
 		int i=0;
 		for(File f:listOfFolders) {
-			try(BufferedReader br = new BufferedReader(new FileReader(f)))
-			{
+			try(BufferedReader br = new BufferedReader(new FileReader(f))){
 				String line=null;
-				while ((line = br.readLine()) != null) 
-				{
+				while ((line = br.readLine()) != null) {
+					String[] split = line.split("\t\t");
+					String[] entities = split[0].split("\t");
+					String weight = split[1];
+					String entity
 					
-					
+
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}	
 		}
-		
+
 	}
 }

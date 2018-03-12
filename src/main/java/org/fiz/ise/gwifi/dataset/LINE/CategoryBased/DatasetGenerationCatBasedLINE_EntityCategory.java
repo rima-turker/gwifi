@@ -1,4 +1,4 @@
-package org.fiz.ise.gwifi.dataset;
+package org.fiz.ise.gwifi.dataset.LINE.CategoryBased;
 
 import java.awt.List;
 import java.io.BufferedReader;
@@ -21,7 +21,6 @@ import java.util.concurrent.TimeUnit;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.log4j.Logger;
-import org.fiz.ise.gwifi.Singleton.FilteredWikipediaPagesSingleton;
 import org.fiz.ise.gwifi.util.AtomicCounter;
 import org.fiz.ise.gwifi.util.SynchronizedCounter;
 import org.fiz.ise.gwifi.util.FileUtil;
@@ -32,31 +31,27 @@ import edu.kit.aifb.gwifi.model.Wikipedia;
 import edu.kit.aifb.gwifi.model.Page.PageType;
 import edu.kit.aifb.gwifi.util.PageIterator;
 
-public class DatasetGeneration_Joint_EntityCategory {
-	private static final Logger LOG = Logger.getLogger(DatasetGeneration_Joint_EntityCategory.class);
+public class DatasetGenerationCatBasedLINE_EntityCategory {
+	private static final Logger LOG = Logger.getLogger(DatasetGenerationCatBasedLINE_EntityCategory.class);
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 	static final Logger thirdLOG = Logger.getLogger("reportsLogger");
 
+	private Wikipedia wikipedia=null;
 	private static ExecutorService executor;
 	private static AtomicCounter countArticle;
 	private static SynchronizedCounter countCategoryPerArticle;
-	/*
-	 * This class is responsible of creating a dataset for LINE algorithm
-	 * each line of the Data set is "entity category weight"
-	 * weight value is estimated:
-	 * iterate over all the wikipedia articles 
-	 * 1) for each page get all the categories
-	 * 2) get its context entities
-	 * 3) and find articles that contains those entities
-	 * 4) find the categories of the number 3 and 
-	 * 5) and intersection of the  1 and 4
-	 * 
-	 */
+	private static AtomicCounter countNullArticle;
+/*
+ * This class is responsible of creating a dataset for LINE algorithm
+ * Dataset contains entity category weight
+ */
 	public static void main(String[] args) {
+		countNullArticle= new AtomicCounter();
 		countArticle = new AtomicCounter();
 		countCategoryPerArticle = new SynchronizedCounter();
-		DatasetGeneration_Joint_EntityCategory data =new DatasetGeneration_Joint_EntityCategory();
+		DatasetGenerationCatBasedLINE_EntityCategory data =new DatasetGenerationCatBasedLINE_EntityCategory();
 		data.generateDatasetEntityCategory_parallel();
+		//data.generateDatasetForEntityCategory();
 	}
 	/*
 	 * iterate over all the wikipedia pages (articles only)
@@ -66,21 +61,28 @@ public class DatasetGeneration_Joint_EntityCategory {
 		int NUMBER_OF_THREADS = 55;
 		try {
 			final long now = System.currentTimeMillis();
-			FilteredWikipediaPagesSingleton singleton = FilteredWikipediaPagesSingleton.getInstance();
-			final Set<Article> articles = new HashSet<>(singleton.articles);
-			System.out.println("size of the articles "+articles.size());
+			final File databaseDirectory= new File("configs/wikipedia-template-en.xml");
+			wikipedia = new Wikipedia(databaseDirectory, false);
+			System.out.println("The Wikipedia environment has been initialized.");
+			PageIterator pageIterator = wikipedia.getPageIterator();
 			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
-			//			List<Article> localList = new ArrayList<>();
-			int i = 1;
-			System.out.println("we have "+articles.size()+" to process");
-			for (Article article:articles) {
-				executor.execute(EntityCategory(article));						
-
+			while (pageIterator.hasNext()) {
+				Page page = pageIterator.next();
+				if (page.getType().equals(PageType.article)) {				
+					Article article  =  getArticle(page.getTitle());
+					if (article!=null) {
+						executor.execute(EntityCategory(article));						
+					}
+					else{
+						countNullArticle.increment();
+					}
+				}
 			}
 			executor.shutdown();
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 			System.out.println("We have "+countCategoryPerArticle.value()+" categories per article");
 			System.out.println("Total time minutes "+TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis()-now));
+			System.out.println("Total number of null articles "+countNullArticle.value());
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -96,7 +98,7 @@ public class DatasetGeneration_Joint_EntityCategory {
 			System.out.println("number of article processed "+ countArticle.value());
 		};
 	}
-
+	
 	/*
 	 * for a given article first entities that in the article 
 	 * then find the articles that contains those entities 
@@ -117,13 +119,48 @@ public class DatasetGeneration_Joint_EntityCategory {
 			e.printStackTrace();
 		}
 	}
-	
+//	public void generateDatasetForEntityCategory() {
+//		try {
+//			int numberOfEntitiesProcessed =0;
+//			final long now = System.currentTimeMillis();
+//			final File databaseDirectory= new File("configs/wikipedia-template-en.xml");
+//			wikipedia = new Wikipedia(databaseDirectory, false);
+//			System.out.println("The Wikipedia environment has been initialized.");
+//			PageIterator pageIterator = wikipedia.getPageIterator();
+//			int i = 0;
+//			while (pageIterator.hasNext()) {
+//				Page page = pageIterator.next();
+//				if (page.getType().equals(PageType.article)) {
+//					//					Article cArticle = getArticle(page.getTitle()); //example: Anarchism
+//					//					Category[] categoriesCArticle = cArticle.getParentCategories(); //Category of Anarchism Get all the categories at the bottom of the article
+//					//					Set<Article> setCArticleLinkOutLinkIn = new HashSet<Article>();
+//					//					Article[] linkOutMainArticle = cArticle.getLinksOut(); //All the entities inside the Anarchism article such as Agriculture
+//					//					for (int j = 0; j < linkOutMainArticle.length; j++) {
+//					//						Article[] linksOutLinkInAnArticle = linkOutMainArticle[j].getLinksIn(); //All the entities contains AgreeCulture in their article
+//					//						Collections.addAll(setCArticleLinkOutLinkIn, linksOutLinkInAnArticle);
+//					//					}
+//					//					findCommonCategories(cArticle,categoriesCArticle,setCArticleLinkOutLinkIn);
+//					//					numberOfEntitiesProcessed+=1;
+//					//					System.out.println("numberOfEntitiesProcessed " +numberOfEntitiesProcessed);
+//					findWeightOfEachCategory(getArticle(page.getTitle()));
+//					System.out.println("numberOfEntitiesProcessed " +numberOfEntitiesProcessed);
+//					numberOfEntitiesProcessed+=1;
+//				}	
+//			}	
+//			System.out.println("We have "+i+" article processed");
+//			System.out.println("The size of the list is "+listEntityCategory.size());
+//			FileUtil.writeDataToFile(listEntityCategory, new File("listEntityCategory"));
+//			System.out.println("Total time minutes "+TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis()-now));
+//		} catch (Exception e) {
+//			System.out.println(e.getMessage());
+//		}
+//	}
 	/*
 	 * In this function the intersection of category articles and article is calculated as a weight values
 	 */
 	private void calculateWeightForEntityCategory(final Article article,
 			final Set<Article> setCArticleLinkOutLinkIn) {
-
+		
 		Category[] categoriesCArticle = article.getParentCategories(); //(Category of Anarchism) Get all the categories at the bottom of the article
 		countCategoryPerArticle.incrementbyValue(categoriesCArticle.length);
 		Map<Category, Integer> mapCatVal = new HashMap<>();
@@ -131,6 +168,19 @@ public class DatasetGeneration_Joint_EntityCategory {
 			Set<Article> childArticlesSet = new HashSet<Article>(Arrays.asList(categoriesCArticle[i].getChildArticles()));
 			childArticlesSet.retainAll(setCArticleLinkOutLinkIn);
 			mapCatVal.put(categoriesCArticle[i],childArticlesSet.size());
+//			for(Article art : setCArticleLinkOutLinkIn)
+//			{
+//				if (childArticlesSet.contains(art)) {
+//					if (mapCatVal.containsKey(categoriesCArticle[i])) {
+//						Integer temp = mapCatVal.get(categoriesCArticle[i]);
+//						temp +=1;
+//						mapCatVal.put(categoriesCArticle[i], temp);
+//					}
+//					else{
+//						mapCatVal.put(categoriesCArticle[i], 1);
+//					}
+//				}
+//			}
 		}
 		for(Entry<Category, Integer>entry:mapCatVal.entrySet()){
 			secondLOG.info(article.getTitle()+"\t"+entry.getKey().getTitle()+"\t"+entry.getValue());
@@ -138,4 +188,13 @@ public class DatasetGeneration_Joint_EntityCategory {
 			//listEntityCategory.add(article+"\t"+entry.getValue()+"\t"+entry.getKey());
 		}
 	}
+	public Article getArticle(String title) {
+		Article article = wikipedia.getArticleByTitle(title);
+		if (article == null) {
+			System.out.println("Could not find exact match of an article for a given title " +title);
+			return null;
+		}
+		return article;
+	}
+
 }

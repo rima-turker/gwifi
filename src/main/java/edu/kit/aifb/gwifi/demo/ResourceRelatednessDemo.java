@@ -36,7 +36,7 @@ public class ResourceRelatednessDemo {
 			int endIdx2 = line.indexOf("\"", startIdx2 + 1);
 			String title1 = line.substring(startIdx1+1, endIdx1);
 			String title2 = line.substring(startIdx2+1, endIdx2);
-			
+			System.out.println(title1 +" "+ title2);
 //			String title1 = "United States"; 
 //			String title2 = "Ultranet";
 					

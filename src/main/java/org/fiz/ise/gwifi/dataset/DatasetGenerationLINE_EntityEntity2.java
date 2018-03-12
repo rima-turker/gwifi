@@ -33,7 +33,7 @@ import edu.kit.aifb.gwifi.model.Page;
 import edu.kit.aifb.gwifi.model.Wikipedia;
 import edu.kit.aifb.gwifi.model.Page.PageType;
 import edu.kit.aifb.gwifi.util.PageIterator;
-
+@Deprecated
 public class DatasetGenerationLINE_EntityEntity2 {
 	private static final Logger LOG = Logger.getLogger(DatasetGenerationLINE_EntityEntity2.class);
 	static final Logger secondLOG = Logger.getLogger("debugLogger");

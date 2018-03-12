@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -27,9 +28,11 @@ import org.fiz.ise.gwifi.util.FileUtil;
 import org.fiz.ise.gwifi.util.SynchronizedCounter;
 import org.fiz.ise.gwifi.util.TimeUtil;
 
+import TEST.SparseMatrix;
+import TEST.SparseMatrix.SparseMatrixNode;
 import edu.kit.aifb.gwifi.model.Article;
 
-public class DatasetGenerationCatBasedLINE_EntityEntity {
+public class EntityEntityWeight_SparceMatrix {
 	private static final Logger LOG = Logger.getLogger(DatasetGenerationLINE_EntityEntity2.class);
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 	static final Logger thirdLOG = Logger.getLogger("reportsLogger");
@@ -40,33 +43,70 @@ public class DatasetGenerationCatBasedLINE_EntityEntity {
 	private static AtomicInteger fileName; 
 	private final Integer NUMBER_OF_THREADS= Config.getInt("NUMBER_OF_THREADS",-1);
 	final long now = System.currentTimeMillis();
-	//private static List<String> safeList;
+	private static final int SIZE = 100000000;
 	private static final int NUMBER_OF_PAGES = Config.getInt("NUMBER_OF_PAGES",-1);
-	private Set<String> mySet = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+	private static final SparseMatrix m = new SparseMatrix(SIZE, SIZE);
+	
+	/*
+	private static Map<String,Integer> map = new ConcurrentHashMap<>();
+	private static AtomicLong ID = new AtomicLong(1);
+	
+	public static void main(String[] args) throws InterruptedException {
+		for(int i=0;i<SIZE;i++) {
+			for(int j=i+1;j<SIZE;j++) {
+				System.err.println(i+" "+j);
+				e.execute(handle(i));
+			}
+		}	
+		e.shutdown();
+		e.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		for(int i=0;i<2000;i++) {
+			SparseMatrixNode search = m.search(i, i);
+			if(search==null) {
+
+			}else {
+				System.err.println(i+" with "+ i + " == "+search.key);
+			}
+		}
+		for(int i=0;i<SIZE;i++) {
+			for(int j=0;j<SIZE;j++) {
+				m.search(i, j);
+			}	
+		}
+	}
+
+	private static Runnable handle(int i) {
+		return ()->{
+			addOrIncreamet(i, i);
+			};
+	}
+	 * 
+	 */
+	
+	private Set<Article> filteredArticles ;
+	
 	public static void main(String[] args) {
-		//safeList = Collections.synchronizedList(new ArrayList<>());
-		DatasetGenerationCatBasedLINE_EntityEntity data = new DatasetGenerationCatBasedLINE_EntityEntity();
+		EntityEntityWeight_SparceMatrix data = new EntityEntityWeight_SparceMatrix();
 		data.initializeVariables();
-		data.generateDatasetEntityEntiy_parallel();
 		
+		data.generateDatasetEntityEntiy_parallel();
 	}
 	private void initializeVariables() {
+		FilteredWikipediaPagesSingleton singleton = FilteredWikipediaPagesSingleton.getInstance();
+		filteredArticles=Collections.unmodifiableSet(new HashSet<Article>(singleton.articles));
 		countArticle = new SynchronizedCounter();
 		countCategoryPerArticle = new SynchronizedCounter();
 		fileName= new AtomicInteger(0);
 	}
-
 	private void generateDatasetEntityEntiy_parallel() {
 		FileUtil.deleteFolder(OUTPUT_FOLDER);
 		FileUtil.createFolder(OUTPUT_FOLDER);
 		try {
-			FilteredWikipediaPagesSingleton singleton = FilteredWikipediaPagesSingleton.getInstance();
-			final Set<Article> articles = new HashSet<>(singleton.articles);
-			System.out.println("size of the articles "+articles.size());
+			System.out.println("size of the articles "+filteredArticles.size());
 			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
 			List<Article> localList = new ArrayList<>();
 			int i = 1;
-			for (Article article:articles) {
+			for (Article article:filteredArticles) {
 				if(localList.size()<NUMBER_OF_PAGES) {
 					localList.add(article);
 				}else {
@@ -85,6 +125,7 @@ public class DatasetGenerationCatBasedLINE_EntityEntity {
 			e.printStackTrace();
 		}
 	}
+	
 	private Runnable handle(final List<Article> articleList, int i) {
 		return () -> {
 			handleSequential(articleList,i);
@@ -92,68 +133,35 @@ public class DatasetGenerationCatBasedLINE_EntityEntity {
 			System.out.println("number of article processed "+ countArticle.value()+" minutes "+ TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis() - now));
 		};
 	}
-//	
-//	private void handleParallel(List<Article> articleList, int i2) {
-//		System.out.println("Inside handleParallel");
-//		final Map<Integer,List<Article>> mapLocal= new HashMap<>();
-//		Long now = TimeUtil.getStart();
-//		int countArticle =0;
-//		for(final Article article: articleList) {
-//			ArrayList<Article> linksOut = new ArrayList<Article>(Arrays.asList(article.getLinksOut()));
-//			int i=0;
-//			for(Article link : linksOut)
-//			{
-//				List<Article> sub = new ArrayList<Article>(linksOut.subList(++i, linksOut.size()));
-//				List<Article> existList = new ArrayList<>(mapLocal.get(link));
-//				if (existList!=null) {
-//					existList.addAll(sub);
-//					mapLocal.put(link.getId(), existList);
-//					
-//					List<Article> newList = new ArrayList<Article>(sub);
-//					newList.addAll(existList);
-//					
-//					mapLocal.put(link.getId(), mapLocal.getOrDefault(link.getId(), sub),newList);
-//				}
-//				
-//			}
-//			
-//		}
-//		System.out.println("Total time for iterations "+(++countArticle)+" "+TimeUtil.getEnd(TimeUnit.SECONDS, now) + " article List size: "+ articleList.size() );
-//		System.out.println("Size of the mySet "+mySet.size());
-////		
-//////		for(String str:localList){
-//////			localMap.put(str, localMap.getOrDefault(str, 0L) + 1);
-//////		}
-////		System.out.println("writing to a file");
-//		FileUtil.writeDataToFile(localMap, OUTPUT_FOLDER + File.separator + fileName.incrementAndGet() + ".txt", false);		
-//	}
 	private void handleSequential(List<Article> articleList, int i2) {
 		System.out.println("Inside handleSequential");
-		List<String> localList = new ArrayList<>();
-		final Map<String,Long> localMap = new HashMap<>();
 		Long now = TimeUtil.getStart();
+		final Map<String,Long> localMap = new HashMap<>();
 		int countArticle =0;
 		for(final Article article: articleList) {
 			final Article[] linksOut = article.getLinksOut();
 			for(int i=0;i<linksOut.length;i++) {
 				for(int j=i+1;j<linksOut.length;j++) {					
-//					localList.add(linksOut[i].getId()<linksOut[j].getId()?linksOut[i].getId()+"\t"+linksOut[j].getId():linksOut[j].getId()+"\t"+linksOut[i].getId());
-					//localList.add(linksOut[i].getId()+"\t"+linksOut[j].getId());
 					String key = linksOut[i].getId()+"\t"+linksOut[j].getId();
-//					localMap.put(key, localMap.getOrDefault(key, 0L) + 1);
-					// ArrayList<String> al2 = new ArrayList<String>(al.subList(1, 4));
-					mySet.add(key);
+					if (filteredArticles.contains(linksOut[i])&&filteredArticles.contains(linksOut[j])) {
+						//localMap.put(key, localMap.getOrDefault(key, 0L) + 1);
+						addOrIncreamet(linksOut[i].getId(),linksOut[j].getId());
+					}
 				}
 			}
-			System.out.println("mySet "+mySet.size());
+			System.out.println("size of articleList "+articleList.size()+" articleList size "+(++countArticle ));
 		}
 		System.out.println("Total time for iterations "+(++countArticle)+" "+TimeUtil.getEnd(TimeUnit.SECONDS, now) + " article List size: "+ articleList.size() );
-		System.out.println("Size of the mySet "+mySet.size());
-//		
-////		for(String str:localList){
-////			localMap.put(str, localMap.getOrDefault(str, 0L) + 1);
-////		}
 //		System.out.println("writing to a file");
 //		FileUtil.writeDataToFile(localMap, OUTPUT_FOLDER + File.separator + fileName.incrementAndGet() + ".txt", false);		
+	}
+	
+	private static void addOrIncreamet(int x,int y) {		
+		final SparseMatrixNode search = m.search(x, y);
+		if(search==null) {
+			m.add(1, x, y);
+		}else {
+			m.add(search.key+1, x, y);
+		}
 	}
 }

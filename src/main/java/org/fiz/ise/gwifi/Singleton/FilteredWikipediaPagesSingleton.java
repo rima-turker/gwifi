@@ -12,7 +12,6 @@ import edu.kit.aifb.gwifi.model.Page.PageType;
 public class FilteredWikipediaPagesSingleton {
 	private static FilteredWikipediaPagesSingleton single_instance = null;
 	public Set<Article> articles;
-	
 	private FilteredWikipediaPagesSingleton()
 	{
 		articles = new HashSet<>();
@@ -29,7 +28,6 @@ public class FilteredWikipediaPagesSingleton {
 				}
 			}
 			System.out.println("We have " + articles.size()+" articles after category based filtering");
-			System.out.println("Total time minutes " + TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis() - now));
 		}
 		catch (Exception e) {
 			e.printStackTrace();

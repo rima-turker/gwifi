@@ -11,8 +11,7 @@ public class CategorySeedLoaderFromMemory extends CategorySeedloader {
 
 	@Override
 	public void loadSeeds() {
-//		final List<String> dummySeeds = Arrays.asList("Chief_executive_officers", "Heads_of_state",
-//				"Chancellors_(government)", "Popes", "Monarchy");
+		//final List<String> dummySeeds = Arrays.asList("Computers");
 		
 		final List<String> dummySeeds = Arrays.asList("Business","Computers","Culture","Arts","Entertainment","Education",
 				"Science","Engineering","Health","Politics","Society","Sports");
