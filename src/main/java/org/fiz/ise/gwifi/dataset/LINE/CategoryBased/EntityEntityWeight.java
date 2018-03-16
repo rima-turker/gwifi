@@ -21,14 +21,14 @@ import java.util.stream.Stream;
 
 import org.apache.log4j.Logger;
 import org.fiz.ise.gwifi.Singleton.FilteredWikipediaPagesSingleton;
-import org.fiz.ise.gwifi.dataset.DatasetGenerationLINE_EntityEntity2;
+import org.fiz.ise.gwifi.dataset.train.DatasetGenerationLINE_EntityEntity2;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.FileUtil;
 import org.fiz.ise.gwifi.util.SynchronizedCounter;
 import org.fiz.ise.gwifi.util.TimeUtil;
 
 import edu.kit.aifb.gwifi.model.Article;
-
+@Deprecated
 public class EntityEntityWeight {
 	private static final Logger LOG = Logger.getLogger(DatasetGenerationLINE_EntityEntity2.class);
 	static final Logger secondLOG = Logger.getLogger("debugLogger");

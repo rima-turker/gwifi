@@ -11,8 +11,6 @@ public class CategorySeedLoaderFromMemory extends CategorySeedloader {
 
 	@Override
 	public void loadSeeds() {
-		//final List<String> dummySeeds = Arrays.asList("Computers");
-		
 		final List<String> dummySeeds = Arrays.asList("Business","Computers","Culture","Arts","Entertainment","Education",
 				"Science","Engineering","Health","Politics","Society","Sports");
 		//Google search snippets
