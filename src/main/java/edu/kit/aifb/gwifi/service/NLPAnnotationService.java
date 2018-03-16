@@ -127,25 +127,25 @@ public class NLPAnnotationService implements A2WService {
 			// logger.info(result);
 		}
 		scanner.close();
-		
+
 		// for evaluation
-//		BufferedReader br = new BufferedReader(new FileReader(new File("res/aida-textb/4.txt")));
-//		StringBuffer sb = new StringBuffer();
-//		String line;
-//		while ((line = br.readLine()) != null) {
-//			sb.append(line).append("\n");
-//		}
-//		br.close();
-//		String xml = sb.toString().trim();
-//
-//		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-//		DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-//		Document inputDoc = docBuilder.parse(new InputSource(new StringReader(xml)));
-//
-//		String text = extractText(inputDoc);
-//
-//		String result = service.annotate(text, null);
-//		System.out.println(result);
+		//		BufferedReader br = new BufferedReader(new FileReader(new File("res/aida-textb/4.txt")));
+		//		StringBuffer sb = new StringBuffer();
+		//		String line;
+		//		while ((line = br.readLine()) != null) {
+		//			sb.append(line).append("\n");
+		//		}
+		//		br.close();
+		//		String xml = sb.toString().trim();
+		//
+		//		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+		//		DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+		//		Document inputDoc = docBuilder.parse(new InputSource(new StringReader(xml)));
+		//
+		//		String text = extractText(inputDoc);
+		//
+		//		String result = service.annotate(text, null);
+		//		System.out.println(result);
 	}
 
 	public NLPAnnotationService(String hubconfig, String wikiconfig, String NLPconfig, Language inputLang,
@@ -173,7 +173,7 @@ public class NLPAnnotationService implements A2WService {
 		else
 			this.outputLang = outputLang;
 
-//		searcher = new MongoCLESASearcher(inputLang.getLabel(), outputLang.getLabel());
+		//		searcher = new MongoCLESASearcher(inputLang.getLabel(), outputLang.getLabel());
 
 		if (kb == null)
 			this.kb = DEFAULT_KB;
@@ -205,7 +205,7 @@ public class NLPAnnotationService implements A2WService {
 		else
 			this.repeatMode = repeatMode;
 	}
-
+	
 	public String annotate(String source, List<Annotation> annotations) throws Exception {
 		if (source == null || source.trim().length() == 0) {
 			System.out.println("You must specify a source document to wikify");
@@ -271,7 +271,6 @@ public class NLPAnnotationService implements A2WService {
 			return source;
 		}
 	}
-
 	public Element buildXMLResponse(Document doc, String wikifiedDoc, Collection<Annotation> annotations)
 			throws Exception {
 		Element xmlResponse = createElement(doc, RESPONSE_TAG);
@@ -437,12 +436,12 @@ public class NLPAnnotationService implements A2WService {
 
 				if (linkStyle != null && linkStyle.trim().length() > 0)
 					newHeaderStuff
-							.append("<style type='text/css'> ." + linkClassName + "{" + linkStyle + ";}</style>\n");
+					.append("<style type='text/css'> ." + linkClassName + "{" + linkStyle + ";}</style>\n");
 
 				newHeaderStuff.append(
 						"<script type=\"text/javascript\" src=\"" + basePath + "/js/jquery-1.5.1.min.js\"></script>\n");
 				newHeaderStuff
-						.append("<script type=\"text/javascript\" src=\"" + basePath + "/js/tooltips.js\"></script>\n");
+				.append("<script type=\"text/javascript\" src=\"" + basePath + "/js/tooltips.js\"></script>\n");
 				newHeaderStuff.append("<script type=\"text/javascript\"> \n");
 				newHeaderStuff.append("  var wm_host=\"" + basePath + "\" ; \n");
 				newHeaderStuff.append("  $(document).ready(function() { \n");
@@ -649,7 +648,7 @@ public class NLPAnnotationService implements A2WService {
 	public DOMSource getDOMSource(String source, String outputLangLabel, String kbLabel) throws Exception {
 		return null;
 	}
-	
+
 	public final static String ITEM_TAG = "item";
 	public final static String TEXT_TAG = "text";
 	public final static String MENTION_TAG = "mention";

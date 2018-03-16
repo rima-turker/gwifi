@@ -4,6 +4,10 @@ import java.util.Map;
 
 public class Print 
 {
+	
+	public static<K, V> void printMap (Map<K, V> hm) {
+		hm.forEach((k,v) -> System.out.println("key: "+k+" value:"+v));
+	}
 //	void printMap(Map<K, V>)
 //	{
 //		for (TypeKey name: example.keySet()){

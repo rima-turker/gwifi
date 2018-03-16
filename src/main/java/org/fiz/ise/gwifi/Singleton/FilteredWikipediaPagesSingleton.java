@@ -16,7 +16,7 @@ public class FilteredWikipediaPagesSingleton {
 	{
 		articles = new HashSet<>();
 		CategorySingleton categories = CategorySingleton.getInstance();
-		Set<Category> setMainCat = new HashSet<>(categories.setAll);
+		Set<Category> setMainCat = new HashSet<>(categories.setAllCategories);
 		try {
 			final long now = System.currentTimeMillis();
 			for (Category category : setMainCat) {

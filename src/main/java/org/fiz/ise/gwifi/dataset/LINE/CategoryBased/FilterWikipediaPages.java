@@ -38,7 +38,7 @@ import edu.kit.aifb.gwifi.model.Page.PageType;
 import edu.kit.aifb.gwifi.util.PageIterator;
 import edu.kit.aifb.gwifi.yxu.textcategorization.CategoryTree;
 
-
+@Deprecated
 public class FilterWikipediaPages {
 
 	private Wikipedia wikipedia=null;

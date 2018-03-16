@@ -28,13 +28,13 @@ public class CategorySingleton {
 	private final Integer DEPTH_OF_CAT_TREE = Config.getInt("DEPTH_OF_CAT_TREE", 0);
 	// variable of type String
 	public Map<Category, Set<Category>> map;
-	public Set<Category> setAll;
-	public Set<Category> set;
+	public Set<Category> setAllCategories;
+	public Set<Category> setMainCategories;
 	
 	private CategorySingleton() {
 		map = new HashMap<>();
-		setAll = new HashSet<>();
-		set = new HashSet<>();
+		setAllCategories = new HashSet<>();
+		setMainCategories = new HashSet<>();
 		
 		WikipediaSingleton singleton = WikipediaSingleton.getInstance();
 		Wikipedia wikipedia = singleton.wikipedia;
@@ -49,8 +49,8 @@ public class CategorySingleton {
 			Category cat = wikipedia.getCategoryByTitle(category);
 			mainCats[id] = cat;
 			mainCategories.add(cat);
-			set.add(cat);
-			setAll.add(cat);
+			setMainCategories.add(cat);
+			setAllCategories.add(cat);
 			id++;
 		}
 		//System.out.println(setAll);
@@ -62,7 +62,7 @@ public class CategorySingleton {
 					Set<Category> child = new HashSet<>(
 							getChildCategoriesSet(new HashSet<>(Arrays.asList(mainCats[i]))));
 					map.put(mainCats[i], child);
-					setAll.addAll(child);
+					setAllCategories.addAll(child);
 					latest.put(mainCats[i], child);
 				}
 			} else {
@@ -80,7 +80,7 @@ public class CategorySingleton {
 					// System.out.println("After originalSet parent"+parent.size());
 					// System.out.println("After lstoriginalSet "+lstoriginalSet.size());
 					map.put(entry.getKey(), parent);
-					setAll.addAll(parent);
+					setAllCategories.addAll(parent);
 					//System.out.println(setAll.size());
 					// System.out.println("******************************************************************************");
 				}

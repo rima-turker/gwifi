@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 import org.fiz.ise.gwifi.util.TimeUtil;
 
-
+@Deprecated
 public class TEST {
 
 	public static void main(String[] args) {
