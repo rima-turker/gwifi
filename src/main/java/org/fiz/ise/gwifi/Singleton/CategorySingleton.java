@@ -25,13 +25,14 @@ import edu.kit.aifb.gwifi.model.Wikipedia;
  */
 public class CategorySingleton {
 	private static CategorySingleton single_instance = null;
+	
 	private final Integer DEPTH_OF_CAT_TREE = Config.getInt("DEPTH_OF_CAT_TREE", 0);
 	// variable of type String
 	public Map<Category, Set<Category>> map;
 	public Set<Category> setAllCategories;
 	public Set<Category> setMainCategories;
 	
-	private CategorySingleton() {
+	private CategorySingleton(List<String> categories) {
 		map = new HashMap<>();
 		setAllCategories = new HashSet<>();
 		setMainCategories = new HashSet<>();
@@ -39,9 +40,6 @@ public class CategorySingleton {
 		WikipediaSingleton singleton = WikipediaSingleton.getInstance();
 		Wikipedia wikipedia = singleton.wikipedia;
 		System.out.println("Depth of the category Tree is "+DEPTH_OF_CAT_TREE );
-		final CategorySeedloader seedLoader = new CategorySeedLoaderFromMemory();
-		seedLoader.loadSeeds();
-		List<String> categories = new ArrayList<>(seedLoader.getSeeds());
 		Category[] mainCats = new Category[categories.size()];
 		List<Category> mainCategories = new ArrayList<>();
 		int id = 0;
@@ -96,11 +94,9 @@ public class CategorySingleton {
 		}
 		return child;
 	}
-
-	public static CategorySingleton getInstance() {
+	public static CategorySingleton getInstance(List<String> categories) {
 		if (single_instance == null)
-			single_instance = new CategorySingleton();
-
+			single_instance = new CategorySingleton(new ArrayList<>(categories));
 		return single_instance;
 	}
 }

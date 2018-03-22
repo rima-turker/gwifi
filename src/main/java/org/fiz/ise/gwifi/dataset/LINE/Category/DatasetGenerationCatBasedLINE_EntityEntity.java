@@ -1,4 +1,4 @@
-package org.fiz.ise.gwifi.dataset.LINE.CategoryBased;
+package org.fiz.ise.gwifi.dataset.LINE.Category;
 
 import java.io.File;
 import java.lang.reflect.Array;
@@ -28,7 +28,7 @@ import org.fiz.ise.gwifi.util.SynchronizedCounter;
 import org.fiz.ise.gwifi.util.TimeUtil;
 
 import edu.kit.aifb.gwifi.model.Article;
-
+@Deprecated
 public class DatasetGenerationCatBasedLINE_EntityEntity {
 	private static final Logger LOG = Logger.getLogger(DatasetGenerationLINE_EntityEntity2.class);
 	static final Logger secondLOG = Logger.getLogger("debugLogger");

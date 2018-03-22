@@ -4,18 +4,23 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
+import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.util.Config;
 
 import edu.kit.aifb.gwifi.model.Article;
 import edu.kit.aifb.gwifi.model.Category;
 import edu.kit.aifb.gwifi.model.Page.PageType;
 
 public class FilteredWikipediaPagesSingleton {
+	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
 	private static FilteredWikipediaPagesSingleton single_instance = null;
 	public Set<Article> articles;
+	
 	private FilteredWikipediaPagesSingleton()
 	{
 		articles = new HashSet<>();
-		CategorySingleton categories = CategorySingleton.getInstance();
+		CategorySingleton categories = CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE));
 		Set<Category> setMainCat = new HashSet<>(categories.setAllCategories);
 		try {
 			final long now = System.currentTimeMillis();

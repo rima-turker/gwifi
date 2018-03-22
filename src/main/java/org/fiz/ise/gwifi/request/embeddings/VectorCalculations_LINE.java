@@ -9,7 +9,10 @@ import java.util.Map;
 import java.util.Set;
 import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
+import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
 import org.fiz.ise.gwifi.model.Model_LINE;
+import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.MapUtil;
 import org.fiz.ise.gwifi.util.Print;
 import org.fiz.ise.gwifi.util.Request_LINEServer;
@@ -17,10 +20,11 @@ import edu.kit.aifb.gwifi.model.Category;
 import edu.kit.aifb.gwifi.model.Wikipedia;
 
 public class VectorCalculations_LINE {
+	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
 	public static void main(String[] args) {
 		WikipediaSingleton singleton = WikipediaSingleton.getInstance();
 		Wikipedia wikipedia = singleton.wikipedia;
-		CategorySingleton singCategory = CategorySingleton.getInstance();
+		CategorySingleton singCategory = CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE));
 		Set<Category> categories = new HashSet<>(singCategory.setMainCategories);
 		List<String> list = new ArrayList<>();
 

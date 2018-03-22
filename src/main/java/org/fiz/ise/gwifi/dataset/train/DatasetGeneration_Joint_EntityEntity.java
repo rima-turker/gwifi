@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 import org.fiz.ise.gwifi.Singleton.FilteredWikipediaPagesSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
-import org.fiz.ise.gwifi.dataset.LINE.CategoryBased.EntityEntityWeight_myApproach;
+import org.fiz.ise.gwifi.dataset.LINE.Category.EntityEntityWeight_myApproach;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.FileUtil;
 import org.fiz.ise.gwifi.util.SynchronizedCounter;

@@ -1,4 +1,4 @@
-package org.fiz.ise.gwifi.dataset.LINE.CategoryBased;
+package org.fiz.ise.gwifi.dataset.LINE.Category;
 
 import java.awt.List;
 import java.io.BufferedReader;
@@ -30,7 +30,7 @@ import edu.kit.aifb.gwifi.model.Page;
 import edu.kit.aifb.gwifi.model.Wikipedia;
 import edu.kit.aifb.gwifi.model.Page.PageType;
 import edu.kit.aifb.gwifi.util.PageIterator;
-
+@Deprecated
 public class DatasetGenerationCatBasedLINE_EntityCategory {
 	private static final Logger LOG = Logger.getLogger(DatasetGenerationCatBasedLINE_EntityCategory.class);
 	static final Logger secondLOG = Logger.getLogger("debugLogger");

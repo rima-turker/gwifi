@@ -34,7 +34,8 @@ public class AnnotationSingleton {
 	    				KB.WIKIPEDIA, NLPModel.NGRAM, DisambiguationModel.PRIOR, MentionMode.NON_OVERLAPPED, ResponseMode.BEST,
 	    				RepeatMode.FIRST);
 			} catch (Exception e) {
-				System.out.println("Exception initializing Wikipedia");
+				System.out.println("Exception initializing Wikipedia: "+e.getMessage());
+				System.exit(1);
 			}
 	    }
 	    // static method to create instance of Singleton class
