@@ -34,7 +34,7 @@ public class TopicDisambiguator {
 		List<Topic> weightedTopics = topicWeighter.getWeightedTopics(topics, rc);
 
 		long end = System.currentTimeMillis();
-		System.out.println("Time for topic disambiguation: " + (end - start) + " ms");
+		//System.out.println("Time for topic disambiguation: " + (end - start) + " ms");
 
 		return weightedTopics;
 	}
@@ -47,7 +47,7 @@ public class TopicDisambiguator {
 		List<Topic> weightedTopics = topicWeighter.getWeightedTopics(topics, rc, categories, ca, alpha);
 
 		long end = System.currentTimeMillis();
-		System.out.println("Time for topic disambiguation: " + (end - start) + " ms");
+		//System.out.println("Time for topic disambiguation: " + (end - start) + " ms");
 
 		return weightedTopics;
 	}

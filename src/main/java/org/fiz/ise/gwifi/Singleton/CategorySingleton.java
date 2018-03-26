@@ -28,12 +28,14 @@ public class CategorySingleton {
 	
 	private final Integer DEPTH_OF_CAT_TREE = Config.getInt("DEPTH_OF_CAT_TREE", 0);
 	// variable of type String
+	public Map<String, Set<Category>> mapCategoryDept;
 	public Map<Category, Set<Category>> map;
 	public Set<Category> setAllCategories;
 	public Set<Category> setMainCategories;
 	
 	private CategorySingleton(List<String> categories) {
 		map = new HashMap<>();
+		mapCategoryDept = new HashMap<>();
 		setAllCategories = new HashSet<>();
 		setMainCategories = new HashSet<>();
 		
@@ -59,6 +61,7 @@ public class CategorySingleton {
 				for (int i = 0; i < mainCats.length; i++) {
 					Set<Category> child = new HashSet<>(
 							getChildCategoriesSet(new HashSet<>(Arrays.asList(mainCats[i]))));
+					mapCategoryDept.put(mainCats[i].getTitle()+"\t"+j,child);
 					map.put(mainCats[i], child);
 					setAllCategories.addAll(child);
 					latest.put(mainCats[i], child);
@@ -74,6 +77,9 @@ public class CategorySingleton {
 					List<Category> lstoriginalSet = new ArrayList<>(parent);
 					List<Category> lstchildSet = new ArrayList<>(child);
 					lstoriginalSet.addAll(lstchildSet);
+
+					mapCategoryDept.put(entry.getKey().getTitle()+"\t"+j,child);
+					
 					parent.addAll(child);// with the previous elements
 					// System.out.println("After originalSet parent"+parent.size());
 					// System.out.println("After lstoriginalSet "+lstoriginalSet.size());
@@ -84,6 +90,16 @@ public class CategorySingleton {
 				}
 			}
 		}
+//		for(Entry<Category, Set<Category>> e : map.entrySet())
+//		{
+//			Integer temp =0;
+//			for(Category c: e.getValue()) {
+//				temp+=c.getChildArticles().length;
+//			}
+//			System.out.println(e.getKey()+" child articles "+temp);
+//			temp=0;
+//		}
+		
 	}
 
 	private Set<Category> getChildCategoriesSet(Set<Category> setParent) {

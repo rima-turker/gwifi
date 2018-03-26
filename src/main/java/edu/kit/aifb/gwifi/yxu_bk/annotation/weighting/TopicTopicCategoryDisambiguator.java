@@ -201,7 +201,7 @@ public class TopicTopicCategoryDisambiguator {
 			tWeighter.getWeightedTopics(topics, rc);
 		}
 		long end = System.currentTimeMillis();
-		System.out.println("Time for topic disambiguation: " + (end - start) + " ms");
+		//System.out.println("Time for topic disambiguation: " + (end - start) + " ms");
 	}
 	
 	private void chooseCateFromTree(List<TopicCategory> chosenCates, List<TopicCategory> allCates){

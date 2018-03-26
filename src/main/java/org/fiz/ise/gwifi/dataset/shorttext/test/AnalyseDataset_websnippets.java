@@ -53,6 +53,7 @@ public class AnalyseDataset_websnippets {
 		counterProcessed= new SynchronizedCounter();
 		executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
 		long now = System.currentTimeMillis();
+		secondLOG.info("Category Tree depth "+Config.getInt("DEPTH_OF_CAT_TREE", 0));
 		try {
 			WikipediaSingleton wikiSing = WikipediaSingleton.getInstance();
 			Wikipedia wiki = wikiSing.wikipedia;
@@ -85,7 +86,7 @@ public class AnalyseDataset_websnippets {
 	}
 	private Runnable handle(String snippet, List<Category> gtList) {
 		return () -> {
-			Category bestMatchingCategory = HeuristicApproach_loadModel.getBestMatchingCategory(snippet,gtList);
+			Category bestMatchingCategory = HeuristicApproach_loadModel.getBestMatchingCategory(snippet,gtList,null);
 			counterProcessed.increment();
 			if (gtList.contains(bestMatchingCategory)) {
 				counterTruePositive.increment();

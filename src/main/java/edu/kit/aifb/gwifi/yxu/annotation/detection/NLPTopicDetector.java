@@ -170,8 +170,8 @@ public class NLPTopicDetector {
 			references = getReferencesByNGram(doc.getPreprocessedText(), lang);
 		}
 		long end = System.currentTimeMillis();
-		System.out.println("Time for getting references: " + (end - start)
-				+ " ms");
+//		System.out.println("Time for getting references: " + (end - start)
+//				+ " ms");
 
 		long newStart = System.currentTimeMillis();
 
@@ -179,8 +179,7 @@ public class NLPTopicDetector {
 				doc.getContextText(), doc.getOriginalText().length(), rc);
 
 		end = System.currentTimeMillis();
-		System.out.println("Time for getting topics: " + (end - newStart)
-				+ " ms");
+		//System.out.println("Time for getting topics: " + (end - newStart)+ " ms");
 
 		// calculateRelatedness(temp, rc);
 
@@ -194,8 +193,7 @@ public class NLPTopicDetector {
 		}
 
 		end = System.currentTimeMillis();
-		System.out.println("Total time for topic detection: " + (end - start)
-				+ " ms\n");
+	//	System.out.println("Total time for topic detection: " + (end - start)+ " ms\n");
 
 		return topics;
 	}
@@ -219,8 +217,8 @@ public class NLPTopicDetector {
 		references.addAll(posReferences);
 		mergePotentialRefs(text, potentialRefs, references);
 		long end = System.currentTimeMillis();
-		System.out.println("Time for getting references: " + (end - start)
-				+ " ms");
+//		System.out.println("Time for getting references: " + (end - start)
+//				+ " ms");
 
 		long newStart = System.currentTimeMillis();
 
@@ -233,8 +231,7 @@ public class NLPTopicDetector {
 				doc.getContextText(), doc.getOriginalText().length(), rc);
 
 		end = System.currentTimeMillis();
-		System.out.println("Time for getting topics: " + (end - newStart)
-				+ " ms");
+		//System.out.println("Time for getting topics: " + (end - newStart)+ " ms");
 
 		// calculateRelatedness(temp, rc);
 
@@ -248,8 +245,8 @@ public class NLPTopicDetector {
 		}
 
 		end = System.currentTimeMillis();
-		System.out.println("Total time for topic detection: " + (end - start)
-				+ " ms\n");
+//		System.out.println("Total time for topic detection: " + (end - start)
+//				+ " ms\n");
 
 		return topics;
 	}
@@ -519,16 +516,15 @@ public class NLPTopicDetector {
 				doc.getPreprocessedText(), positions, potentialRefs);
 
 		long end = System.currentTimeMillis();
-		System.out.println("Time for getting references: " + (end - start)
-				+ " ms");
+//		System.out.println("Time for getting references: " + (end - start)
+//				+ " ms");
 
 		long newStart = System.currentTimeMillis();
 		Collection<Topic> temp = getTopicsByLocalCompatibility(references,
 				null, doc.getPreprocessedText().length(), rc);
 
 		end = System.currentTimeMillis();
-		System.out.println("Time for getting topics: " + (end - newStart)
-				+ " ms");
+		//System.out.println("Time for getting topics: " + (end - newStart)+ " ms");
 
 		// calculateRelatedness(temp, rc);
 
@@ -540,8 +536,8 @@ public class NLPTopicDetector {
 		}
 
 		end = System.currentTimeMillis();
-		System.out.println("Total time for topic detection: " + (end - start)
-				+ " ms\n");
+//		System.out.println("Total time for topic detection: " + (end - start)
+//				+ " ms\n");
 
 		return topics;
 	}
@@ -639,14 +635,13 @@ public class NLPTopicDetector {
 
 		Collections.sort(references);
 		long end = System.currentTimeMillis();
-		System.out.println("Time for getting references: " + (end - start)
-				+ " ms");
+//		System.out.println("Time for getting references: " + (end - start)
+//				+ " ms");
 		long newStart = System.currentTimeMillis();
 		Collection<Topic> temp = getTopicsByLocalCompatibility(references,
 				doc.getContextText(), doc.getOriginalText().length(), rc);
 		end = System.currentTimeMillis();
-		System.out.println("Time for getting topics: " + (end - newStart)
-				+ " ms");
+	//	System.out.println("Time for getting topics: " + (end - newStart)+ " ms");
 
 		// calculateRelatedness(temp, rc);
 		List<Topic> topics = new ArrayList<Topic>();
@@ -659,8 +654,8 @@ public class NLPTopicDetector {
 		}
 
 		end = System.currentTimeMillis();
-		System.out.println("Total time for topic detection: " + (end - start)
-				+ " ms\n");
+//		System.out.println("Total time for topic detection: " + (end - start)
+//				+ " ms\n");
 
 		return topics;
 	}

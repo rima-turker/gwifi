@@ -24,7 +24,6 @@ public class LINE_modelSingleton {
     {
         if (single_instance == null)
         	single_instance = new LINE_modelSingleton();
- 
         return single_instance;
     }
 }

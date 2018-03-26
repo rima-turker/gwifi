@@ -4,6 +4,7 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 import org.apache.log4j.Logger;
+import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
 
 /**
  * This class is responsible for reading attributes fom config file
@@ -31,6 +32,14 @@ public final class Config {
 		} catch (final Exception e) {
 			Config.LOG.warn(e.getMessage(), e);
 			return defBoolean;
+		}
+	}
+	public static TestDatasetType_Enum getEnum(final String key) {
+		try {
+			return TestDatasetType_Enum.valueOf(Config.RESOURCE_BUNDLE.getString(key));
+		} catch (final Exception e) {
+			Config.LOG.warn(e.getMessage());
+			return null;
 		}
 	}
 
