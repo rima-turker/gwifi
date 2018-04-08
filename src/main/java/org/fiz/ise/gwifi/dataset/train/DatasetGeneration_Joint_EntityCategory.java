@@ -67,7 +67,7 @@ public class DatasetGeneration_Joint_EntityCategory {
 		try {
 			final long now = System.currentTimeMillis();
 			FilteredWikipediaPagesSingleton singleton = FilteredWikipediaPagesSingleton.getInstance();
-			final Set<Article> articles = new HashSet<>(singleton.articles);
+			final Set<Article> articles = new HashSet<>(singleton.categoryFilteredArticles);
 			System.out.println("size of the articles "+articles.size());
 			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
 			//			List<Article> localList = new ArrayList<>();
@@ -133,7 +133,7 @@ public class DatasetGeneration_Joint_EntityCategory {
 			mapCatVal.put(categoriesCArticle[i],childArticlesSet.size());
 		}
 		for(Entry<Category, Integer>entry:mapCatVal.entrySet()){
-			secondLOG.info(article.getTitle()+"\t"+entry.getKey().getTitle()+"\t"+entry.getValue());
+			//secondLOG.info(article.getTitle()+"\t"+entry.getKey().getTitle()+"\t"+entry.getValue());
 			thirdLOG.info(article.getId()+"\t"+entry.getKey().getId()+"\t"+entry.getValue());
 			//listEntityCategory.add(article+"\t"+entry.getValue()+"\t"+entry.getKey());
 		}

@@ -21,13 +21,19 @@ public class Document {
 	private final String title;
 	private final List<String> content;
 	private List<String> sentences;
+	private final Integer id;
 
-	public Document(String title, List<String> content,String location) {
+	
+
+
+	public Document(Integer id,String title, List<String> content,String location) {
 		this.title = title;
 		this.content = content;
-		//this.sentences = generateSentences();
 		this.location = location;
+		this.id=id;
 	}
+
+	
 
 	private List<String> generateSentences() {
 		final ArrayList<String> sentenceList = new ArrayList<String>();
@@ -69,11 +75,18 @@ public class Document {
 	public String getLocation() {
 		return location;
 	}
-
+	public Integer getId() {
+		return id;
+	}
 	@Override
 	public String toString() {
-		return "Document [location=" + location + ", title=" + title + ", content=" + content + ", sentences="
-				+ sentences + "]";
+		return title + ", " + content;
 	}
+
+//	@Override
+//	public String toString() {
+//		return "Document [location=" + location + ", title=" + title + ", content=" + content + ", sentences="
+//				+ sentences + "]";
+//	}
 
 }

@@ -145,7 +145,7 @@ public class NLPTopicDetector {
 			references = getReferencesByPOS(doc.getPreprocessedText(), lang);
 		} else if (model.equals(NLPModel.NER)) {
 			references = getReferencesByNER(doc.getPreprocessedText(), lang);
-		} else if (model.equals(NLPModel.NGRAM)) {
+		} else if (model.equals(NLPModel.NGRAM)) {//reference means surface forms
 			references = getReferencesByNGram(doc.getPreprocessedText(), lang);
 		} else {
 			references = getReferencesByNGram(doc.getPreprocessedText(), lang);

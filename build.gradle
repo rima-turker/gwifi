@@ -20,9 +20,10 @@ applicationDefaultJvmArgs = ["-Xmx50g", "-d64", "-XX:+UseParallelGC", "-server"]
 
 description = """Graph-based Wikifier"""
 
-//mainClassName="edu.kit.aifb.gwifi.demo.ArticleDemo"
-//mainClassName="org.fiz.ise.gwifi.dataset.DatasetGenerationLINE_EntityEntity2"
-mainClassName="org.fiz.ise.gwifi.dataset.shorttext.test.AnalyseDataset_ag"
+//mainClassName="org.fiz.ise.gwifi.dataset.shorttext.baseline.DatasetGeneration_TFIDF"
+mainClassName="org.fiz.ise.gwifi.dataset.shorttext.test.TestBasedonDatasets"
+//mainClassName="org.fiz.ise.gwifi.util.MergeTwoFiles"
+//mainClassName="org.fiz.ise.gwifi.dataset.train.DatasetGeneration_Joint_EntityEntity"
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8

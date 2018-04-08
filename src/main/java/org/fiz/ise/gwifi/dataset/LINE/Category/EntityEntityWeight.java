@@ -53,7 +53,7 @@ public class EntityEntityWeight {
 	}
 	private void initializeVariables() {
 		FilteredWikipediaPagesSingleton singleton = FilteredWikipediaPagesSingleton.getInstance();
-		filteredArticles=Collections.unmodifiableSet(new HashSet<Article>(singleton.articles));
+		filteredArticles=Collections.unmodifiableSet(new HashSet<Article>(singleton.categoryFilteredArticles));
 		countArticle = new SynchronizedCounter();
 		countCategoryPerArticle = new SynchronizedCounter();
 		fileName= new AtomicInteger(0);

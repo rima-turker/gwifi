@@ -61,7 +61,7 @@ public class DatasetGenerationCatBasedLINE_EntityEntity {
 		FileUtil.createFolder(OUTPUT_FOLDER);
 		try {
 			FilteredWikipediaPagesSingleton singleton = FilteredWikipediaPagesSingleton.getInstance();
-			final Set<Article> articles = new HashSet<>(singleton.articles);
+			final Set<Article> articles = new HashSet<>(singleton.categoryFilteredArticles);
 			System.out.println("size of the articles "+articles.size());
 			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
 			List<Article> localList = new ArrayList<>();

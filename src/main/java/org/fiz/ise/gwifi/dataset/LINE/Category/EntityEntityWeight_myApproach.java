@@ -72,7 +72,7 @@ public class EntityEntityWeight_myApproach {
 		mapGlobal = new ConcurrentHashMap<>();
 		setGlobal  = Collections.synchronizedSet(new HashSet<>()); 
 		FilteredWikipediaPagesSingleton singleton = FilteredWikipediaPagesSingleton.getInstance();
-		filteredArticles=Collections.unmodifiableSet(new HashSet<Article>(singleton.articles));
+		filteredArticles=Collections.unmodifiableSet(new HashSet<Article>(singleton.categoryFilteredArticles));
 		arrMainFilteredArticles = filteredArticles.toArray(new Article[filteredArticles.size()]);
 		Arrays.sort(arrMainFilteredArticles);
 		countArticle = new SynchronizedCounter();

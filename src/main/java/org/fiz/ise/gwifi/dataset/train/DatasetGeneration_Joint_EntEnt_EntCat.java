@@ -7,10 +7,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,14 +28,17 @@ import org.fiz.ise.gwifi.util.SynchronizedCounter;
 import org.w3c.dom.ls.LSException;
 
 import edu.kit.aifb.gwifi.model.Article;
+import edu.kit.aifb.gwifi.model.Category;
 import edu.kit.aifb.gwifi.model.Page;
 import edu.kit.aifb.gwifi.model.Wikipedia;
 import edu.kit.aifb.gwifi.model.Page.PageType;
 import edu.kit.aifb.gwifi.util.PageIterator;
 
-public class DatasetGeneration_Joint_EntityEntity {
-	private static final Logger LOG = Logger.getLogger(DatasetGeneration_Joint_EntityEntity.class);
+public class DatasetGeneration_Joint_EntEnt_EntCat {
+	private static final Logger LOG = Logger.getLogger(DatasetGeneration_Joint_EntEnt_EntCat.class);
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
+	static final Logger thirdLOG = Logger.getLogger("reportsLogger");
+	
 	static final long now = System.currentTimeMillis();
 	private ExecutorService executor;
 	private static SynchronizedCounter countArticle;
@@ -41,11 +46,11 @@ public class DatasetGeneration_Joint_EntityEntity {
 	private final Integer NUMBER_OF_THREADS=  Config.getInt("NUMBER_OF_THREADS",-1);
 	private static final Map<Integer,Set<Article>> cache = new ConcurrentHashMap<>();
 	private static final Map<Integer,Set<Article>> preCache = new ConcurrentHashMap<>();
-	private static Wikipedia wikipedia;
 	private static List<String> globalList;
 	private static Set<String> globalSet;
+	
 	public static void main(String[] args) {
-		DatasetGeneration_Joint_EntityEntity data = new DatasetGeneration_Joint_EntityEntity();
+		DatasetGeneration_Joint_EntEnt_EntCat data = new DatasetGeneration_Joint_EntEnt_EntCat();
 		data.initializeVariables();
 		System.out.println("Thread started...");
 		final Thread t = new Thread (new Runnable() {
@@ -64,75 +69,16 @@ public class DatasetGeneration_Joint_EntityEntity {
 		t.setDaemon(true);
 		//t.start();
 		data.initializePreCache();
-		data.generateDatasetEntityEntiy();
+		data.generateDatasetEntityEntiy_EntityCategory();
 		//data.generateDatasetEntityEntiy_fromMap();
 	}
 	private void initializeVariables() {
 		globalList = Collections.synchronizedList(new ArrayList<String>());
 		globalSet = Collections.synchronizedSet(new HashSet<>());
-		wikipedia = WikipediaSingleton.getInstance().wikipedia;
 		countArticle = new SynchronizedCounter();
 		countLine= new SynchronizedCounter();
 	}
-	private void generateDatasetEntityEntiy_fromMap() {
-		int count =0;
-		List<String> tep = new ArrayList<>();
-		Set<String> set1 = new HashSet<>();
-		String sCurrentLine;
-		String file1 = "/home/rima/playground/JavaProjectsRun/gwifi_logging/bin/log/secondLog";
-		//String file1 = "sample_Log";
-		try (BufferedReader br = new BufferedReader(new FileReader(file1))) {
-			while ((sCurrentLine = br.readLine()) != null) {
-				int i = sCurrentLine.indexOf("\t\t");
-				String firstPart = sCurrentLine.substring(0, i);
-				//				String secondPart = sCurrentLine.substring(i+2);
-				if (set1.contains(firstPart)) {
-					//System.out.println("Set contains the second part "+firstPart);
-					//LOG.info("Set contains the second part "+firstPart);
-					if (!tep.contains(sCurrentLine)) {
-						System.out.println(sCurrentLine);
-						System.exit(1);
-					}
-				}
-				tep.add(sCurrentLine);
-				set1.add(firstPart);
-				count++;
-			}
-			System.out.println("size of the map "+set1.size());
-			System.out.println("size of the count "+count);
-			System.out.println("Started processing...");
-
-			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
-			int i = 1;
-			for(String s: set1) {
-				int index = s.indexOf("\t");
-				String firstPart = s.substring(0, index).trim();
-				String secondPart = s.substring(index+1).trim();
-				Article a1 = wikipedia.getArticleById(Integer.parseInt(firstPart));
-				Article a2 = wikipedia.getArticleById(Integer.parseInt(secondPart));
-				if (a1!=null&&a2!=null) {
-					//					System.out.println(s);
-					//					System.exit(1);
-
-					i++;
-				}
-				countLine.increment();
-				//executor.execute(handle_map(a1,a2, i));
-
-			}
-			System.out.println("count i "+i);
-			executor.shutdown();
-			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-			System.out.println("Total time minutes " + TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis() - now));
-			System.out.println("setGlobal size "+globalSet.size());
-			System.out.println("writing to a file");
-			FileUtil.writeDataToFile(globalList, "EntityEntity_LINE_dataset.txt", false);	
-		} 
-		catch (Exception e) {
-			e.printStackTrace();
-		} 
-	}
-	private void generateDatasetEntityEntiy() {
+	private void generateDatasetEntityEntiy_EntityCategory() {
 		//PageIterator pageIterator = wikipedia.getPageIterator();
 		executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
 		try {
@@ -142,17 +88,6 @@ public class DatasetGeneration_Joint_EntityEntity {
 				executor.execute(handle(a, i));
 				i++;
 			}
-//			while (pageIterator.hasNext()) {
-//				Page page = pageIterator.next();
-//				if (page.getType().equals(PageType.article)) {
-//					Article article = wikipedia.getArticleByTitle(page.getTitle());
-//					if(article==null) {
-//						continue;
-//					}
-//					executor.execute(handle(article, i));
-//					i++;
-//				}
-//			}
 			executor.shutdown();
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 			System.out.println("Total time minutes " + TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis() - now));
@@ -163,34 +98,44 @@ public class DatasetGeneration_Joint_EntityEntity {
 			e.printStackTrace();
 		}
 	}
-
-	private Runnable handle_map(Article article1, Article article2, int index2) {
-		return () -> {
-			//System.out.println(article1+" "+ article2);
-			handleParallel_map(article1, article2);
-			countArticle.incrementbyValue(1);
-		};
-	}
 	private Runnable handle(final Article articleToProcess, int index) {
 		return () -> {
+			findWeightOfEachCategory(articleToProcess);
 			handleParallel(articleToProcess, index);
 			countArticle.incrementbyValue(1);
 		};
 	}
-	private void handleParallel_map(Article article1,Article article2) {
-		Set<Article> setTemp = getFromCacheInLinks(article1);
-		//Set<Article> setTemp = new HashSet<>(Arrays.asList(article1.getLinksIn()));
-		Set<Article> setMain = getFromCacheInLinks(article2);
-		//	Set<Article> setMain = new HashSet<>(Arrays.asList(article2.getLinksIn()));
-		setMain.retainAll(setTemp);
-		if (setMain.size()>0) {
-			String key = article1.getId()+"\t"+article2.getId();
-			//			if (globalSet.contains(key)) {
-			//				System.out.println("Set contains the key "+key);
-			//				System.exit(1);
-			//			}
-			globalSet.add(key);
-			globalList.add(key+"\t"+setMain.size());
+	/*
+	 * for a given article first entities that in the article 
+	 * then find the articles that contains those entities 
+	 * send those articles to calculateWeightForEntityCategory
+	 */
+	private void findWeightOfEachCategory(Article article) {
+		try {
+
+			Set<Article> setCArticleLinkOutLinkIn = new HashSet<Article>();
+			Article[] linkOutMainArticle = article.getLinksOut(); //All the entities inside the main (Anarchism) article such as Agriculture
+			for (int j = 0; j < linkOutMainArticle.length; j++) {
+				Article[] linksOutLinkInAnArticle = linkOutMainArticle[j].getLinksIn(); //All the entities contains Agriculture in their article
+				Collections.addAll(setCArticleLinkOutLinkIn, linksOutLinkInAnArticle);
+			}
+			calculateWeightForEntityCategory(article,setCArticleLinkOutLinkIn);
+			//System.out.println("numberOfEntitiesProcessed " +numberOfEntitiesProcessed);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	private void calculateWeightForEntityCategory(final Article article,
+			final Set<Article> setCArticleLinkOutLinkIn) {
+		Category[] categoriesCArticle = article.getParentCategories(); //(Category of Anarchism) Get all the categories at the bottom of the article
+		Map<Category, Integer> mapCatVal = new HashMap<>();
+		for (int i = 0; i < categoriesCArticle.length; i++) {
+			Set<Article> childArticlesSet = new HashSet<Article>(Arrays.asList(categoriesCArticle[i].getChildArticles()));
+			childArticlesSet.retainAll(setCArticleLinkOutLinkIn);
+			mapCatVal.put(categoriesCArticle[i],childArticlesSet.size());
+		}
+		for(Entry<Category, Integer>entry:mapCatVal.entrySet()){
+			thirdLOG.info(article.getId()+"\t"+entry.getKey().getId()+"\t"+entry.getValue());
 		}
 	}
 	private void handleParallel(Article articleToProcess,int index) {
@@ -207,12 +152,6 @@ public class DatasetGeneration_Joint_EntityEntity {
 				setMain.retainAll(setInLinks);
 				if (setMain.size()>0) {
 					String key = articleToProcess.getId()+"\t"+outLinks[j].getId();
-					//secondLOG.info(key+"\t\t"+setTemp.size());
-					//					if (globalSet.contains(key)) {
-					//						System.out.println("Set contains the key "+key);
-					//						//System.exit(1);
-					//					}
-					//globalSet.add(key+"\t"+setMain.size());
 					globalList.add(key+"\t"+setMain.size());
 				}
 			}

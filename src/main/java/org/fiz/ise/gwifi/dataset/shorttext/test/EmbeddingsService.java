@@ -1,8 +1,10 @@
 package org.fiz.ise.gwifi.dataset.shorttext.test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -25,6 +27,15 @@ public class EmbeddingsService {
 	private static Wikipedia wikipedia = singleton.wikipedia;
 	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
 	private static CategorySingleton singCategory = CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE));
+	
+	public static List<String>  getMostSimilarConcepts(String entity1,Model_LINE model,int n) {
+		try {
+			List<String> similarity = new ArrayList<>( Request_LINEServer.getMostSimilarConcepts(entity1, Model_LINE.LINE_COMBINED, n));
+			return similarity;
+		} catch (Exception e) {
+			return null;
+		}
+	}
 	public static double getSimilarity(String id1, String id2 ){
 		try {
 			Double similarity = Request_LINEServer.getSimilarity(id1,id2,Model_LINE.LINE_COMBINED);

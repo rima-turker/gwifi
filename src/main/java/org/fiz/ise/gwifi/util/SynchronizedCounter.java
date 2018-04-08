@@ -15,5 +15,7 @@ public class SynchronizedCounter {
     public synchronized int value() {
         return c;
     }
-
+    public synchronized void setValue(int value) {
+        c=value;
+    }
 }

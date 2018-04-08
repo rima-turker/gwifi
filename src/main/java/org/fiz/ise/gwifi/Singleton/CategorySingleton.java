@@ -39,8 +39,7 @@ public class CategorySingleton {
 		setAllCategories = new HashSet<>();
 		setMainCategories = new HashSet<>();
 		
-		WikipediaSingleton singleton = WikipediaSingleton.getInstance();
-		Wikipedia wikipedia = singleton.wikipedia;
+		Wikipedia wikipedia = WikipediaSingleton.getInstance().wikipedia;
 		System.out.println("Depth of the category Tree is "+DEPTH_OF_CAT_TREE );
 		Category[] mainCats = new Category[categories.size()];
 		List<Category> mainCategories = new ArrayList<>();

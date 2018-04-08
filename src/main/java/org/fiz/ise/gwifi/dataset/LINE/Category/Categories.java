@@ -24,6 +24,7 @@ public class Categories {
 		return Collections.unmodifiableList(dummySeeds);
 	}
 	private static List<String> getCategories_Ag() {
+	//	final List<String> dummySeeds = Arrays.asList("World","Sports","Business","Science and technology");
 		final List<String> dummySeeds = Arrays.asList("World","Sports","Business","Science","Technology");
 		return Collections.unmodifiableList(dummySeeds);
 	}

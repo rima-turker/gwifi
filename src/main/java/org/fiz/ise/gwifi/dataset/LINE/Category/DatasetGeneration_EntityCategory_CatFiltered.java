@@ -63,7 +63,7 @@ public class DatasetGeneration_EntityCategory_CatFiltered {
 			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
 			final long now = System.currentTimeMillis();
 			FilteredWikipediaPagesSingleton singleton = FilteredWikipediaPagesSingleton.getInstance();
-			final Set<Article> filteredArticles=Collections.unmodifiableSet(new HashSet<Article>(singleton.articles));
+			final Set<Article> filteredArticles=Collections.unmodifiableSet(new HashSet<Article>(singleton.categoryFilteredArticles));
 			CategorySingleton singletonCategories = CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE));
 			setCategory=Collections.unmodifiableSet(new HashSet<Category>(singletonCategories.setAllCategories));
 			System.out.println("size of the articles "+filteredArticles.size());

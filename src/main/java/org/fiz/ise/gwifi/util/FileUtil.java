@@ -12,6 +12,17 @@ import java.util.Map.Entry;
 
 public class FileUtil {
 
+	public static void writeDataToFile(List<String> data,final File file) {
+		try {
+			final FileWriter fw = new FileWriter(file);
+			for(String s:data) {
+				fw.write(s+"\n");
+			}
+			fw.close();
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
+	}
 	public static void writeDataToFile(List<String> data,final String fileName,final boolean append) {
 		try {
 			final FileWriter fw = new FileWriter(fileName, append);
@@ -46,17 +57,7 @@ public class FileUtil {
 		}
 	}
 	
-	public static void writeDataToFile(List<String> data,final File file) {
-		try {
-			final FileWriter fw = new FileWriter(file);
-			for(String s:data) {
-				fw.write(s+"\n");
-			}
-			fw.close();
-		} catch (final IOException e) {
-			e.printStackTrace();
-		}
-	}
+	
 
 	public static boolean createFolder(String folderName) {
 		Path path = Paths.get(folderName);
