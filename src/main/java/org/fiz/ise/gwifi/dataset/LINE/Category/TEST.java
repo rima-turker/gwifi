@@ -1,4 +1,4 @@
-package org.fiz.ise.gwifi.dataset.LINE.CategoryBased;
+package org.fiz.ise.gwifi.dataset.LINE.Category;
 
 import java.util.ArrayList;
 import java.util.HashMap;

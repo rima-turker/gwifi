@@ -1,6 +1,6 @@
 package org.fiz.ise.gwifi.util;
 public class SynchronizedCounter {
-    private int c = 0;
+    private long c = 0;
 
     public synchronized void increment() {
         c++;
@@ -12,10 +12,10 @@ public class SynchronizedCounter {
         c--;
     }
 
-    public synchronized int value() {
+    public synchronized long value() {
         return c;
     }
-    public synchronized void setValue(int value) {
+    public synchronized void setValue(long value) {
         c=value;
     }
 }

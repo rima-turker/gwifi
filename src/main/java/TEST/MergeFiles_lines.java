@@ -99,9 +99,9 @@ public class MergeFiles_lines {
 		//		}
 	}
 	private static void handleFiles(List<File> fileList, int i) {
-		int atomicInitial = atomic.value();
+		long atomicInitial = atomic.value();
 		atomic.incrementbyValue(fileList.size());
-		int atomicFinal = atomic.value();
+		long atomicFinal = atomic.value();
 		//	final Map<String, Long> localMap = new HashMap<>();
 		//System.err.println("Thread "+i+" started with "+fileList.size()+" files");
 		int j=0;

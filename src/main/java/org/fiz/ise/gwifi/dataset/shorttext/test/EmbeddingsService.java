@@ -36,9 +36,17 @@ public class EmbeddingsService {
 			return null;
 		}
 	}
+	public static double getSimilarity_CONLL(String id1, String id2 ){
+		try {
+			Double similarity = Request_LINEServer.getSimilarity(id1,id2,Model_LINE.CONLL);
+			return similarity;
+		} catch (Exception e) {
+			return 0.0;
+		}
+	}
 	public static double getSimilarity(String id1, String id2 ){
 		try {
-			Double similarity = Request_LINEServer.getSimilarity(id1,id2,Model_LINE.LINE_COMBINED);
+			Double similarity = Request_LINEServer.getSimilarity(id1,id2,Model_LINE.LINE_1st_Complex);
 			return similarity;
 		} catch (Exception e) {
 			return 0.0;

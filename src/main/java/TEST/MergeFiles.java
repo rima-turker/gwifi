@@ -88,9 +88,9 @@ public class MergeFiles {
 		};
 	}
 	private static void handleFiles(List<File> fileList, int i) {
-		int atomicInitial = atomic.value();
+		long atomicInitial = atomic.value();
 		atomic.incrementbyValue(fileList.size());
-		int atomicFinal = atomic.value();
+		long atomicFinal = atomic.value();
 		final Map<String, Long> map = new HashMap<>();
 		int j=0;
 		long mainStart = TimeUtil.getStart();

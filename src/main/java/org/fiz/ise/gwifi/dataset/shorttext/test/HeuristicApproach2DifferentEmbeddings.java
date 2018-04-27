@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import org.apache.log4j.Logger;
 import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
 import org.fiz.ise.gwifi.Singleton.CategorySingleton;
+import org.fiz.ise.gwifi.Singleton.LINE_2modelSingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
 import org.fiz.ise.gwifi.model.Model_LINE;
@@ -29,14 +30,14 @@ import edu.kit.aifb.gwifi.model.Category;
 import edu.kit.aifb.gwifi.model.Page;
 import edu.kit.aifb.gwifi.service.NLPAnnotationService;
 
-public class HeuristicApproach {
+public class HeuristicApproach2DifferentEmbeddings {
 
 	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
 	private static Set<Category> setMainCategories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories);
-	private static boolean LOAD_MODEL = Config.getBoolean("LOAD_MODEL", false);
+	private static boolean LOAD_2MODEL = Config.getBoolean("LOAD_2MODEL", false);
 	private final static Integer DEPTH_OF_CAT_TREE = Config.getInt("DEPTH_OF_CAT_TREE", 0);
 	private static Map<Category, Set<Category>> mapCategories;
-	private static final Logger LOG = Logger.getLogger(HeuristicApproach.class);
+	private static final Logger LOG = Logger.getLogger(HeuristicApproach2DifferentEmbeddings.class);
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 	private final double threshold = 0.9;
 
@@ -49,7 +50,7 @@ public class HeuristicApproach {
 		//shortText="Google is improving on the discussions its popular Web site hosts, hoping the upgrades will spur more online banter and make its market-leading search engine a richer destination.";
 		mapCategories = new HashMap<>(map);
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-		HeuristicApproach heuristic = new HeuristicApproach();
+		HeuristicApproach2DifferentEmbeddings heuristic = new HeuristicApproach2DifferentEmbeddings();
 		StringBuilder mainBuilder = new StringBuilder();
 		try {
 			Map<Category, Double> mapScore = new HashMap<>(); 
@@ -69,61 +70,11 @@ public class HeuristicApproach {
 				for(Annotation a:lstAnnotations) {
 					score+=heuristic.calculateScoreBasedInitialFormula(a, mainCat, contextSimilarity);
 					//score+=heuristic.calculateScoreBasedWeightMaxCatSimilarity(a, mainCat);
-					//Entry<Category, Double> entry = getMostSimilarCategory(a,mainCat);
-//					double P_Ce_e=1;
-//					double P_e_c = 0.0;
-//					if (entry!=null) {
-//						P_e_c= entry.getValue();
-					
-		//				System.out.println(a.getTitle()+": weight: "+P_Se_c+" cCat "+entry.getKey().getTitle()+", similarity "+entry.getValue()+" "+mainCat.getTitle()+" Singlescore: "+(P_e_c*P_Se_c*P_Ce_e));
-//					}
-					//double P_e_c=1;
-					//					System.out.println(mainCat.getTitle()+", "+a.getTitle()+" P_e_c: "+P_e_c);
-					//	double P_Se_c=1;
-					//					System.out.println(mainCat.getTitle()+", "+a.getTitle()+" P_Se_c: "+P_Se_c);
-					//	double P_Ce_e=get_P_Ce_e(a.getId(),contextAnnotation);
-					
-					//					
-					//double P_Ce_e=coherency.get(a.getId());
-					//					System.out.println(mainCat.getTitle()+" "+a.getTitle()+" P_Ce_e: "+P_Ce_e);
-					//	System.out.println("result of multiplication: "+(P_e_c*P_Se_c*P_Ce_e));
-					//	System.out.println(mainCat+" sim score: "+P_e_c+ " "+a.getTitle());
-					
-
-					//					System.out.println(a.getTitle()+": weight: "+P_Se_c+" cCat "+entry.getKey().getTitle()+", similarity "+entry.getValue()+" "+mainCat.getTitle()+" coherency: "+P_Ce_e+" Singlescore: "+(P_e_c*P_Se_c*P_Ce_e));
-					//					score+=(P_e_c*P_Ce_e);
-					//score+=P_e_c;
-//					if (first) {
-//						//System.out.println(mainCat.getTitle()+" EL score: "+(P_Se_c*P_Ce_e)+ " "+a.getTitle());
-//						entry = getMostSimilarCategory(a);
-//						//System.out.println(a.getTitle()+" "+entry.getValue()+" "+entry.getKey().getTitle());
-//						//System.out.println(a.getTitle()+" "+entry.getValue()+" "+entry.getKey().getTitle());
-//						//						if (mapMostSimilar.containsKey(entry.getKey())) {
-//						//							mapMostSimilar.put(entry.getKey(), mapMostSimilar.get(entry.getKey())+entry.getValue());
-//						//						}
-//						//						else{
-//						//							mapMostSimilar.put(entry.getKey(), entry.getValue());
-//						//						}
-//						//						mainBuilder.append(a.getMention()+", "+a.getTitle()+", "+a.getId()+", weight: "+a.getWeight()+", :"+entry.getKey().getTitle()+", "+entry.getValue()+"\n");
-//						try {
-//							if (entry!=null) {
-//								mainBuilder.append(a.getMention()+", "+a.getTitle()+", EL score: "+(P_Se_c*P_Ce_e)+", :"+entry.getKey().getTitle()+",similarity "+entry.getValue()+"\n");
-//							}
-//						} catch (Exception e) {
-//							System.out.println(e.getMessage()+" "+a.getId()+" "+(P_Se_c*P_Ce_e)+" "+entry);
-//						}
-//					}
 				}
 				first=false;
-//				System.out.println(mainCat.getTitle()+" ---------score: "+score+" -----------------");
-//				System.out.println();
 				mapScore.put(mainCat, score);
 			}
 			mainBuilder.append("\n");
-			//Map<Category, Double> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(mapScore));
-			//			for(Entry<Category, Double> e: sortedMap.entrySet()){			
-			//				mainBuilder.append(e.getKey()+" "+e.getValue()+"\n");
-			//			}
 			Map<Category, Double>  sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(mapScore));
 			Category firstElement = MapUtil.getFirst(sortedMap).getKey();
 
@@ -164,38 +115,7 @@ public class HeuristicApproach {
 		double P_Ce_e=get_P_Ce_e_efficient(a.getId(),contextSimilarity);
 		return (P_e_c*P_Se_c*P_Ce_e);
 	}
-	private  Map<Integer, Double>  calculateCoherency(List<Annotation> lstAnnotations) {
-		Map<Integer, Double> mapContextSimilarity = new HashMap<>();
-		for(Annotation a: lstAnnotations){
-			//System.out.println("main A: "+a.getTitle()+" "+a.getWeight());
-			List<Annotation> contextAnnotations = lstAnnotations.stream()
-					.filter(p -> p.getId()!=a.getId()).collect(Collectors.toList());
-			List<Annotation> listTemp = new ArrayList<>();
-			for(Annotation c: contextAnnotations){
-				//System.out.println("context A: "+c.getTitle()+" "+c.getWeight());
-				if (c.getWeight()>=threshold) {
-					listTemp.add(c);
-				}
-			}
-			if (listTemp.size()==0) {
-				listTemp=new ArrayList<>(findMaxWeightedAnnotation(contextAnnotations));
-			}
-			//System.out.println("listTemp:  "+listTemp.size());
-			double similarity=.0;
-			for(Annotation aFilteredContext:listTemp) {
-				double simTemp =0.0;
-				if (LOAD_MODEL) {
-					simTemp=(LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(a.getId()), String.valueOf(aFilteredContext.getId())));
-				}
-				else {
-					simTemp =(EmbeddingsService.getSimilarity(String.valueOf(a.getId()), String.valueOf(aFilteredContext.getId())));
-				}
-				similarity+=simTemp;
-			}
-			mapContextSimilarity.put(a.getId(), similarity/listTemp.size());
-		}
-		return mapContextSimilarity;
-	}
+	
 	private List<Annotation> findMaxWeightedAnnotation(List<Annotation> contextAnnotations) {
 		double max = 0.0;
 		Annotation result = null;
@@ -211,15 +131,15 @@ public class HeuristicApproach {
 		Map<Integer, Map<Integer, Double>> mapContextSimilarity = new HashMap<>();
 		for(Annotation a: annotations){
 			Map<Integer, Double> temp = new HashMap<>();
-			for(Annotation c: annotations){
+			for(Annotation a2: annotations){
 				double similarity=.0;
-				if (LOAD_MODEL) {
-					similarity=(LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(a.getId()), String.valueOf(c.getId())));
+				if (LOAD_2MODEL) {
+					similarity=LINE_2modelSingleton.getInstance().lineModel_2nd.similarity(String.valueOf(a.getId()), String.valueOf(a2.getId()));
 				}
 				else {
-					similarity =(EmbeddingsService.getSimilarity(String.valueOf(a.getId()), String.valueOf(c.getId())));
+					similarity =(EmbeddingsService.getSimilarity(String.valueOf(a.getId()), String.valueOf(a2.getId())));
 				}
-				temp.put(c.getId(), similarity);
+				temp.put(a2.getId(), similarity);
 			}
 			mapContextSimilarity.put(a.getId(), temp);
 		}
@@ -238,8 +158,8 @@ public class HeuristicApproach {
 		if (DEPTH_OF_CAT_TREE==0) {
 			double P_Cr_c=0.0;
 			double P_e_Cr =0.0;
-			if (LOAD_MODEL) {
-				P_e_Cr =LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(articleID), String.valueOf(mainCat.getId()));
+			if (LOAD_2MODEL) {
+				P_e_Cr =LINE_2modelSingleton.getInstance().lineModel_1st.similarity(String.valueOf(articleID), String.valueOf(mainCat.getId()));
 			}
 			else {
 				P_e_Cr =EmbeddingsService.getSimilarity(String.valueOf(articleID), String.valueOf(mainCat.getId()));
@@ -254,10 +174,10 @@ public class HeuristicApproach {
 			for(Category c:childCategories) {
 				double P_Cr_c=0.0;
 				double P_e_Cr =0.0;
-				if (LOAD_MODEL) {
+				if (LOAD_2MODEL) {
 					P_Cr_c =1;
 					//P_Cr_c = LINE_modelSingleton.getInstance().line_Combined.similarity(String.valueOf(mainCat.getId()), String.valueOf(c.getId()));
-					P_e_Cr =LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(articleID), String.valueOf(c.getId()));
+					P_e_Cr =LINE_2modelSingleton.getInstance().lineModel_1st.similarity(String.valueOf(articleID), String.valueOf(c.getId()));
 				}
 				else {
 					//P_Cr_c = EmbeddingsService.getSimilarity(String.valueOf(mainCat.getId()), String.valueOf(c.getId()));
@@ -314,8 +234,8 @@ public class HeuristicApproach {
 		double countNonZero=0;
 		for(Annotation a: contextEntities){
 			double temp=.0;
-			if (LOAD_MODEL) {
-				temp=(LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(mainId), String.valueOf(a.getId())));
+			if (LOAD_2MODEL) {
+				temp=LINE_2modelSingleton.getInstance().lineModel_2nd.similarity(String.valueOf(mainId), String.valueOf(a.getId()));
 			}
 			else {
 				temp =(EmbeddingsService.getSimilarity(String.valueOf(mainId), String.valueOf(a.getId())));
@@ -337,11 +257,11 @@ public class HeuristicApproach {
 			categories.add(mainCategory);
 			Map<Category, Double> map = new HashMap<>();
 			for(Category category:categories){
-				if (LOAD_MODEL) {
-					if (LINE_modelSingleton.getInstance().lineModel.hasWord(String.valueOf(category.getId()))&&LINE_modelSingleton.getInstance().lineModel.hasWord(String.valueOf(annotation.getId()))) {
+				if (LOAD_2MODEL) {
+					if (LINE_2modelSingleton.getInstance().lineModel_1st.hasWord(String.valueOf(category.getId()))&&LINE_2modelSingleton.getInstance().lineModel_1st.hasWord(String.valueOf(annotation.getId()))) {
 						double similarity = 0.0;
 						try {
-							similarity=LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(annotation.getId()), String.valueOf(category.getId()));
+							similarity=LINE_2modelSingleton.getInstance().lineModel_1st.similarity(String.valueOf(annotation.getId()), String.valueOf(category.getId()));
 							map.put(category, similarity);
 						} catch (Exception e) {
 							System.out.println("exception finding the similarity: "+similarity);
@@ -396,11 +316,11 @@ public class HeuristicApproach {
 				Set<Category> categories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setAllCategories);
 				Map<Category, Double> map = new HashMap<>();
 				for(Category category:categories){
-					if (LOAD_MODEL) {
-						if (LINE_modelSingleton.getInstance().lineModel.hasWord(String.valueOf(category.getId()))&&LINE_modelSingleton.getInstance().lineModel.hasWord(String.valueOf(annotation.getId()))) {
+					if (LOAD_2MODEL) {
+						if (LINE_2modelSingleton.getInstance().lineModel_1st.hasWord(String.valueOf(category.getId()))&&LINE_2modelSingleton.getInstance().lineModel_1st.hasWord(String.valueOf(annotation.getId()))) {
 							double similarity = 0.0;
 							try {
-								similarity=LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(annotation.getId()), String.valueOf(category.getId()));
+								similarity=LINE_2modelSingleton.getInstance().lineModel_1st.similarity(String.valueOf(annotation.getId()), String.valueOf(category.getId()));
 								map.put(category, similarity);
 							} catch (Exception e) {
 								System.out.println("exception finding the similarity: "+similarity);
