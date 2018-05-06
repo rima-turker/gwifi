@@ -1,3 +1,4 @@
+/Models/*
 /.gradle/
 /.settings/
 /bin/
@@ -17,3 +18,7 @@
 /ag_news_csv/
 /src/main/environment/*
 /TestDataset/
+/Results/*
+/TestDataset_TFIDF_WEB/*
+/Train_TFIDF_WEBoriginal_Partition/*
+/TrainTFID_AG_fromOriginalDataset/*

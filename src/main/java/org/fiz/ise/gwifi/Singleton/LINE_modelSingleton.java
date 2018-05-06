@@ -20,6 +20,9 @@ public class LINE_modelSingleton {
     		if (LINE_MODEL_NAME.equals(Model_LINE.LINE_COMBINED_Complex)) {
     			ADDRESS_OF_LINE_MODEL = Config.getString("ADDRESS_OF_LINE_COMBINED_Complex","");
 			}
+    		else if (LINE_MODEL_NAME.equals(Model_LINE.LINE_COMBINED_Complex_normalized)) {
+    			ADDRESS_OF_LINE_MODEL = Config.getString("ADDRESS_OF_LINE_COMBINED_Complex_normalized","");
+    		}
     		else if (LINE_MODEL_NAME.equals(Model_LINE.LINE_COMBINED_2nd)) {
     			ADDRESS_OF_LINE_MODEL = Config.getString("ADDRESS_OF_LINE_COMBINED_2nd","");
 			}

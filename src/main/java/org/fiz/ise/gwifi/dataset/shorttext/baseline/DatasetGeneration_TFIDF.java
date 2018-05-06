@@ -48,7 +48,10 @@ public class DatasetGeneration_TFIDF {
 		//generateTestSetTFIDF_AG();
 		//generateTrainSetTFIDF();
 		generateTestSetTFIDF_WEB();
+		//generateTestSetTFIDF_AG();
+	
 	}
+	
 	private static void generateTrainSetTFIDF() {
 		DatasetGeneration_TFIDF test = new DatasetGeneration_TFIDF();
 		Map<Category, Set<Integer>> randomArticles = new HashMap<>(test.generateRandomArticleIDs());
@@ -66,7 +69,8 @@ public class DatasetGeneration_TFIDF {
 	}
 	private static void generateTestSetTFIDF_WEB() {
 		try {
-			List<String> lines = FileUtils.readLines(new File(DATASET_TEST_WEB), "utf-8");
+//			List<String> lines = FileUtils.readLines(new File(DATASET_TEST_WEB), "utf-8");
+			List<String> lines = FileUtils.readLines(new File("/home/rima/playground/GeneralFiles/gwifi/Dataset_ShortTextClassification/data-web-snippets/train.txt"), "utf-8");
 			String[] arrLines = new String[lines.size()];
 			arrLines = lines.toArray(arrLines);
 			for (int i = 0; i < arrLines.length; i++) {
@@ -74,19 +78,21 @@ public class DatasetGeneration_TFIDF {
 				String label = split[split.length-1];
 				String snippet = arrLines[i].substring(0, arrLines[i].length()-(label).length()).trim();
 				String folderName = label;
-				File directory = new File("TestDataset_TFIDF_WEB"+File.separator+folderName);
+//				File directory = new File("TestDataset_TFIDF_WEB"+File.separator+folderName);
+				File directory = new File("TrainDataset_TFIDF_WEB_original"+File.separator+folderName);
 				if (! directory.exists()){
 					directory.mkdir();
 				}
 				FileUtil.writeDataToFile(Arrays.asList(snippet), directory+File.separator+i,false);
 			}
 		} catch (Exception e) {
-			// TODO: handle exception
+			System.out.println(e.getMessage());
 		}
 	}
 	private static void generateTestSetTFIDF_AG() {
 		try {
-			List<String> lines = FileUtils.readLines(new File(DATASET_TEST_AG), "utf-8");
+//			List<String> lines = FileUtils.readLines(new File(DATASET_TEST_AG), "utf-8");
+			List<String> lines = FileUtils.readLines(new File("/home/rima/playground/GeneralFiles/gwifi/Dataset_ShortTextClassification/ag_news_csv/train.csv"), "utf-8");
 			Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG());
 			String[] arrLines = new String[lines.size()];
 			arrLines = lines.toArray(arrLines);
@@ -97,7 +103,8 @@ public class DatasetGeneration_TFIDF {
 				String title = split[1].replace("\"", "");
 				String description = split[2].replace("\"", "");
 				String folderName = mapLabel.get(Integer.parseInt(label)).getTitle();
-				File directory = new File("TestDataset"+File.separator+folderName);
+//				File directory = new File("TestDataset"+File.separator+folderName);
+				File directory = new File("TrainTFID_AG_fromOriginalDataset"+File.separator+folderName);
 				if (! directory.exists()){
 					directory.mkdir();
 				}

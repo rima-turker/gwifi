@@ -47,7 +47,6 @@ public class HeuristicApproach2DifferentEmbeddings {
 	 * 
 	 */
 	public static Category getBestMatchingCategory(String shortText,List<Category> gtList, Map<Category, Set<Category>> map) {
-		//shortText="Google is improving on the discussions its popular Web site hosts, hoping the upgrades will spur more online banter and make its market-leading search engine a richer destination.";
 		mapCategories = new HashMap<>(map);
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
 		HeuristicApproach2DifferentEmbeddings heuristic = new HeuristicApproach2DifferentEmbeddings();
@@ -93,7 +92,7 @@ public class HeuristicApproach2DifferentEmbeddings {
 		}
 		return null;
 	}
-	private static void findCandidates(String shortText) {
+	public static void findCandidates(String shortText) {
 		System.out.println(shortText);
 		Map<String, Page> m = new HashMap<>();
 		for(Topic t: AnnotationSingleton.getInstance().getCandidates(shortText) ) {
@@ -162,7 +161,7 @@ public class HeuristicApproach2DifferentEmbeddings {
 				P_e_Cr =LINE_2modelSingleton.getInstance().lineModel_1st.similarity(String.valueOf(articleID), String.valueOf(mainCat.getId()));
 			}
 			else {
-				P_e_Cr =EmbeddingsService.getSimilarity(String.valueOf(articleID), String.valueOf(mainCat.getId()));
+				//P_e_Cr =EmbeddingsService.getSimilarity(String.valueOf(articleID), String.valueOf(mainCat.getId()));
 			}
 			if (!Double.isNaN(P_e_Cr)) {
 				result+=P_e_Cr;

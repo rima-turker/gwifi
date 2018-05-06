@@ -13,11 +13,17 @@ public class Categories {
 		switch (t) {
 		case AG:  return getCategories_Ag();
 		case WEB_SNIPPETS:  return getCategories_Web();
+		case YAHOO:  return getCategories_Yahoo();
 		case DBLP: return getCategories_DBLP();
 		default: 
 			System.out.println("Invalid Dataset Type");
 			return null;
 		}
+	}
+	private static List<String> getCategories_Yahoo() {
+		final List<String> dummySeeds = Arrays.asList("Society","Culture","Science","Mathematics","Health","Education",
+				"Reference","Computers","Internet","Sports","Trade","Finance","Entertainment","Music","Family","Intimate relationships","Politics","Government");		
+		return Collections.unmodifiableList(dummySeeds);
 	}
 	private static List<String> getCategories_Web() {
 //		final List<String> dummySeeds = Arrays.asList("Business","Computers","Culture","Arts","Entertainment","Education",
@@ -31,6 +37,7 @@ public class Categories {
 	private static List<String> getCategories_Ag() {
 	//	final List<String> dummySeeds = Arrays.asList("World","Sports","Business","Science and technology");
 	//	final List<String> dummySeeds = Arrays.asList("World","Sports","Business","Science","Technology");
+//			final List<String> dummySeeds = Arrays.asList("Sports","Science","Technology","World","Trade");//0.80
 			final List<String> dummySeeds = Arrays.asList("Sports","Science","Technology","World","Trade");
 		//final List<String> dummySeeds = Arrays.asList("Sports","Business","Science","Technology");
 		return Collections.unmodifiableList(dummySeeds);

@@ -29,11 +29,27 @@ public class LabelsOfTheTexts {
 		
 		return mapLabel;
 	}
+	
+	public static Map<Integer, String> getLables_Yahoo()
+	{
+		Map<Integer, String> mapLabel = new HashMap<>();
+		mapLabel.put(1, "Society-Culture");
+		mapLabel.put(2, "Science-Mathematics");
+		mapLabel.put(3,"Health");
+		mapLabel.put(4,"Education-Reference");
+		mapLabel.put(5,"Computers-Internet");
+		mapLabel.put(6,"Sports");
+		mapLabel.put(7,"Business-Finance");
+		mapLabel.put(8,"Entertainment-Music");
+		mapLabel.put(9,"Family-Intimate relationships");
+		mapLabel.put(10,"Politics-Government");
+		return mapLabel;
+	}
 	public static Map<Integer, Category> getLables_DBLP()
 	{
 		Map<Integer, Category> mapLabel = new HashMap<>();
-		mapLabel.put(1, wikipedia.getCategoryByTitle("Databases"));
-		mapLabel.put(2, wikipedia.getCategoryByTitle("Artificial intelligence"));
+		//mapLabel.put(1, wikipedia.getCategoryByTitle);
+		//mapLabel.put(2, wikipedia.getCategoryByTitle("Artificial intelligence"));
 		mapLabel.put(3, wikipedia.getCategoryByTitle("Computer hardware"));
 		mapLabel.put(4, wikipedia.getCategoryByTitle("Systems Network Architecture"));
 		mapLabel.put(5, wikipedia.getCategoryByTitle("Programming languages"));

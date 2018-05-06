@@ -22,8 +22,9 @@ description = """Graph-based Wikifier"""
 
 //mainClassName="org.fiz.ise.gwifi.dataset.shorttext.baseline.DatasetGeneration_TFIDF"
 mainClassName="org.fiz.ise.gwifi.dataset.shorttext.test.TestBasedonDatasets"
+//mainClassName="org.fiz.ise.gwifi.dataset.shorttext.baseline.SampleData"
 //mainClassName="org.fiz.ise.gwifi.util.MergeTwoFiles"
-//mainClassName="org.fiz.ise.gwifi.dataset.train.DatasetGeneration_Joint_EntityEntity"
+//mainClassName="org.fiz.ise.gwifi.dataset.train.NormalizeLINE_Dataset"
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8

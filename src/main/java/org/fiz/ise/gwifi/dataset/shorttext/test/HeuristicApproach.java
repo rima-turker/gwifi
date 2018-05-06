@@ -46,7 +46,6 @@ public class HeuristicApproach {
 	 * 
 	 */
 	public static Category getBestMatchingCategory(String shortText,List<Category> gtList, Map<Category, Set<Category>> map) {
-		//shortText="Google is improving on the discussions its popular Web site hosts, hoping the upgrades will spur more online banter and make its market-leading search engine a richer destination.";
 		mapCategories = new HashMap<>(map);
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
 		HeuristicApproach heuristic = new HeuristicApproach();
@@ -55,8 +54,8 @@ public class HeuristicApproach {
 			Map<Category, Double> mapScore = new HashMap<>(); 
 			mainBuilder.append(shortText+"\n");
 			StringBuilder strBuild = new StringBuilder();
-			for(Category c: gtList)	{
-				strBuild.append(c+" ");
+				for(Category c: gtList)	{
+					strBuild.append(c+" ");
 			}
 			List<Annotation> lstAnnotations = new ArrayList<>();
 			service.annotate(shortText, lstAnnotations);
@@ -94,7 +93,7 @@ public class HeuristicApproach {
 					//					score+=(P_e_c*P_Ce_e);
 					//score+=P_e_c;
 //					if (first) {
-//						//System.out.println(mainCat.getTitle()+" EL score: "+(P_Se_c*P_Ce_e)+ " "+a.getTitle());
+						//System.out.println(mainCat.getTitle()+" EL score: "+(P_Se_c*P_Ce_e)+ " "+a.getTitle());
 //						entry = getMostSimilarCategory(a);
 //						//System.out.println(a.getTitle()+" "+entry.getValue()+" "+entry.getKey().getTitle());
 //						//System.out.println(a.getTitle()+" "+entry.getValue()+" "+entry.getKey().getTitle());
@@ -130,12 +129,9 @@ public class HeuristicApproach {
 			for(Entry<Category, Double> e: sortedMap.entrySet()){			
 				mainBuilder.append(e.getKey()+" "+e.getValue()+"\n");
 			}
-			mainBuilder.append(""+"\n");
-			mainBuilder.append(""+"\n");
 			if (!gtList.contains(firstElement)) {
 				secondLOG.info(mainBuilder.toString());
 			}
-//			System.out.println(mainBuilder.toString());
 			return firstElement;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -161,7 +157,10 @@ public class HeuristicApproach {
 	private double calculateScoreBasedInitialFormula(Annotation a, Category mainCat,Map<Integer, Map<Integer, Double>> contextSimilarity) {
 		double P_e_c=get_P_e_c(a.getId(), mainCat);
 		double P_Se_c=get_P_Se_c(a);
-		double P_Ce_e=get_P_Ce_e_efficient(a.getId(),contextSimilarity);
+		double P_Ce_e=1;
+		if (contextSimilarity.size()>1) {
+			P_Ce_e=get_P_Ce_e_efficient(a.getId(),contextSimilarity);
+		}
 		return (P_e_c*P_Se_c*P_Ce_e);
 	}
 	private  Map<Integer, Double>  calculateCoherency(List<Annotation> lstAnnotations) {
@@ -289,6 +288,7 @@ public class HeuristicApproach {
 	 */
 	private static double get_P_Ce_e_efficient(Integer mainId,Map<Integer, Map<Integer, Double>> mapContextSimilarity){ //Context entities an the entity(already disambiguated) 
 		double result =0.0;
+//		double result =1.0;
 		double countNonZero=0;
 		Map<Integer, Double> temp = new HashMap<>(mapContextSimilarity.get(mainId));
 		for (Entry<Integer, Double> e: temp.entrySet()) {
@@ -296,12 +296,14 @@ public class HeuristicApproach {
 			if (!Double.isNaN(similarity)&&similarity>0.0&&similarity!=1.0) {
 				countNonZero++;
 				result+=similarity;
+//				result*=similarity;
 			}
 		}
 		if (countNonZero==0) {
 			return 0.0;
 		}
 		return result/countNonZero;
+//		return result;
 	}
 
 	/**

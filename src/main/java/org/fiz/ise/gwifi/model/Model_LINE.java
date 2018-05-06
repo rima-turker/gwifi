@@ -10,5 +10,6 @@ public enum Model_LINE {
 	LINE_1st_Complex,
 	LINE_2nd_Complex,
 	LINE_COMBINED_Complex,
+	LINE_COMBINED_Complex_normalized,
 	CONLL;
 }

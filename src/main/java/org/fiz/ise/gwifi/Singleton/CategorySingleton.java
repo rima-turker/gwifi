@@ -47,6 +47,9 @@ public class CategorySingleton {
 		for (String category : categories) {
 			Category cat = wikipedia.getCategoryByTitle(category);
 			mainCats[id] = cat;
+			if (cat==null) {
+				System.out.println(category);
+			}
 			mainCategories.add(cat);
 			setMainCategories.add(cat);
 			setAllCategories.add(cat);

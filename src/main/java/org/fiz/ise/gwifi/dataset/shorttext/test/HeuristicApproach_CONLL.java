@@ -43,14 +43,11 @@ public class HeuristicApproach_CONLL {
 	private static final Logger LOG = Logger.getLogger(HeuristicApproach_CONLL.class);
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 	static final Logger resultLog = Logger.getLogger("reportsLogger");
-	private final double threshold = 0.9;
 	/*
 	 * The main purpose of this class is the calculate the similarity and decide 
 	 * which category a text belongs to based on the probability
-	 * 
 	 */
 	public static Category getBestMatchingCategory(String shortText,List<Category> gtList, Map<Category, Set<Category>> map) {
-		//shortText="Google is improving on the discussions its popular Web site hosts, hoping the upgrades will spur more online banter and make its market-leading search engine a richer destination.";
 		mapCategories = new HashMap<>(map);
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
 		HeuristicApproach_CONLL heuristic = new HeuristicApproach_CONLL();
@@ -64,30 +61,28 @@ public class HeuristicApproach_CONLL {
 			}
 			List<Annotation> lstAnnotations = new ArrayList<>();
 			service.annotate(shortText, lstAnnotations);
-			mainBuilder.append(strBuild.toString()+"\n"+"\n");
-			boolean first =true;
+			mainBuilder.append(strBuild.toString()+"\n");
 			Map<Integer, Map<Integer, Double>> contextSimilarity = new HashMap<>(calculateContextEntitySimilarities(lstAnnotations));
-//			for (Category mainCat : setMainCategories) {
-//				double score = 0.0; 
-//				for(Annotation a:lstAnnotations) {
-//					score+=heuristic.calculateScoreBasedInitialFormula(a, mainCat, contextSimilarity);
-//				}
-//				first=false;
-//				mapScore.put(mainCat, score);
-//			}
-//			mainBuilder.append("\n");
-//			Map<Category, Double>  sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(mapScore));
-//			Category firstElement = MapUtil.getFirst(sortedMap).getKey();
-//
-//			for(Entry<Category, Double> e: sortedMap.entrySet()){			
-//				mainBuilder.append(e.getKey()+" "+e.getValue()+"\n");
-//			}
-//			mainBuilder.append(""+"\n");
-//			mainBuilder.append(""+"\n");
+			for (Category mainCat : setMainCategories) {
+				double score = 0.0; 
+				for(Annotation a:lstAnnotations) {
+					score+=heuristic.calculateScoreBasedInitialFormula(a, mainCat, contextSimilarity);
+				}
+				mapScore.put(mainCat, score);
+			}
+			mainBuilder.append("\n");
+			Map<Category, Double>  sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(mapScore));
+			Category firstElement = MapUtil.getFirst(sortedMap).getKey();
+
+			for(Entry<Category, Double> e: sortedMap.entrySet()){			
+				mainBuilder.append(e.getKey()+" "+e.getValue()+"\n");
+			}
+			mainBuilder.append(""+"\n");
+			mainBuilder.append(""+"\n");
 //			if (!gtList.contains(firstElement)) {
 //				secondLOG.info(mainBuilder.toString());
 //			}
-//			return firstElement;
+			return firstElement;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -103,7 +98,7 @@ public class HeuristicApproach_CONLL {
 		return (P_e_c*P_Se_c);
 	}
 	private double calculateScoreBasedInitialFormula(Annotation a, Category mainCat,Map<Integer, Map<Integer, Double>> contextSimilarity) {
-		double P_e_c=get_P_e_c(convertURIToConllBased(a.getURL(),true),convertURIToConllBased(mainCat.getTitle(),false) );
+		double P_e_c=get_P_e_c(convertURIToConllBased(a.getURL(),true),convertURIToConllBased(mainCat.getTitle(),false),mainCat );
 		double P_Se_c=get_P_Se_c(a);
 		double P_Ce_e=get_P_Ce_e_efficient(a.getId(),contextSimilarity);
 		return (P_e_c*P_Se_c*P_Ce_e);
@@ -113,38 +108,6 @@ public class HeuristicApproach_CONLL {
 			return "e_"+uri.replace("http://en.wikipedia.org/wiki/", "").toLowerCase().replaceAll(" ", "_");
 		}
 		return "c_"+uri.replace(" ", "_").toLowerCase();
-	}
-	private  Map<Integer, Double>  calculateCoherency(List<Annotation> lstAnnotations) {
-		Map<Integer, Double> mapContextSimilarity = new HashMap<>();
-		for(Annotation a: lstAnnotations){
-			//System.out.println("main A: "+a.getTitle()+" "+a.getWeight());
-			List<Annotation> contextAnnotations = lstAnnotations.stream()
-					.filter(p -> p.getId()!=a.getId()).collect(Collectors.toList());
-			List<Annotation> listTemp = new ArrayList<>();
-			for(Annotation c: contextAnnotations){
-				//System.out.println("context A: "+c.getTitle()+" "+c.getWeight());
-				if (c.getWeight()>=threshold) {
-					listTemp.add(c);
-				}
-			}
-			if (listTemp.size()==0) {
-				listTemp=new ArrayList<>(findMaxWeightedAnnotation(contextAnnotations));
-			}
-			//System.out.println("listTemp:  "+listTemp.size());
-			double similarity=.0;
-			for(Annotation aFilteredContext:listTemp) {
-				double simTemp =0.0;
-				if (LOAD_MODEL) {
-					simTemp=(LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(a.getId()), String.valueOf(aFilteredContext.getId())));
-				}
-				else {
-					simTemp =(EmbeddingsService.getSimilarity(String.valueOf(a.getId()), String.valueOf(aFilteredContext.getId())));
-				}
-				similarity+=simTemp;
-			}
-			mapContextSimilarity.put(a.getId(), similarity/listTemp.size());
-		}
-		return mapContextSimilarity;
 	}
 	private List<Annotation> findMaxWeightedAnnotation(List<Annotation> contextAnnotations) {
 		double max = 0.0;
@@ -165,18 +128,25 @@ public class HeuristicApproach_CONLL {
 				double similarity=.0;
 				if (LOAD_MODEL) {
 					similarity=(LINE_modelSingleton.getInstance().lineModel.similarity(convertURIToConllBased(a.getTitle(),true), convertURIToConllBased(c.getTitle(),true)));
-					resultLog.info(convertURIToConllBased(a.getTitle(),true));
-					resultLog.info(convertURIToConllBased(c.getTitle(),true));
+					
+					if (!LINE_modelSingleton.getInstance().lineModel.hasWord(convertURIToConllBased(a.getTitle(),true))) {
+						secondLOG.info(convertURIToConllBased(a.getTitle(),true));
+					}
+					else {
+						resultLog.info(convertURIToConllBased(a.getTitle(),true));
+					}
+					if (!LINE_modelSingleton.getInstance().lineModel.hasWord(convertURIToConllBased(c.getTitle(),true))) {
+						secondLOG.info(convertURIToConllBased(c.getTitle(),true));
+					}
+					else {
+						resultLog.info(convertURIToConllBased(c.getTitle(),true));
+					}
 				}
 				else {
 					similarity =(EmbeddingsService.getSimilarity_CONLL(convertURIToConllBased(a.getTitle(),true), convertURIToConllBased(c.getTitle(),true)));
+					
 				}
-				if (!LINE_modelSingleton.getInstance().lineModel.hasWord(convertURIToConllBased(a.getTitle(),true))) {
-					secondLOG.info(convertURIToConllBased(a.getTitle(),true));
-				}
-				if (!LINE_modelSingleton.getInstance().lineModel.hasWord(convertURIToConllBased(c.getTitle(),true))) {
-					secondLOG.info(convertURIToConllBased(c.getTitle(),true));
-				}
+		
 				temp.put(c.getId(), similarity);
 			}
 			mapContextSimilarity.put(a.getId(), temp);
@@ -189,7 +159,7 @@ public class HeuristicApproach_CONLL {
 	private static int get_P_c_(Category c){
 		return c.getChildArticles().length;
 	}
-	private static double get_P_e_c(String connlURI,String mainCat) {
+	private static double get_P_e_c(String connlURI,String mainCat,Category mCat) {
 		Set<Category> childCategories;
 		double result =0.0;
 		double countNonZero=0.0;
@@ -208,7 +178,8 @@ public class HeuristicApproach_CONLL {
 			}
 		}
 		else {
-			childCategories = new HashSet<>(mapCategories.get(mainCat));
+			
+			childCategories = new HashSet<>(mapCategories.get(mCat));
 			for(Category c:childCategories) {
 				double P_Cr_c=0.0;
 				double P_e_Cr =0.0;
