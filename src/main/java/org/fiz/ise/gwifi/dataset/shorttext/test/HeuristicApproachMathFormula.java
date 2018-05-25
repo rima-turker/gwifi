@@ -29,14 +29,14 @@ import edu.kit.aifb.gwifi.model.Category;
 import edu.kit.aifb.gwifi.model.Page;
 import edu.kit.aifb.gwifi.service.NLPAnnotationService;
 
-public class HeuristicApproach {
+public class HeuristicApproachMathFormula {
 
 	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
 	private static Set<Category> setMainCategories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories);
 	private static boolean LOAD_MODEL = Config.getBoolean("LOAD_MODEL", false);
 	private final static Integer DEPTH_OF_CAT_TREE = Config.getInt("DEPTH_OF_CAT_TREE", 0);
 	private static Map<Category, Set<Category>> mapCategories;
-	private static final Logger LOG = Logger.getLogger(HeuristicApproach.class);
+	private static final Logger LOG = Logger.getLogger(HeuristicApproachMathFormula.class);
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 	private final double threshold = 0.9;
 
@@ -48,7 +48,7 @@ public class HeuristicApproach {
 	public static Category getBestMatchingCategory(String shortText,List<Category> gtList, Map<Category, Set<Category>> map) {
 		mapCategories = new HashMap<>(map);
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-		HeuristicApproach heuristic = new HeuristicApproach();
+		HeuristicApproachMathFormula heuristic = new HeuristicApproachMathFormula();
 		StringBuilder mainBuilder = new StringBuilder();
 		try {
 			Map<Category, Double> mapScore = new HashMap<>(); 
@@ -60,69 +60,15 @@ public class HeuristicApproach {
 			List<Annotation> lstAnnotations = new ArrayList<>();
 			service.annotate(shortText, lstAnnotations);
 			mainBuilder.append(strBuild.toString()+"\n"+"\n");
-			boolean first =true;
-			//Map<Integer, Double>  coherency = new HashMap<>(heuristic.calculateCoherency(lstAnnotations));
 			Map<Integer, Map<Integer, Double>> contextSimilarity = new HashMap<>(calculateContextEntitySimilarities(lstAnnotations));
 			for (Category mainCat : setMainCategories) {
 				double score = 0.0; 
 				for(Annotation a:lstAnnotations) {
 					score+=heuristic.calculateScoreBasedInitialFormula(a, mainCat, contextSimilarity);
-					//score+=heuristic.calculateScoreBasedWeightMaxCatSimilarity(a, mainCat);
-					//Entry<Category, Double> entry = getMostSimilarCategory(a,mainCat);
-//					double P_Ce_e=1;
-//					double P_e_c = 0.0;
-//					if (entry!=null) {
-//						P_e_c= entry.getValue();
-					
-		//				System.out.println(a.getTitle()+": weight: "+P_Se_c+" cCat "+entry.getKey().getTitle()+", similarity "+entry.getValue()+" "+mainCat.getTitle()+" Singlescore: "+(P_e_c*P_Se_c*P_Ce_e));
-//					}
-					//double P_e_c=1;
-					//					System.out.println(mainCat.getTitle()+", "+a.getTitle()+" P_e_c: "+P_e_c);
-					//	double P_Se_c=1;
-					//					System.out.println(mainCat.getTitle()+", "+a.getTitle()+" P_Se_c: "+P_Se_c);
-					//	double P_Ce_e=get_P_Ce_e(a.getId(),contextAnnotation);
-					
-					//					
-					//double P_Ce_e=coherency.get(a.getId());
-					//					System.out.println(mainCat.getTitle()+" "+a.getTitle()+" P_Ce_e: "+P_Ce_e);
-					//	System.out.println("result of multiplication: "+(P_e_c*P_Se_c*P_Ce_e));
-					//	System.out.println(mainCat+" sim score: "+P_e_c+ " "+a.getTitle());
-					
-
-					//					System.out.println(a.getTitle()+": weight: "+P_Se_c+" cCat "+entry.getKey().getTitle()+", similarity "+entry.getValue()+" "+mainCat.getTitle()+" coherency: "+P_Ce_e+" Singlescore: "+(P_e_c*P_Se_c*P_Ce_e));
-					//					score+=(P_e_c*P_Ce_e);
-					//score+=P_e_c;
-//					if (first) {
-						//System.out.println(mainCat.getTitle()+" EL score: "+(P_Se_c*P_Ce_e)+ " "+a.getTitle());
-//						entry = getMostSimilarCategory(a);
-//						//System.out.println(a.getTitle()+" "+entry.getValue()+" "+entry.getKey().getTitle());
-//						//System.out.println(a.getTitle()+" "+entry.getValue()+" "+entry.getKey().getTitle());
-//						//						if (mapMostSimilar.containsKey(entry.getKey())) {
-//						//							mapMostSimilar.put(entry.getKey(), mapMostSimilar.get(entry.getKey())+entry.getValue());
-//						//						}
-//						//						else{
-//						//							mapMostSimilar.put(entry.getKey(), entry.getValue());
-//						//						}
-//						//						mainBuilder.append(a.getMention()+", "+a.getTitle()+", "+a.getId()+", weight: "+a.getWeight()+", :"+entry.getKey().getTitle()+", "+entry.getValue()+"\n");
-//						try {
-//							if (entry!=null) {
-//								mainBuilder.append(a.getMention()+", "+a.getTitle()+", EL score: "+(P_Se_c*P_Ce_e)+", :"+entry.getKey().getTitle()+",similarity "+entry.getValue()+"\n");
-//							}
-//						} catch (Exception e) {
-//							System.out.println(e.getMessage()+" "+a.getId()+" "+(P_Se_c*P_Ce_e)+" "+entry);
-//						}
-//					}
 				}
-				first=false;
-//				System.out.println(mainCat.getTitle()+" ---------score: "+score+" -----------------");
-//				System.out.println();
 				mapScore.put(mainCat, score);
 			}
 			mainBuilder.append("\n");
-			//Map<Category, Double> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(mapScore));
-			//			for(Entry<Category, Double> e: sortedMap.entrySet()){			
-			//				mainBuilder.append(e.getKey()+" "+e.getValue()+"\n");
-			//			}
 			Map<Category, Double>  sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(mapScore));
 			Category firstElement = MapUtil.getFirst(sortedMap).getKey();
 
@@ -211,24 +157,20 @@ public class HeuristicApproach {
 		for(Annotation a: annotations){
 			Map<Integer, Double> temp = new HashMap<>();
 			for(Annotation c: annotations){
-				double similarity=.0;
-				if (LOAD_MODEL) {
-					similarity=(LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(a.getId()), String.valueOf(c.getId())));
+				if (!a.equals(c)) {
+					double similarity=.0;
+					if (LOAD_MODEL) {
+						similarity=(LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(a.getId()), String.valueOf(c.getId())));
+					}
+					else {
+						similarity =(EmbeddingsService.getSimilarity(String.valueOf(a.getId()), String.valueOf(c.getId())));
+					}
+					temp.put(c.getId(), similarity*c.getWeight());
 				}
-				else {
-					similarity =(EmbeddingsService.getSimilarity(String.valueOf(a.getId()), String.valueOf(c.getId())));
-				}
-				temp.put(c.getId(), similarity);
 			}
 			mapContextSimilarity.put(a.getId(), temp);
 		}
 		return mapContextSimilarity;
-	}
-	/*
-	 * Popularity of the category
-	 */
-	private static int get_P_c_(Category c){
-		return c.getChildArticles().length;
 	}
 	private static double get_P_e_c(int articleID,Category mainCat) {
 		Set<Category> childCategories;
@@ -281,30 +223,26 @@ public class HeuristicApproach {
 	private static double get_P_Se_c(Annotation a) {//comes from EL system weight value because we calculate the confidence based on the prior prob
 		return a.getWeight();
 	}
-	
 	/**
 	 * This method takes the all the context entities and tries to calculate the probabilities of the given an 
 	 * entitiy and all the other context entities and sums them up and takes the avarage
 	 * @return the avarage result
 	 */
 	private static double get_P_Ce_e_efficient(Integer mainId,Map<Integer, Map<Integer, Double>> mapContextSimilarity){ //Context entities an the entity(already disambiguated) 
-		double result =0.0;
-//		double result =1.0;
+		double result =1.0;
 		double countNonZero=0;
 		Map<Integer, Double> temp = new HashMap<>(mapContextSimilarity.get(mainId));
 		for (Entry<Integer, Double> e: temp.entrySet()) {
 			double similarity = e.getValue();
-			if (!Double.isNaN(similarity)&&similarity>0.0&&similarity!=1.0) {
+			if (!Double.isNaN(similarity)&&similarity>0.0&&e.getKey()!=mainId) {
 				countNonZero++;
-				result+=similarity;
-//				result*=similarity;
+				result*=similarity;
 			}
 		}
 		if (countNonZero==0) {
 			return 0.0;
 		}
-		return result/countNonZero;
-//		return result;
+		return result;
 	}
 
 	/**

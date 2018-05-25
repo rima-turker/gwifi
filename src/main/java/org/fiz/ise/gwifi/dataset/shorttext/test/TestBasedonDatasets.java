@@ -255,9 +255,9 @@ public class TestBasedonDatasets {
 			System.out.println("Number of true positive: "+counterTruePositive.value()+" number of processed: "+counterProcessed.value());
 			Double d = (counterTruePositive.value()*0.1)/(counterProcessed.value()*0.1);
 			System.out.println("Accuracy: "+d);
-			Print.printMap(truePositive);
-			Print.printMap(mapMissClassified);
-			Print.printMap(falsePositive);
+//			Print.printMap(truePositive);
+//			Print.printMap(mapMissClassified);
+//			Print.printMap(falsePositive);
 			System.out.println("Calculating F measures");
 			CalculateClassificationMetrics calculate = new CalculateClassificationMetrics();
 			calculate.evaluateResults(truePositive, falsePositive, numberOfSamplesPerCategory);
@@ -278,6 +278,7 @@ public class TestBasedonDatasets {
 //			}
 //			else {
 				bestMatchingCategory = HeuristicApproach.getBestMatchingCategory(description,gtList,mapCategories);
+//				bestMatchingCategory = HeuristicApproachMathFormula.getBestMatchingCategory(description,gtList,mapCategories);
 //			}
 		//	bestMatchingCategory = HeuristicApproach_CONLL.getBestMatchingCategory(description,gtList,mapCategories);
 			counterProcessed.increment();
