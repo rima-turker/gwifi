@@ -18,7 +18,24 @@ import edu.kit.aifb.gwifi.service.NLPAnnotationService;
 public class TEST {
 
 	public static void main(String[] args) throws Exception {
-		Wikipedia wikipedia = WikipediaSingleton.getInstance().wikipedia;
+		
+//		List<Integer> lst = new ArrayList<>();
+//		lst.add(1);
+//		lst.add(2);
+//		lst.add(3);
+//		lst.add(4);
+//		double result =1.0;
+//		for(int i:lst) {
+//		result*=i;
+//		System.out.println(result);
+//			
+//		}
+		
+		String s ="Albert Einstein was born in Germany";
+		//AnnotationSingleton.getInstance().getCandidates(s);
+		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
+		System.out.println(service.annotate(s,null));
+//		Wikipedia wikipedia = WikipediaSingleton.getInstance().wikipedia;
 //		Map <Category, Integer> truePositive = new HashMap<>();
 //		Map <Category, Integer> falsePositive = new HashMap<>();
 //		Map <Category, Integer> numberOfElements = new HashMap<>();
@@ -31,14 +48,14 @@ public class TEST {
 //		CalculateClassificationMetrics metrics = new CalculateClassificationMetrics();
 //		metrics.evaluateResults( truePositive,falsePositive,numberOfElements);
 		
-		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-		List<Annotation> lstAnnotations = new ArrayList<>();
-		String shortText ="Albert Einstein was born in Germany";
-		service.annotate(shortText, lstAnnotations);
-		
-		for(Annotation a:lstAnnotations) {
-			System.out.println("e_"+a.getURL().replace("http://en.wikipedia.org/wiki/", "").toLowerCase());
-		}
+//		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
+//		List<Annotation> lstAnnotations = new ArrayList<>();
+//		String shortText ="Albert Einstein was born in Germany";
+//		service.annotate(shortText, lstAnnotations);
+//		
+//		for(Annotation a:lstAnnotations) {
+//			System.out.println("e_"+a.getURL().replace("http://en.wikipedia.org/wiki/", "").toLowerCase());
+//		}
 		//System.out.println((LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(a.getId()), String.valueOf(aFilteredContext.getId())));
 		
 				
