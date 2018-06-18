@@ -31,7 +31,7 @@ import org.fiz.ise.gwifi.util.SynchronizedCounter;
 import edu.kit.aifb.gwifi.model.Category;
 import edu.kit.aifb.gwifi.model.Wikipedia;
 
-public class TestBasedonDatasets {
+public class TestBasedonSortTextDatasets {
 
 	private final String DATASET_TEST_AG = Config.getString("DATASET_TEST_AG","");
 	private final String DATASET_TEST_WEB = Config.getString("DATASET_TEST_WEB","");
@@ -41,7 +41,6 @@ public class TestBasedonDatasets {
 	private static boolean LOAD_MODEL = Config.getBoolean("LOAD_MODEL", false);
 	private static boolean LOAD_2MODEL = Config.getBoolean("LOAD_2MODEL", false);
 	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE"); 
-
 	private static Wikipedia wikipedia = WikipediaSingleton.getInstance().wikipedia;
 	private static CategorySingleton singCategory;
 	private static SynchronizedCounter counterTruePositive;
@@ -58,7 +57,7 @@ public class TestBasedonDatasets {
 	long now = System.currentTimeMillis();
 
 	public static void main(String[] args) {
-		TestBasedonDatasets test = new TestBasedonDatasets();
+		TestBasedonSortTextDatasets test = new TestBasedonSortTextDatasets();
 		test.initializeVariables();
 	}
 	private void initializeVariables() {
@@ -67,7 +66,7 @@ public class TestBasedonDatasets {
 		counterProcessed= new SynchronizedCounter();
 		counterFalsePositive= new SynchronizedCounter();
 		counterTruePositive= new SynchronizedCounter();
-		TestBasedonDatasets test = new TestBasedonDatasets();
+		TestBasedonSortTextDatasets test = new TestBasedonSortTextDatasets();
 		Map<Category, Set<Category>> mapTemp = new HashMap<>(singCategory.map);
 		for(Entry<Category, Set<Category>> e: mapTemp.entrySet())
 		{

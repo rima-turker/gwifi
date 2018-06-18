@@ -44,10 +44,14 @@ public class AnnotationSingleton {
 	    {
 	    	try {
 	    		
+//	    		service = new NLPAnnotationService("configs/hub-template.xml",
+//	    				"configs/wikipedia-template-en.xml", "configs/NLPConfig.properties", Language.EN, Language.EN,
+//	    				KB.WIKIPEDIA, NLPModel.NGRAM, DisambiguationModel.PRIOR, MentionMode.NON_OVERLAPPED, ResponseMode.BEST,
+//	    				RepeatMode.FIRST);
 	    		service = new NLPAnnotationService("configs/hub-template.xml",
 	    				"configs/wikipedia-template-en.xml", "configs/NLPConfig.properties", Language.EN, Language.EN,
 	    				KB.WIKIPEDIA, NLPModel.NGRAM, DisambiguationModel.PRIOR, MentionMode.NON_OVERLAPPED, ResponseMode.BEST,
-	    				RepeatMode.FIRST);
+	    				RepeatMode.ALL);
 	    		
 	    		DisambiguationUtil disambiguationUtil = new DisambiguationUtil(WikipediaSingleton.getInstance().wikipedia);
 	    		topicDetector = new NLPTopicDetector(WikipediaSingleton.getInstance().wikipedia, disambiguationUtil, null, "configs/NLPConfig.properties", false, false);

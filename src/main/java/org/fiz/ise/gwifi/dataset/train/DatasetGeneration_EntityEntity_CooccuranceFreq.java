@@ -42,10 +42,8 @@ import edu.kit.aifb.gwifi.util.PageIterator;
 import edu.stanford.nlp.time.JollyDayHolidays.MyXMLManager;
 
 public class DatasetGeneration_EntityEntity_CooccuranceFreq {
-	private static final Logger LOG = Logger.getLogger(DatasetGeneration_EntityEntity_CooccuranceFreq.class);
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 	static final Logger thirdLOG = Logger.getLogger("reportsLogger");
-
 	static final long now = System.currentTimeMillis();
 	private ExecutorService executor;
 	private static SynchronizedCounter countArticle;
@@ -56,7 +54,12 @@ public class DatasetGeneration_EntityEntity_CooccuranceFreq {
 	private static List<String> globalList;
 	private static Set<String> globalSet;
 	private static Wikipedia wikipedia;
-
+/*
+ * This class is responsible for generating a entity-entity cooccurance dataset for LINE,
+ * iterates over Wikipedia articles 
+ * For each article collects the context entities
+ * writes them into a log file without any processing (such as "e1 e2") 
+ */
 	public static void main(String[] args) {
 		DatasetGeneration_EntityEntity_CooccuranceFreq data = new DatasetGeneration_EntityEntity_CooccuranceFreq();
 		data.initializeVariables();
@@ -65,9 +68,7 @@ public class DatasetGeneration_EntityEntity_CooccuranceFreq {
 			@Override
 			public void run() {
 				while(true) {
-					//					System.out.println("number of article processed "+ countArticle.value()+" minutes "+ TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis() - now)+ " globalSetSize "+globalSet.size()+" globalList "+globalList.size());
 					System.out.println("number of lines "+ countLine.value()+" minutes "+ TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis() - now));
-					//System.out.println("number of article processed "+ countArticle.value()+" minutes "+ TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis() - now));
 					try {
 						Thread.sleep(10000);
 					} catch (InterruptedException e) {
@@ -80,10 +81,16 @@ public class DatasetGeneration_EntityEntity_CooccuranceFreq {
 		t.start();
 		//data.generateDatasetEntityEntiy();
 
-		String file = "/home/rima/playground/JavaProjectsRun/gwifi/bin/log_entityCategory/secondLog_onlySort";
-		readHugeFile(file);
+//		String file = "/home/rima/playground/JavaProjectsRun/gwifi/bin/log_entityCategory/secondLog_onlySort";
+//		countSortedCooccuranceFile(file);
 	}
-	public static void readHugeFile(String file) {
+	/*
+	 * After generating the dataset for cooccurance file
+	 * First the file partitined to 5 and each file sorted seperately
+	 * sorted files are merged into one file (it was something like sort -m xa* > merge/allMerged) 
+	 * then the countSortedCooccuranceFile function called with the sortedMerged file
+	 */
+	public static void countSortedCooccuranceFile(String file) {
 		try {
 			int thereshold=1;
 			BufferedReader bf = new BufferedReader(new FileReader(file));

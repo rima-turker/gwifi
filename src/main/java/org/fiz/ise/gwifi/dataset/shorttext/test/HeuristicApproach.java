@@ -67,62 +67,11 @@ public class HeuristicApproach {
 				double score = 0.0; 
 				for(Annotation a:lstAnnotations) {
 					score+=heuristic.calculateScoreBasedInitialFormula(a, mainCat, contextSimilarity);
-					//score+=heuristic.calculateScoreBasedWeightMaxCatSimilarity(a, mainCat);
-					//Entry<Category, Double> entry = getMostSimilarCategory(a,mainCat);
-//					double P_Ce_e=1;
-//					double P_e_c = 0.0;
-//					if (entry!=null) {
-//						P_e_c= entry.getValue();
-					
-		//				System.out.println(a.getTitle()+": weight: "+P_Se_c+" cCat "+entry.getKey().getTitle()+", similarity "+entry.getValue()+" "+mainCat.getTitle()+" Singlescore: "+(P_e_c*P_Se_c*P_Ce_e));
-//					}
-					//double P_e_c=1;
-					//					System.out.println(mainCat.getTitle()+", "+a.getTitle()+" P_e_c: "+P_e_c);
-					//	double P_Se_c=1;
-					//					System.out.println(mainCat.getTitle()+", "+a.getTitle()+" P_Se_c: "+P_Se_c);
-					//	double P_Ce_e=get_P_Ce_e(a.getId(),contextAnnotation);
-					
-					//					
-					//double P_Ce_e=coherency.get(a.getId());
-					//					System.out.println(mainCat.getTitle()+" "+a.getTitle()+" P_Ce_e: "+P_Ce_e);
-					//	System.out.println("result of multiplication: "+(P_e_c*P_Se_c*P_Ce_e));
-					//	System.out.println(mainCat+" sim score: "+P_e_c+ " "+a.getTitle());
-					
-
-					//					System.out.println(a.getTitle()+": weight: "+P_Se_c+" cCat "+entry.getKey().getTitle()+", similarity "+entry.getValue()+" "+mainCat.getTitle()+" coherency: "+P_Ce_e+" Singlescore: "+(P_e_c*P_Se_c*P_Ce_e));
-					//					score+=(P_e_c*P_Ce_e);
-					//score+=P_e_c;
-//					if (first) {
-						//System.out.println(mainCat.getTitle()+" EL score: "+(P_Se_c*P_Ce_e)+ " "+a.getTitle());
-//						entry = getMostSimilarCategory(a);
-//						//System.out.println(a.getTitle()+" "+entry.getValue()+" "+entry.getKey().getTitle());
-//						//System.out.println(a.getTitle()+" "+entry.getValue()+" "+entry.getKey().getTitle());
-//						//						if (mapMostSimilar.containsKey(entry.getKey())) {
-//						//							mapMostSimilar.put(entry.getKey(), mapMostSimilar.get(entry.getKey())+entry.getValue());
-//						//						}
-//						//						else{
-//						//							mapMostSimilar.put(entry.getKey(), entry.getValue());
-//						//						}
-//						//						mainBuilder.append(a.getMention()+", "+a.getTitle()+", "+a.getId()+", weight: "+a.getWeight()+", :"+entry.getKey().getTitle()+", "+entry.getValue()+"\n");
-//						try {
-//							if (entry!=null) {
-//								mainBuilder.append(a.getMention()+", "+a.getTitle()+", EL score: "+(P_Se_c*P_Ce_e)+", :"+entry.getKey().getTitle()+",similarity "+entry.getValue()+"\n");
-//							}
-//						} catch (Exception e) {
-//							System.out.println(e.getMessage()+" "+a.getId()+" "+(P_Se_c*P_Ce_e)+" "+entry);
-//						}
-//					}
 				}
 				first=false;
-//				System.out.println(mainCat.getTitle()+" ---------score: "+score+" -----------------");
-//				System.out.println();
 				mapScore.put(mainCat, score);
 			}
 			mainBuilder.append("\n");
-			//Map<Category, Double> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(mapScore));
-			//			for(Entry<Category, Double> e: sortedMap.entrySet()){			
-			//				mainBuilder.append(e.getKey()+" "+e.getValue()+"\n");
-			//			}
 			Map<Category, Double>  sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(mapScore));
 			Category firstElement = MapUtil.getFirst(sortedMap).getKey();
 

@@ -4,5 +4,8 @@ public enum TestDatasetType_Enum {
 	AG,
 	WEB_SNIPPETS,
 	DBLP,
-	YAHOO;
+	YAHOO,
+	TWENTYNEWS,
+	YOVISTO_SENTENCEBYSENTENCE,
+	YOVISTO;
 }

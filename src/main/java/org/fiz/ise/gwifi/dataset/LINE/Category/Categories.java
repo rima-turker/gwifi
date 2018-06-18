@@ -1,10 +1,18 @@
 package org.fiz.ise.gwifi.dataset.LINE.Category;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.fiz.ise.gwifi.dataset.shorttext.test.LabelsOfTheTexts;
+import org.fiz.ise.gwifi.dataset.shorttext.test.TestBasedOnAnnotatedDocument;
+import org.fiz.ise.gwifi.dataset.shorttext.test.TestBasedonLongTextDatasets;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+
+import edu.kit.aifb.gwifi.model.Category;
 
 public class Categories {
 
@@ -15,11 +23,39 @@ public class Categories {
 		case WEB_SNIPPETS:  return getCategories_Web();
 		case YAHOO:  return getCategories_Yahoo();
 		case DBLP: return getCategories_DBLP();
+		case TWENTYNEWS: return getCategories_20News();
+		case YOVISTO: return getCategories_YOVISTO();
+		case YOVISTO_SENTENCEBYSENTENCE: return getCategories_YOVISTOSENTENCES();
 		default: 
 			System.out.println("Invalid Dataset Type");
 			return null;
 		}
 	}
+	private static List<String> getCategories_YOVISTO() {
+		List<String> categoryList = new ArrayList<>(TestBasedonLongTextDatasets.getLstCategory());
+		return Collections.unmodifiableList(categoryList);
+	}
+	private static List<String> getCategories_YOVISTOSENTENCES() {
+		List<String> categoryList = new ArrayList<>(TestBasedOnAnnotatedDocument.getLstCategory());
+		return Collections.unmodifiableList(categoryList);
+	}
+	private static List<String> getCategories_20News() {
+		Map<String, List<Category>> categories = new HashMap<>(LabelsOfTheTexts.getLables_20News());
+		List<String> dummySeeds = new ArrayList<>();
+		categories.forEach((key, articles) -> {
+          articles.forEach(a -> {
+        	  dummySeeds.add(a.getTitle());
+          
+          });
+		});
+//		final List<String> dummySeeds = Arrays.asList("Weapons","Middle East","Politics",
+//	"Atheism",		"Christianity",	"Christians",	"Religion",	"IBM",	"Computer hardware",	
+//	"Macintosh computers",	"Apple Inc.",	"Apple Inc. hardware",	"Computer graphics",
+//	"Windows software",	"X Window System",	"Operating systems",	"Cars",	"Motorcycles",	"Baseball",	
+//	"Hockey",	"Electronics",	"Cryptography",	"Medicine",	"Space","Discounts and allowances","Sales");
+	return dummySeeds;
+	}
+	
 	private static List<String> getCategories_Yahoo() {
 		final List<String> dummySeeds = Arrays.asList("Society","Culture","Science","Mathematics","Health","Education",
 				"Reference","Computers","Internet","Sports","Trade","Finance","Entertainment","Music","Family","Intimate relationships","Politics","Government");		

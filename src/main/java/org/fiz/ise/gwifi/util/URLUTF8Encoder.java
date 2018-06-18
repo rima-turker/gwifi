@@ -114,7 +114,7 @@ public class URLUTF8Encoder {
 	
 	public static String decodeJavaNative(String url) {
 		try {
-			return java.net.URLDecoder.decode(url, "UTF-8").replace(" ", "_");
+			return java.net.URLDecoder.decode(url, "UTF-8").replace("_", " ");
 		}catch(Exception e) {
 			e.printStackTrace();
 		}
