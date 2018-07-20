@@ -22,6 +22,7 @@ description = """Graph-based Wikifier"""
 
 //mainClassName="org.fiz.ise.gwifi.dataset.shorttext.baseline.DatasetGeneration_TFIDF"
 mainClassName="org.fiz.ise.gwifi.dataset.shorttext.test.TestBasedonLongTextDatasets"
+//mainClassName="org.fiz.ise.gwifi.test.longDocument.YovistoParser"
 //mainClassName="org.fiz.ise.gwifi.dataset.shorttext.baseline.SampleData"
 //mainClassName="org.fiz.ise.gwifi.util.MergeTwoFiles"
 //mainClassName="org.fiz.ise.gwifi.dataset.train.NormalizeLINE_Dataset"

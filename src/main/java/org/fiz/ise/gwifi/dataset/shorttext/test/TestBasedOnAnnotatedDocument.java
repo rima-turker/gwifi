@@ -19,6 +19,9 @@ import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
+import org.fiz.ise.gwifi.dataset.shorttext.test.CalculateClassificationMetrics;
+import org.fiz.ise.gwifi.dataset.shorttext.test.EmbeddingsService;
+import org.fiz.ise.gwifi.dataset.shorttext.test.HeuristicApproach;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.FileUtil;
@@ -54,7 +57,7 @@ public class TestBasedOnAnnotatedDocument {
 	
 	private static Set<Category> setMainCategories ;
 	
-	private void initializeCategoryMap(Map<List<String>, List<Category>> dataset)
+	public void initializeCategoryMap(Map<List<String>, List<Category>> dataset)
 	{	
 		counterProcessed= new SynchronizedCounter();
 		counterFalsePositive= new SynchronizedCounter();
@@ -84,6 +87,7 @@ public class TestBasedOnAnnotatedDocument {
 			mapTemp.put(main, temp);
 		}
 		mapCategories= new HashMap<>(mapTemp);
+		System.out.println("category map initialized "+mapCategories.size());
 		if (LOAD_MODEL) {
 			LINE_modelSingleton.getInstance();
 		}
@@ -91,7 +95,9 @@ public class TestBasedOnAnnotatedDocument {
 	public void startProcessingData(Map<List<String>, List<Category>> dataset) {
 		int count=0;
 		try {
+			System.out.println("inside start processing " +dataset.size());
 			initializeCategoryMap(dataset);
+			System.out.println("initialized mapCategories "+mapCategories.size() );
 			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
 			for(Entry<List<String>, List<Category>> e : dataset.entrySet()) {
 				executor.execute(handle(e.getKey(),e.getValue(),++count));
@@ -114,8 +120,7 @@ public class TestBasedOnAnnotatedDocument {
 	}
 	private Runnable handle(List<String> description, List<Category> gtList,int i) {
 		return () -> {
-			Category bestMatchingCategory=null;
-			bestMatchingCategory = getBestMatchingCategory(description,gtList);
+			Category bestMatchingCategory= getBestMatchingCategory(description,gtList);
 			counterProcessed.increment();
 			if (gtList.contains(bestMatchingCategory)) {
 				counterTruePositive.increment();

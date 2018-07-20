@@ -17,11 +17,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
 import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_2modelSingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
+import org.fiz.ise.gwifi.dataset.shorttext.test.HeuristicApproach;
+import org.fiz.ise.gwifi.dataset.shorttext.test.LabelsOfTheTexts;
+import org.fiz.ise.gwifi.dataset.shorttext.test.SentenceSegmentator;
 import org.fiz.ise.gwifi.model.NewsgroupsArticle;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
 import org.fiz.ise.gwifi.test.longDocument.NewsgroupParser;
@@ -31,8 +35,10 @@ import org.fiz.ise.gwifi.util.FileUtil;
 import org.fiz.ise.gwifi.util.Print;
 import org.fiz.ise.gwifi.util.SynchronizedCounter;
 
+import edu.kit.aifb.gwifi.annotation.Annotation;
 import edu.kit.aifb.gwifi.model.Category;
 import edu.kit.aifb.gwifi.model.Wikipedia;
+import edu.kit.aifb.gwifi.service.NLPAnnotationService;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.process.CoreLabelTokenFactory;
 import edu.stanford.nlp.process.LexedTokenFactory;
@@ -51,65 +57,94 @@ public class TestBasedonLongTextDatasets {
 	private static SynchronizedCounter counterTruePositive;
 	private static SynchronizedCounter counterFalsePositive;
 	private static SynchronizedCounter counterProcessed;
-	private static Map<Category, Integer> numberOfSamplesPerCategory = new ConcurrentHashMap<>();
 	private static Map<Category, Integer> truePositive = new ConcurrentHashMap<>();
 	private static Map<Category, Integer> falsePositive = new ConcurrentHashMap<>();
 	private static Map<String, Category> falsePositiveResult = new ConcurrentHashMap<>();
 	private static Map<String, Integer> mapMissClassified = new ConcurrentHashMap<>();
 	private ExecutorService executor;
 	private static List<String> lstCategory;
-
+	private static int NUMBER_OF_SENTENCES_YOVISTO = Config.getInt("NUMBER_OF_SENTENCES_YOVISTO",-1);
 	private static Map<Category, Set<Category>> mapCategories;
-	//static final Logger resultLog = Logger.getLogger("reportsLogger");
 	long now = System.currentTimeMillis();
 
 	public static void main(String[] args) {
-		TestBasedonLongTextDatasets test = new TestBasedonLongTextDatasets();
-		test.initializeVariables();
-
-	}
-	private void initializeVariables() {
-		lstCategory= new ArrayList<>();
-		TestBasedonLongTextDatasets test = new TestBasedonLongTextDatasets();
-		Map<String,List<Category>> map=null;
 		if (LOAD_MODEL) {
 			LINE_modelSingleton.getInstance();
 		}
+		List<Integer> lst = new ArrayList<>();
+		//lst.add(2);
+//		lst.add(3);
+//		lst.add(5);
+//		lst.add(10);
+		lst.add(100000);
+		
+		for(int i : lst) {
+			NUMBER_OF_SENTENCES_YOVISTO=i;
+			TestBasedonLongTextDatasets test = new TestBasedonLongTextDatasets();
+			Map<String,List<Category>> dataset = new HashMap<>(test.initializeDataset());
+			//test.findAvgEntities(dataset);
+			test.setCategoryList(dataset);
+			test.startProcessingData(dataset);
+			
+		}
+		
+	}
+	private void findAvgEntities(Map<String,List<Category>> dataset) {
+		double numberOfEntities=0;
+		double numberOfDocs=dataset.size();
+		try {
+			NLPAnnotationService service = AnnotationSingleton.getInstance().service;
+			for(Entry<String,List<Category>> e : dataset.entrySet()) {
+				List<Annotation> lstAnnotations = new ArrayList<>();
+				service.annotate(e.getKey(), lstAnnotations);
+				numberOfEntities+=lstAnnotations.size();
+			}
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		System.out.println("Avg Entities "+numberOfEntities/numberOfDocs);
+		
+	}
+	
+
+	private Map<String,List<Category>> initializeDataset() {
+		TestBasedonLongTextDatasets test = new TestBasedonLongTextDatasets();
+		Map<String,List<Category>> map=null;
+		counterProcessed= new SynchronizedCounter();
+		counterFalsePositive= new SynchronizedCounter();
+		counterTruePositive= new SynchronizedCounter();
+
 		if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.YOVISTO)) {
 			System.out.println("The dataset type is YOVISTO");
-			map = new HashMap<>(test.dataset_YOVISTO());
+			System.out.println("Numvber of Sentences to be considered "+NUMBER_OF_SENTENCES_YOVISTO);
+			map = new HashMap<>(test.dataset_YOVISTO(NUMBER_OF_SENTENCES_YOVISTO));
 			System.out.println("map size "+map.size());
 		}
 		else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.TWENTYNEWS)) {
 			test.dataset_20News();
 		}
-		else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.YOVISTO_SENTENCEBYSENTENCE)) {
-			System.out.println("YOVISTO_SENTENCEBYSENTENCE");
-			List<Integer> lstNumberOfSentences = new ArrayList<>();
-			lstNumberOfSentences.add(1);
-			lstNumberOfSentences.add(2);
-			lstNumberOfSentences.add(3);
-			lstNumberOfSentences.add(5);
-			lstNumberOfSentences.add(100000);
-			//for(int i : lstNumberOfSentences) {
-			//	map = new HashMap<>(YovistoParser.generateDataset(1));
-				System.out.println("map size "+map.size());
-				for(Entry<String, List<Category>> e: map.entrySet()) {
-					List<Category> temp = new ArrayList<>(e.getValue());
-					for(Category c:temp) {
-						if (!lstCategory.contains(c)) {
-							lstCategory.add(c.getTitle());
-						}
-					}
-				}
-				System.out.println("Size of Category list "+lstCategory.size());
-			//}
+		else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.YOVISTO_SENTENCEBYSENTENCE_sentence)) {
+			YovistoParser parser = new YovistoParser();
+			parser.initializeVariables();
+			System.out.println("Data Type: YOVISTO_SENTENCEBYSENTENCE_sentence number of Sentences "+ NUMBER_OF_SENTENCES_YOVISTO);
+			map = new HashMap<>(parser.generateDataset_gwifi(NUMBER_OF_SENTENCES_YOVISTO));
+			System.out.println("map size "+map.size());
 		}
+		return map;
+	}
+	public void setCategoryList(Map<String,List<Category>> map) {
+		lstCategory= new ArrayList<>();
+		for(Entry<String, List<Category>> e: map.entrySet()) {
+			List<Category> temp = new ArrayList<>(e.getValue());
+			for(Category c:temp) {
+				if (!lstCategory.contains(c.getTitle())) {
+					lstCategory.add(c.getTitle());
+				}
+			}
+		}
+		System.out.println("Size of Category list "+lstCategory.size());
 		singCategory= CategorySingleton.getInstance(lstCategory);
-		counterProcessed= new SynchronizedCounter();
-		counterFalsePositive= new SynchronizedCounter();
-		counterTruePositive= new SynchronizedCounter();
-
 		Map<Category, Set<Category>> mapTemp = new HashMap<>(singCategory.map);
 		for(Entry<Category, Set<Category>> e: mapTemp.entrySet())
 		{
@@ -123,14 +158,9 @@ public class TestBasedonLongTextDatasets {
 			mapTemp.put(main, temp);
 		}
 		mapCategories= new HashMap<>(mapTemp);
-		if (map!=null) {
-			startProcessingData(map);
-		}
-		else {
-			System.out.println("Could not load the dataset");
-		}
 	}
-	public  Map<String,List<Category>> dataset_YOVISTO() {
+	
+	public  Map<String,List<Category>> dataset_YOVISTO(int numberOfSentences) {
 		Map<String,List<Category>> dataset=null;
 		Map<Category, Integer> mapCount = new HashMap<>();
 		int numberOfSentencesTotal=0;
@@ -142,16 +172,15 @@ public class TestBasedonLongTextDatasets {
 				String title = split[0];
 				String[] categories = split[1].split(",");
 				String content = split[2];
-				String sentence=segment2Sentence(content,6);
+				String sentence=segment2Sentence(content,numberOfSentences);
 				if (categories.length==1) {
 					Category c = wikipedia.getCategoryByTitle(StringUtils.capitalize(categories[0]));
 					if (c!=null) {
-						if (!lstCategory.contains(c)) {
-							lstCategory.add(c.getTitle());
-						}
-						mapCount.put(c, mapCount.containsKey(c) ? mapCount.get(c) + 1 : 1);
 						numberOfSentencesTotal+=SentenceSegmentator.findNumberOfSentences(content);
 						dataset.put(title+" "+sentence, Arrays.asList(c));
+					}
+					else {
+						System.out.println(categories[0]);
 					}
 				}
 			}
@@ -167,11 +196,53 @@ public class TestBasedonLongTextDatasets {
 			count+=entry.getValue();
 		}
 		System.out.println("total Number Of Sentence : "+numberOfSentencesTotal);
-		System.out.println("Average number of Sentences : "+numberOfSentencesTotal/count);
+		System.out.println("Average number of Sentences : "+numberOfSentencesTotal/dataset.size());
 		System.out.println(count);
 		System.out.println("returned dataset size" + dataset.size());
 		return dataset;
 	}
+//	public  Map<String,List<Category>> dataset_YOVISTO(int numberOfSentences) {
+//		Map<String,List<Category>> dataset=null;
+//		Map<Category, Integer> mapCount = new HashMap<>();
+//		int numberOfSentencesTotal=0;
+//		try {
+//			dataset = new HashMap<>();
+//			List<String> lines = FileUtils.readLines(new File(DATASET_TEST_YOVISTO), "utf-8");
+//			for(String line : lines) {
+//				String[] split = line.split("\t");
+//				String title = split[0];
+//				String[] categories = split[1].split(",");
+//				String content = split[2];
+//				String sentence=segment2Sentence(content,numberOfSentences);
+//				if (categories.length==1) {
+//					Category c = wikipedia.getCategoryByTitle(StringUtils.capitalize(categories[0]));
+//					if (c!=null) {
+//						if (!lstCategory.contains(c)) {
+//							lstCategory.add(c.getTitle());
+//						}
+//						mapCount.put(c, mapCount.containsKey(c) ? mapCount.get(c) + 1 : 1);
+//						numberOfSentencesTotal+=SentenceSegmentator.findNumberOfSentences(content);
+//						dataset.put(title+" "+sentence, Arrays.asList(c));
+//					}
+//				}
+//			}
+//			System.out.println("Number of articles: "+dataset.size());
+//			System.out.println("Start processing");
+//
+//		} catch (Exception e) {
+//			System.out.println(e.getMessage());
+//		}
+//		int count =0;
+//		for (Map.Entry<Category, Integer> entry : mapCount.entrySet()) {
+//			System.out.println(entry.getKey().getTitle()+"\t"+entry.getValue());
+//			count+=entry.getValue();
+//		}
+//		System.out.println("total Number Of Sentence : "+numberOfSentencesTotal);
+//		System.out.println("Average number of Sentences : "+numberOfSentencesTotal/count);
+//		System.out.println(count);
+//		System.out.println("returned dataset size" + dataset.size());
+//		return dataset;
+//	}
 	public  void dataset_20News() {
 		Map<String,List<Category>> dataset = new HashMap<>();
 		Map<String, List<Category>> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_20News());
@@ -206,25 +277,17 @@ public class TestBasedonLongTextDatasets {
 			System.out.println("Number of true positive: "+counterTruePositive.value()+" number of processed: "+counterProcessed.value());
 			Double d = (counterTruePositive.value()*0.1)/(counterProcessed.value()*0.1);
 			System.out.println("Accuracy: "+d);
-			//				Print.printMap(truePositive);
-			//				Print.printMap(mapMissClassified);
-			//				Print.printMap(falsePositive);
 			System.out.println("Calculating F measures");
-			CalculateClassificationMetrics calculate = new CalculateClassificationMetrics();
-			calculate.evaluateResults(truePositive, falsePositive, numberOfSamplesPerCategory);
 			FileUtil.writeDataToFile(truePositive,"TRUE_POSITIVE_RESULTS");
 			FileUtil.writeDataToFile(falsePositiveResult,"FALSE_POSITIVE_RESULTS");
 			FileUtil.writeDataToFile(mapMissClassified,"MISS_CLASSIFIED_RESULTS");
-			//			resultLog.info("Total number processed "+ count+", true positive "+counterTruePositive.value());
-			//			resultLog.info("Total number processed "+ counterProcessed.value()+", false positive "+counterFalsePositive.value());
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 		}
 	}
 	private Runnable handle(String description, List<Category> gtList,int i) {
 		return () -> {
-			Category bestMatchingCategory=null;
-			bestMatchingCategory = HeuristicApproach.getBestMatchingCategory(description,gtList,mapCategories);
+			Category bestMatchingCategory= HeuristicApproach.getBestMatchingCategory(description,gtList,mapCategories);
 			counterProcessed.increment();
 			if (gtList.contains(bestMatchingCategory)) {
 				counterTruePositive.increment();

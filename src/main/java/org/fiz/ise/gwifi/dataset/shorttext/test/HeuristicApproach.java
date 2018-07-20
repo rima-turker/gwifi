@@ -60,15 +60,12 @@ public class HeuristicApproach {
 			List<Annotation> lstAnnotations = new ArrayList<>();
 			service.annotate(shortText, lstAnnotations);
 			mainBuilder.append(strBuild.toString()+"\n"+"\n");
-			boolean first =true;
-			//Map<Integer, Double>  coherency = new HashMap<>(heuristic.calculateCoherency(lstAnnotations));
 			Map<Integer, Map<Integer, Double>> contextSimilarity = new HashMap<>(calculateContextEntitySimilarities(lstAnnotations));
 			for (Category mainCat : setMainCategories) {
 				double score = 0.0; 
 				for(Annotation a:lstAnnotations) {
 					score+=heuristic.calculateScoreBasedInitialFormula(a, mainCat, contextSimilarity);
 				}
-				first=false;
 				mapScore.put(mainCat, score);
 			}
 			mainBuilder.append("\n");

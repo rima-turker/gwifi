@@ -25,7 +25,8 @@ public class Categories {
 		case DBLP: return getCategories_DBLP();
 		case TWENTYNEWS: return getCategories_20News();
 		case YOVISTO: return getCategories_YOVISTO();
-		case YOVISTO_SENTENCEBYSENTENCE: return getCategories_YOVISTOSENTENCES();
+		case YOVISTO_SENTENCEBYSENTENCE_sentence: return getCategories_YOVISTOSENTENCES_sentence();
+		case YOVISTO_SENTENCEBYSENTENCE_entities: return getCategories_YOVISTOSENTENCES_entities();
 		default: 
 			System.out.println("Invalid Dataset Type");
 			return null;
@@ -35,7 +36,11 @@ public class Categories {
 		List<String> categoryList = new ArrayList<>(TestBasedonLongTextDatasets.getLstCategory());
 		return Collections.unmodifiableList(categoryList);
 	}
-	private static List<String> getCategories_YOVISTOSENTENCES() {
+	private static List<String> getCategories_YOVISTOSENTENCES_sentence() {
+		List<String> categoryList = new ArrayList<>(TestBasedonLongTextDatasets.getLstCategory());
+		return Collections.unmodifiableList(categoryList);
+	}
+	private static List<String> getCategories_YOVISTOSENTENCES_entities() {
 		List<String> categoryList = new ArrayList<>(TestBasedOnAnnotatedDocument.getLstCategory());
 		return Collections.unmodifiableList(categoryList);
 	}

@@ -34,11 +34,11 @@ public class TEST_Meeting {
 	private static WikipediaSingleton singleton = WikipediaSingleton.getInstance();
 	private static Wikipedia wikipedia = singleton.wikipedia;
 	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
-	private static CategorySingleton singCategory = CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE));
+	//private static CategorySingleton singCategory = CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE));
 	static NLPAnnotationService service = AnnotationSingleton.getInstance().service;
 
 	public static void main(String[] args) throws Exception {
-		dataset_WEB();
+//		dataset_WEB();
 //		String DATASET_TEST_WEB ="/home/rtue/eclipse-workspace/Dataset_ShortTextClassification/ag_news_csv/test.csv";
 //		List<String> lines = FileUtils.readLines(new File(DATASET_TEST_WEB), "utf-8");
 //		System.out.println("number of the lines "+lines.size()+" dataset: "+DATASET_TEST_WEB);
@@ -73,7 +73,15 @@ public class TEST_Meeting {
 
 		//		
 		//		List<String> lines = new ArrayList<>(TestBasedonDatasets.generateRandomDataset_AG());
-		//		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
+				NLPAnnotationService service = AnnotationSingleton.getInstance().service;
+				String str = "Mussorgsky was an innovator of Russian music in the romantic period";
+				List<Annotation> lstAnnotations = new ArrayList<>();
+				service.annotate(str, lstAnnotations);
+				
+				for(Annotation a : lstAnnotations) {
+					System.out.println(a);
+				}
+				
 		//		String[] arrLines = new String[lines.size()];
 		//		arrLines = lines.toArray(arrLines);
 		//		int count=0;
