@@ -74,7 +74,7 @@ public class TEST_Meeting {
 		//		
 		//		List<String> lines = new ArrayList<>(TestBasedonDatasets.generateRandomDataset_AG());
 				NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-				String str = "Mussorgsky was an innovator of Russian music in the romantic period";
+				String str = "Mozart was a prolific and influential composer.";
 				List<Annotation> lstAnnotations = new ArrayList<>();
 				service.annotate(str, lstAnnotations);
 				

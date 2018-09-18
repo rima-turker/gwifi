@@ -108,7 +108,7 @@ public class TestBasedonLongTextDatasets {
 	}
 	
 
-	private Map<String,List<Category>> initializeDataset() {
+	public Map<String,List<Category>> initializeDataset() {
 		TestBasedonLongTextDatasets test = new TestBasedonLongTextDatasets();
 		Map<String,List<Category>> map=null;
 		counterProcessed= new SynchronizedCounter();

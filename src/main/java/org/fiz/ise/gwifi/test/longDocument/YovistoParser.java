@@ -451,7 +451,7 @@ public class YovistoParser {
 		}
 		return datasetSentences;
 	}
-	private static List<String> generateSentences(String content) {
+	public static List<String> generateSentences(String content) {
 		final List<String> sentenceList = new LinkedList<String>();
 		final LexedTokenFactory<CoreLabel> tokenFactory = new CoreLabelTokenFactory();
 		final List<CoreLabel> tokens = new ArrayList<CoreLabel>();

@@ -8,5 +8,6 @@ public enum TestDatasetType_Enum {
 	TWENTYNEWS,
 	YOVISTO_SENTENCEBYSENTENCE_sentence,
 	YOVISTO_SENTENCEBYSENTENCE_entities,
-	YOVISTO;
+	YOVISTO;//I do not remember why removed this, I just want to consider the dataset
+	//Semantics Paper
 }

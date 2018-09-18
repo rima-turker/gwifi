@@ -35,6 +35,10 @@ public class LINE_modelSingleton {
     		else if (LINE_MODEL_NAME.equals(Model_LINE.CONLL)) {
     			ADDRESS_OF_LINE_MODEL = Config.getString("ADDRESS_OF_CONLL","");
 			}
+    		else if (LINE_MODEL_NAME.equals(Model_LINE.GOOGLE)) {
+    			ADDRESS_OF_LINE_MODEL = Config.getString("ADDRESS_OF_GOOGLE","");
+			}
+    		
 			System.out.println("ADDRESS_OF_LINE_MODEL "+ADDRESS_OF_LINE_MODEL);
     		lineModel=WordVectorSerializer.readWord2VecModel(ADDRESS_OF_LINE_MODEL);
     		System.out.println("Time took to load model minutes :"+ TimeUnit.SECONDS.toMinutes(TimeUtil.getEnd(TimeUnit.SECONDS, now)));
