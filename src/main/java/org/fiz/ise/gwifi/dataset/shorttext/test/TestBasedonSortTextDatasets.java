@@ -3,6 +3,7 @@ package org.fiz.ise.gwifi.dataset.shorttext.test;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -39,7 +40,6 @@ public class TestBasedonSortTextDatasets {
 	private final String DATASET_TEST_YAHOO = Config.getString("DATASET_TEST_YAHOO","");
 	private final static Integer NUMBER_OF_THREADS=  Config.getInt("NUMBER_OF_THREADS",-1);
 	private static boolean LOAD_MODEL = Config.getBoolean("LOAD_MODEL", false);
-	private static boolean LOAD_2MODEL = Config.getBoolean("LOAD_2MODEL", false);
 	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE"); 
 	private static Wikipedia wikipedia = WikipediaSingleton.getInstance().wikipedia;
 	private static CategorySingleton singCategory;
@@ -67,36 +67,38 @@ public class TestBasedonSortTextDatasets {
 		counterFalsePositive= new SynchronizedCounter();
 		counterTruePositive= new SynchronizedCounter();
 		TestBasedonSortTextDatasets test = new TestBasedonSortTextDatasets();
-		Map<Category, Set<Category>> mapTemp = new HashMap<>(singCategory.map);
-		for(Entry<Category, Set<Category>> e: mapTemp.entrySet())
-		{
-			Category main = e.getKey();
-			Set<Category> temp = new HashSet<>();
-			for(Category c: e.getValue() ) {
-				if (c.getChildArticles().length>0) {
-					temp.add(c);
-				}
-			}
-			mapTemp.put(main, temp);
-		}
-		mapCategories= new HashMap<>(mapTemp);
-		Set<Category> setMainCategories= new HashSet<>(singCategory.setMainCategories);
-		//		for (Category c: setMainCategories) {
-		//			System.out.println(c.getTitle()+" "+mapTemp.get(c));
-		//			for (Category c2: setMainCategories) {
-		//				System.out.println(c+" "+c2+" "+LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(c.getId()), String.valueOf(c2.getId())));
-		//			}
-		//			
-		//		}
-
 		if (LOAD_MODEL) {
 			LINE_modelSingleton.getInstance();
 		}
-		else if (LOAD_2MODEL) {
-			LINE_2modelSingleton.getInstance();
-		}
+
+		//		Map<Category, Set<Category>> mapCategories=new HashMap<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).map);
+		//		for(Entry<Category, Set<Category>> e : mapCategories.entrySet()) {
+		//			
+		//			System.out.println(e.getKey().getTitle()+"\n");
+		//			List<String> result = new ArrayList<>(LINE_modelSingleton.getInstance().lineModel.wordsNearest(String.valueOf(e.getKey().getId()), 10));
+		//			
+		//			for(String s : result) {
+		//				System.out.println(wikipedia.getPageById(Integer.parseInt(s)).getTitle());
+		//			}
+		//			for(Entry<Category, Set<Category>> e2 : mapCategories.entrySet()) {
+		//				//				similarity.put(e.getKey()+"-"+e2.getKey(),LINE_modelSingleton.getInstance().lineModel. );
+		//				System.out.println((e.getKey()+"-"+e2.getKey())+": "+LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(e.getKey().getId()),String.valueOf(e2.getKey().getId())));
+		//
+		//			}
+		//		}
+
+
+
+		//		for(String entity : entityList) {
+		//			System.out.println(entity+"  "+wikipedia.getCategoryByTitle(entity)+ " "+String.valueOf(wikipedia.getCategoryByTitle(entity).getId()));
+		//			List<String> result = new ArrayList<>(LINE_modelSingleton.getInstance().lineModel.wordsNearest(String.valueOf(wikipedia.getCategoryByTitle(entity).getId()), 10));
+		//			for(String str: result) {
+		//				System.out.println(wikipedia.getPageById(Integer.parseInt(str)).getTitle());
+		//			}
+		//			System.out.println();
+		//		}
 		if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
-			test.dataset_AG();
+			startProcessingData(test.read_dataset_AG());
 		}
 		else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.WEB_SNIPPETS)) {
 			test.dataset_WEB();
@@ -107,8 +109,119 @@ public class TestBasedonSortTextDatasets {
 		else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.YAHOO)) {
 			test.dataset_Yahoo();
 		}
+
 	}
-	//"9","What makes friendship click?","How does the spark keep going?","good communication is what does it.  Can you move beyond small talk and say what's really on your mind.  If you start doing this, my expereince is that potentially good friends will respond or shun you.  Then you know who the really good friends are."
+	public Map<String,List<Category>> read_dataset_AG() {
+		Map<String,List<Category>> dataset = new HashMap<>();
+		Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG());
+//		List<String> lines = new ArrayList<>(generateRandomDataset_AG());
+		List<String> lines;
+		try {
+			lines = FileUtils.readLines(new File(DATASET_TEST_AG), "utf-8");
+			String[] arrLines = new String[lines.size()];
+			arrLines = lines.toArray(arrLines);
+			int i=0;
+			for (i = 0; i < arrLines.length; i++) {
+				List<Category> gtList = new ArrayList<>(); 
+				String[] split = arrLines[i].split("\",\"");
+				String label = split[0].replace("\"", "");
+				numberOfSamplesPerCategory.put(mapLabel.get(Integer.valueOf(label)), numberOfSamplesPerCategory.getOrDefault(mapLabel.get(Integer.valueOf(label)), 0) + 1);
+				gtList.add(mapLabel.get(Integer.valueOf(label)));
+				
+//				if (label.equals("4")) {
+//					numberOfSamplesPerCategory.put(mapLabel.get(4), numberOfSamplesPerCategory.getOrDefault(mapLabel.get(4), 0) + 1);
+//					numberOfSamplesPerCategory.put(mapLabel.get(5), numberOfSamplesPerCategory.getOrDefault(mapLabel.get(5), 0) + 1);
+//					gtList.add(mapLabel.get(4));
+//					gtList.add(mapLabel.get(5));
+//				}
+//				else {
+//					numberOfSamplesPerCategory.put(mapLabel.get(Integer.valueOf(label)), numberOfSamplesPerCategory.getOrDefault(mapLabel.get(Integer.valueOf(label)), 0) + 1);
+//					gtList.add(mapLabel.get(Integer.valueOf(label)));
+//				}
+				String title = split[1].replace("\"", "");
+				String description = split[2].replace("\"", "");
+				dataset.put(title+" "+description, gtList);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return dataset;
+	}
+	private void startProcessingData(Map<String,List<Category>> dataset) {
+		int count=0;
+		try {
+			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
+			for(Entry<String, List<Category>> e : dataset.entrySet()) {
+				executor.execute(handle(e.getKey(),e.getValue(),++count));
+			}
+			executor.shutdown();
+			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+			System.out.println("Total time minutes " + TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis() - now));
+			System.out.println("Number of true positive: "+counterTruePositive.value()+" number of processed: "+counterProcessed.value());
+			Double d = (counterTruePositive.value()*0.1)/(counterProcessed.value()*0.1);
+			System.out.println("Accuracy: "+d);
+			System.out.println("True Positive");
+			Print.printMap(truePositive);
+			System.out.println("\nmiss Clasified Positive");
+			Print.printMap(mapMissClassified);
+			System.out.println("\nFalse Positive");
+			Print.printMap(falsePositive);
+			System.out.println("Calculating F measures");
+			CalculateClassificationMetrics calculate = new CalculateClassificationMetrics();
+			calculate.evaluateResults(truePositive, falsePositive, numberOfSamplesPerCategory);
+			FileUtil.writeDataToFile(truePositive,"TRUE_POSITIVE_RESULTS");
+			FileUtil.writeDataToFile(falsePositiveResult,"FALSE_POSITIVE_RESULTS");
+			FileUtil.writeDataToFile(mapMissClassified,"MISS_CLASSIFIED_RESULTS");
+			//			resultLog.info("Total number processed "+ count+", true positive "+counterTruePositive.value());
+			//			resultLog.info("Total number processed "+ counterProcessed.value()+", false positive "+counterFalsePositive.value());
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+	}
+	private Runnable handle(String description, List<Category> gtList,int i) {
+		return () -> {
+			Category bestMatchingCategory=null;
+			bestMatchingCategory = HeuristicApproachConsideringCategorySemantics.getBestMatchingCategory(description,gtList);
+			counterProcessed.increment();
+			if (gtList.contains(bestMatchingCategory)) {
+				counterTruePositive.increment();
+				truePositive.put(gtList.get(0), truePositive.getOrDefault(gtList.get(0), 0) + 1);
+				System.out.println(" total processed: "+i+" True positive "+counterTruePositive.value());
+			}
+			else{
+				try {
+					falsePositiveResult.put(description+"\n gt:"+gtList.get(0).getTitle(), bestMatchingCategory);
+					falsePositive.put(gtList.get(0), falsePositive.getOrDefault(gtList.get(0), 0) + 1);
+					//falseNegative = totalNumberOfSamples_B -(predicted_B(true or false does not matter)) 
+				} catch (Exception e) {
+					System.out.println("Exception msg "+e.getMessage());
+					System.out.println("description "+description+" "+gtList+" "+bestMatchingCategory );
+					System.exit(1);
+				}
+				counterFalsePositive.increment();
+				String key=gtList.get(0)+"\t"+"predicted: "+bestMatchingCategory;
+				mapMissClassified.put(key, mapMissClassified.getOrDefault(key, 0) + 1);
+				System.out.println(" total processed: "+i+" True positive "+counterTruePositive.value());
+			}
+		};
+	}
+	public List<String> generateRandomDataset_AG(){
+		List<String> result = new ArrayList<>();
+		try {
+			//	Map<String, Integer> map = new HashMap<>();
+			List<String> lines = FileUtils.readLines(new File(DATASET_TEST_AG), "utf-8");
+			for(String l : lines) {
+				String[] split = l.split("\",\"");
+				String label = split[0].replace("\"", "");
+				result.add(l);
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println("Number of lines "+result.size());
+		return result;
+	}
 	public void dataset_Yahoo() {
 		Map<String,List<Category>> dataset = new HashMap<>();
 		Map<Integer, String> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_Yahoo());
@@ -201,7 +314,7 @@ public class TestBasedonSortTextDatasets {
 						numberOfSamplesPerCategory.put(wikipedia.getCategoryByTitle(("Computer hardware")), numberOfSamplesPerCategory.getOrDefault(wikipedia.getCategoryByTitle(("Computer hardware")), 0) + 1);
 						//gtList.add(wikipedia.getCategoryByTitle(("Computer networking")));
 					}
-
+					
 					else {gtList.add(wikipedia.getCategoryByTitle(StringUtils.capitalize(label)));
 					numberOfSamplesPerCategory.put(wikipedia.getCategoryByTitle(StringUtils.capitalize(label)), numberOfSamplesPerCategory.getOrDefault(wikipedia.getCategoryByTitle(StringUtils.capitalize(label)), 0) + 1);
 					}
@@ -213,111 +326,5 @@ public class TestBasedonSortTextDatasets {
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
-	}
-	public void dataset_AG() {
-		Map<String,List<Category>> dataset = new HashMap<>();
-		Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG());
-		List<String> lines = new ArrayList<>(generateRandomDataset_AG());
-		String[] arrLines = new String[lines.size()];
-		arrLines = lines.toArray(arrLines);
-		int i=0;
-		for (i = 0; i < arrLines.length; i++) {
-			List<Category> gtList = new ArrayList<>(); 
-			String[] split = arrLines[i].split("\",\"");
-			String label = split[0].replace("\"", "");
-			if (label.equals("4")||label.equals("5")) {
-				numberOfSamplesPerCategory.put(mapLabel.get(4), numberOfSamplesPerCategory.getOrDefault(mapLabel.get(4), 0) + 1);
-				numberOfSamplesPerCategory.put(mapLabel.get(5), numberOfSamplesPerCategory.getOrDefault(mapLabel.get(5), 0) + 1);
-				gtList.add(mapLabel.get(4));
-				gtList.add(mapLabel.get(5));
-			}
-			else {
-				numberOfSamplesPerCategory.put(mapLabel.get(Integer.valueOf(label)), numberOfSamplesPerCategory.getOrDefault(mapLabel.get(Integer.valueOf(label)), 0) + 1);
-				gtList.add(mapLabel.get(Integer.valueOf(label)));
-			}
-			String title = split[1].replace("\"", "");
-			String description = split[2].replace("\"", "");
-			dataset.put(title+" "+description, gtList);
-		}
-		startProcessingData(dataset);
-	}
-	private void startProcessingData(Map<String,List<Category>> dataset) {
-		int count=0;
-		try {
-			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
-			for(Entry<String, List<Category>> e : dataset.entrySet()) {
-				executor.execute(handle(e.getKey(),e.getValue(),++count));
-			}
-			executor.shutdown();
-			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-			System.out.println("Total time minutes " + TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis() - now));
-			System.out.println("Number of true positive: "+counterTruePositive.value()+" number of processed: "+counterProcessed.value());
-			Double d = (counterTruePositive.value()*0.1)/(counterProcessed.value()*0.1);
-			System.out.println("Accuracy: "+d);
-//			Print.printMap(truePositive);
-//			Print.printMap(mapMissClassified);
-//			Print.printMap(falsePositive);
-			System.out.println("Calculating F measures");
-			CalculateClassificationMetrics calculate = new CalculateClassificationMetrics();
-			calculate.evaluateResults(truePositive, falsePositive, numberOfSamplesPerCategory);
-			FileUtil.writeDataToFile(truePositive,"TRUE_POSITIVE_RESULTS");
-			FileUtil.writeDataToFile(falsePositiveResult,"FALSE_POSITIVE_RESULTS");
-			FileUtil.writeDataToFile(mapMissClassified,"MISS_CLASSIFIED_RESULTS");
-			//			resultLog.info("Total number processed "+ count+", true positive "+counterTruePositive.value());
-			//			resultLog.info("Total number processed "+ counterProcessed.value()+", false positive "+counterFalsePositive.value());
-		} catch (Exception e) {
-			System.out.println(e.getMessage());
-		}
-	}
-	private Runnable handle(String description, List<Category> gtList,int i) {
-		return () -> {
-			Category bestMatchingCategory=null;
-//			if (LOAD_2MODEL) {
-				//bestMatchingCategory = HeuristicApproach2DifferentEmbeddings.getBestMatchingCategory(description,gtList,mapCategories);
-//			}
-//			else {
-				bestMatchingCategory = HeuristicApproach.getBestMatchingCategory(description,gtList,mapCategories);
-//				bestMatchingCategory = HeuristicApproachMathFormula.getBestMatchingCategory(description,gtList,mapCategories);
-//			}
-		//	bestMatchingCategory = HeuristicApproach_CONLL.getBestMatchingCategory(description,gtList,mapCategories);
-			counterProcessed.increment();
-			if (gtList.contains(bestMatchingCategory)) {
-				counterTruePositive.increment();
-				truePositive.put(gtList.get(0), truePositive.getOrDefault(gtList.get(0), 0) + 1);
-				System.out.println(" total processed: "+i+" True positive "+counterTruePositive.value());
-			}
-			else{
-				try {
-					falsePositiveResult.put(description+"\n gt:"+gtList.get(0).getTitle(), bestMatchingCategory);
-					falsePositive.put(gtList.get(0), falsePositive.getOrDefault(gtList.get(0), 0) + 1);
-					//falseNegative = totalNumberOfSamples_B -(predicted_B(true or false does not matter)) 
-				} catch (Exception e) {
-					System.out.println("Exception msg "+e.getMessage());
-					System.out.println("description "+description+" "+gtList+" "+bestMatchingCategory );
-					System.exit(1);
-				}
-				counterFalsePositive.increment();
-				String key=gtList.get(0)+"\t"+"predicted: "+bestMatchingCategory;
-				mapMissClassified.put(key, mapMissClassified.getOrDefault(key, 0) + 1);
-				System.out.println(" total processed: "+i+" True positive "+counterTruePositive.value());
-			}
-		};
-	}
-	public List<String> generateRandomDataset_AG(){
-		List<String> result = new ArrayList<>();
-		try {
-			//	Map<String, Integer> map = new HashMap<>();
-			List<String> lines = FileUtils.readLines(new File(DATASET_TEST_AG), "utf-8");
-			for(String l : lines) {
-				String[] split = l.split("\",\"");
-				String label = split[0].replace("\"", "");
-				result.add(l);
-			}
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		System.out.println("Number of lines "+result.size());
-		return result;
 	}
 }

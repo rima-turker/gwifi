@@ -76,11 +76,12 @@ public class Categories {
 		return Collections.unmodifiableList(dummySeeds);
 	}
 	private static List<String> getCategories_Ag() {
-	//	final List<String> dummySeeds = Arrays.asList("World","Sports","Business","Science and technology");
+		final List<String> dummySeeds = Arrays.asList("World","Sports","Business","Science and technology");
 	//	final List<String> dummySeeds = Arrays.asList("World","Sports","Business","Science","Technology");
 //			final List<String> dummySeeds = Arrays.asList("Sports","Science","Technology","World","Trade");//0.80
-			final List<String> dummySeeds = Arrays.asList("Sports","Science","Technology","World","Trade");
-		//final List<String> dummySeeds = Arrays.asList("Sports","Business","Science","Technology");
+	//		final List<String> dummySeeds = Arrays.asList("Sports","Science","Technology","World","Business");
+		//	final List<String> dummySeeds = Arrays.asList("World","Business");
+	//	final List<String> dummySeeds = Arrays.asList("Business","World");
 		return Collections.unmodifiableList(dummySeeds);
 	}
 	private static List<String> getCategories_DBLP() {

@@ -20,9 +20,19 @@ public class LabelsOfTheTexts {
 		Map<Integer, Category> mapLabel = new HashMap<>();
 		mapLabel.put(1, wikipedia.getCategoryByTitle("World"));
 		mapLabel.put(2, wikipedia.getCategoryByTitle("Sports"));
-		mapLabel.put(3, wikipedia.getCategoryByTitle("Trade"));
-		mapLabel.put(4, wikipedia.getCategoryByTitle("Science"));
-		mapLabel.put(5, wikipedia.getCategoryByTitle("Technology"));
+		mapLabel.put(3, wikipedia.getCategoryByTitle("Business"));
+		mapLabel.put(4, wikipedia.getCategoryByTitle("Science and technology"));
+//		mapLabel.put(4, wikipedia.getCategoryByTitle("Science"));
+//		mapLabel.put(5, wikipedia.getCategoryByTitle("Technology"));
+		return mapLabel;
+	}
+	public static Map<Category,Integer> getCatValue_AG()
+	{
+		Map<Category,Integer> mapLabel = new HashMap<>();
+		mapLabel.put(wikipedia.getCategoryByTitle("World"),1);
+		mapLabel.put(wikipedia.getCategoryByTitle("Sports"),2);
+		mapLabel.put(wikipedia.getCategoryByTitle("Business"),3);
+		mapLabel.put(wikipedia.getCategoryByTitle("Science and technology"),4);
 		return mapLabel;
 	}
 	

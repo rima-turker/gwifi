@@ -25,20 +25,20 @@ import edu.kit.aifb.gwifi.model.Wikipedia;
  */
 public class CategorySingleton {
 	private static CategorySingleton single_instance = null;
-	
+
 	private final Integer DEPTH_OF_CAT_TREE = Config.getInt("DEPTH_OF_CAT_TREE", 0);
 	// variable of type String
 	public Map<String, Set<Category>> mapCategoryDept;
 	public Map<Category, Set<Category>> map;
 	public Set<Category> setAllCategories;
 	public Set<Category> setMainCategories;
-	
+
 	private CategorySingleton(List<String> categories) {
 		map = new HashMap<>();
 		mapCategoryDept = new HashMap<>();
 		setAllCategories = new HashSet<>();
 		setMainCategories = new HashSet<>();
-		
+
 		Wikipedia wikipedia = WikipediaSingleton.getInstance().wikipedia;
 		System.out.println("Depth of the category Tree is "+DEPTH_OF_CAT_TREE );
 		Category[] mainCats = new Category[categories.size()];
@@ -71,37 +71,30 @@ public class CategorySingleton {
 			} else {
 				for (Entry<Category, Set<Category>> entry : latest.entrySet()) {
 					Set<Category> parent = new HashSet<>(entry.getValue());
-					// System.out.println("parent "+entry.getKey()+" "+parent.size());
 					Set<Category> child = new HashSet<>(getChildCategoriesSet(parent));
-					// System.out.println("child "+child.size());
-					// System.out.println("Before originalSet parent "+parent.size());
 					latest.put(entry.getKey(), child);
 					List<Category> lstoriginalSet = new ArrayList<>(parent);
 					List<Category> lstchildSet = new ArrayList<>(child);
 					lstoriginalSet.addAll(lstchildSet);
 
 					mapCategoryDept.put(entry.getKey().getTitle()+"\t"+j,child);
-					
+
 					parent.addAll(child);// with the previous elements
-					// System.out.println("After originalSet parent"+parent.size());
-					// System.out.println("After lstoriginalSet "+lstoriginalSet.size());
 					map.put(entry.getKey(), parent);
 					setAllCategories.addAll(parent);
-					//System.out.println(setAll.size());
-					// System.out.println("******************************************************************************");
 				}
 			}
 		}
-//		for(Entry<Category, Set<Category>> e : map.entrySet())
-//		{
-//			Integer temp =0;
-//			for(Category c: e.getValue()) {
-//				temp+=c.getChildArticles().length;
-//			}
-//			System.out.println(e.getKey()+" child articles "+temp);
-//			temp=0;
-//		}
-		
+		//		for(Entry<Category, Set<Category>> e : map.entrySet())
+		//		{
+		//			Integer temp =0;
+		//			for(Category c: e.getValue()) {
+		//				temp+=c.getChildArticles().length;
+		//			}
+		//			System.out.println(e.getKey()+" child articles "+temp);
+		//			temp=0;
+		//		}
+
 	}
 
 	private Set<Category> getChildCategoriesSet(Set<Category> setParent) {

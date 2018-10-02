@@ -12,5 +12,7 @@ public enum Model_LINE {
 	LINE_COMBINED_Complex,
 	LINE_COMBINED_Complex_normalized,
 	CONLL,
-	GOOGLE;
+	GOOGLE,
+	PTE_modified,
+	PTE_modified_categoryUndirected;
 }

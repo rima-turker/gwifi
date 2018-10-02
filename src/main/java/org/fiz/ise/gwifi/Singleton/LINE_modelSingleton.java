@@ -38,6 +38,12 @@ public class LINE_modelSingleton {
     		else if (LINE_MODEL_NAME.equals(Model_LINE.GOOGLE)) {
     			ADDRESS_OF_LINE_MODEL = Config.getString("ADDRESS_OF_GOOGLE","");
 			}
+    		else if (LINE_MODEL_NAME.equals(Model_LINE.PTE_modified)) {
+    			ADDRESS_OF_LINE_MODEL = Config.getString("ADDRESS_OF_PTE_modified","");
+			}
+    		else if (LINE_MODEL_NAME.equals(Model_LINE.PTE_modified_categoryUndirected)) {
+    			ADDRESS_OF_LINE_MODEL = Config.getString("ADDRESS_OF_PTE_modified_categoryUndirected","");
+			}
     		
 			System.out.println("ADDRESS_OF_LINE_MODEL "+ADDRESS_OF_LINE_MODEL);
     		lineModel=WordVectorSerializer.readWord2VecModel(ADDRESS_OF_LINE_MODEL);

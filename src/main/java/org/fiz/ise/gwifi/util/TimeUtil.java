@@ -13,6 +13,8 @@ public class TimeUtil {
 			return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()-now);
 		case NANOSECONDS:
 			return TimeUnit.NANOSECONDS.toNanos(System.currentTimeMillis()-now);
+		case MINUTES:
+			return TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis()-now);
 		default:
 			return 0;
 		}

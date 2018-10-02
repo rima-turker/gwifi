@@ -47,10 +47,7 @@ import edu.stanford.nlp.process.WordToSentenceProcessor;
 
 public class TestBasedonLongTextDatasets {
 
-	private final String DATASET_TEST_20NEWS = Config.getString("DATASET_TEST_20NEWS_RANDOM100","");
-	private final String DATASET_TEST_YOVISTO = Config.getString("DATASET_TEST_YOVISTO","");
 	private final static Integer NUMBER_OF_THREADS=  Config.getInt("NUMBER_OF_THREADS",-1);
-	private static boolean LOAD_MODEL = Config.getBoolean("LOAD_MODEL", false);
 	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE"); 
 	private static Wikipedia wikipedia = WikipediaSingleton.getInstance().wikipedia;
 	private static CategorySingleton singCategory;
@@ -68,16 +65,16 @@ public class TestBasedonLongTextDatasets {
 	long now = System.currentTimeMillis();
 
 	public static void main(String[] args) {
-		if (LOAD_MODEL) {
+		if (Config.getBoolean("LOAD_MODEL", false)) {
 			LINE_modelSingleton.getInstance();
 		}
 		List<Integer> lst = new ArrayList<>();
 		//lst.add(2);
-//		lst.add(3);
-//		lst.add(5);
-//		lst.add(10);
+		//		lst.add(3);
+		//		lst.add(5);
+		//		lst.add(10);
 		lst.add(100000);
-		
+
 		for(int i : lst) {
 			NUMBER_OF_SENTENCES_YOVISTO=i;
 			TestBasedonLongTextDatasets test = new TestBasedonLongTextDatasets();
@@ -85,9 +82,9 @@ public class TestBasedonLongTextDatasets {
 			//test.findAvgEntities(dataset);
 			test.setCategoryList(dataset);
 			test.startProcessingData(dataset);
-			
+
 		}
-		
+
 	}
 	private void findAvgEntities(Map<String,List<Category>> dataset) {
 		double numberOfEntities=0;
@@ -104,9 +101,9 @@ public class TestBasedonLongTextDatasets {
 			e1.printStackTrace();
 		}
 		System.out.println("Avg Entities "+numberOfEntities/numberOfDocs);
-		
+
 	}
-	
+
 
 	public Map<String,List<Category>> initializeDataset() {
 		TestBasedonLongTextDatasets test = new TestBasedonLongTextDatasets();
@@ -159,21 +156,23 @@ public class TestBasedonLongTextDatasets {
 		}
 		mapCategories= new HashMap<>(mapTemp);
 	}
-	
+
 	public  Map<String,List<Category>> dataset_YOVISTO(int numberOfSentences) {
 		Map<String,List<Category>> dataset=null;
 		Map<Category, Integer> mapCount = new HashMap<>();
 		int numberOfSentencesTotal=0;
+		int countMultiWordCats=0;
 		try {
 			dataset = new HashMap<>();
-			List<String> lines = FileUtils.readLines(new File(DATASET_TEST_YOVISTO), "utf-8");
+			List<String> lines = FileUtils.readLines(new File(Config.getString("DATASET_TEST_YOVISTO","")), "utf-8");
 			for(String line : lines) {
 				String[] split = line.split("\t");
 				String title = split[0];
 				String[] categories = split[1].split(",");
 				String content = split[2];
 				String sentence=segment2Sentence(content,numberOfSentences);
-				if (categories.length==1) {
+					//			if (categories.length==1 && !categories[0].contains(" ")) { //58 is number of multi word categories I ignore them. 1452 is the total number of the dataset
+				if (categories.length==1) { //58 is number of multi word categories I ignore them. 1452 is the total number of the dataset
 					Category c = wikipedia.getCategoryByTitle(StringUtils.capitalize(categories[0]));
 					if (c!=null) {
 						numberOfSentencesTotal+=SentenceSegmentator.findNumberOfSentences(content);
@@ -185,6 +184,7 @@ public class TestBasedonLongTextDatasets {
 				}
 			}
 			System.out.println("Number of articles: "+dataset.size());
+			System.out.println("Number of multi word cats: "+countMultiWordCats);
 			System.out.println("Start processing");
 
 		} catch (Exception e) {
@@ -198,56 +198,56 @@ public class TestBasedonLongTextDatasets {
 		System.out.println("total Number Of Sentence : "+numberOfSentencesTotal);
 		System.out.println("Average number of Sentences : "+numberOfSentencesTotal/dataset.size());
 		System.out.println(count);
-		System.out.println("returned dataset size" + dataset.size());
+		System.out.println("returned dataset size : " + dataset.size());
 		return dataset;
 	}
-//	public  Map<String,List<Category>> dataset_YOVISTO(int numberOfSentences) {
-//		Map<String,List<Category>> dataset=null;
-//		Map<Category, Integer> mapCount = new HashMap<>();
-//		int numberOfSentencesTotal=0;
-//		try {
-//			dataset = new HashMap<>();
-//			List<String> lines = FileUtils.readLines(new File(DATASET_TEST_YOVISTO), "utf-8");
-//			for(String line : lines) {
-//				String[] split = line.split("\t");
-//				String title = split[0];
-//				String[] categories = split[1].split(",");
-//				String content = split[2];
-//				String sentence=segment2Sentence(content,numberOfSentences);
-//				if (categories.length==1) {
-//					Category c = wikipedia.getCategoryByTitle(StringUtils.capitalize(categories[0]));
-//					if (c!=null) {
-//						if (!lstCategory.contains(c)) {
-//							lstCategory.add(c.getTitle());
-//						}
-//						mapCount.put(c, mapCount.containsKey(c) ? mapCount.get(c) + 1 : 1);
-//						numberOfSentencesTotal+=SentenceSegmentator.findNumberOfSentences(content);
-//						dataset.put(title+" "+sentence, Arrays.asList(c));
-//					}
-//				}
-//			}
-//			System.out.println("Number of articles: "+dataset.size());
-//			System.out.println("Start processing");
-//
-//		} catch (Exception e) {
-//			System.out.println(e.getMessage());
-//		}
-//		int count =0;
-//		for (Map.Entry<Category, Integer> entry : mapCount.entrySet()) {
-//			System.out.println(entry.getKey().getTitle()+"\t"+entry.getValue());
-//			count+=entry.getValue();
-//		}
-//		System.out.println("total Number Of Sentence : "+numberOfSentencesTotal);
-//		System.out.println("Average number of Sentences : "+numberOfSentencesTotal/count);
-//		System.out.println(count);
-//		System.out.println("returned dataset size" + dataset.size());
-//		return dataset;
-//	}
+	//	public  Map<String,List<Category>> dataset_YOVISTO(int numberOfSentences) {
+	//		Map<String,List<Category>> dataset=null;
+	//		Map<Category, Integer> mapCount = new HashMap<>();
+	//		int numberOfSentencesTotal=0;
+	//		try {
+	//			dataset = new HashMap<>();
+	//			List<String> lines = FileUtils.readLines(new File(DATASET_TEST_YOVISTO), "utf-8");
+	//			for(String line : lines) {
+	//				String[] split = line.split("\t");
+	//				String title = split[0];
+	//				String[] categories = split[1].split(",");
+	//				String content = split[2];
+	//				String sentence=segment2Sentence(content,numberOfSentences);
+	//				if (categories.length==1) {
+	//					Category c = wikipedia.getCategoryByTitle(StringUtils.capitalize(categories[0]));
+	//					if (c!=null) {
+	//						if (!lstCategory.contains(c)) {
+	//							lstCategory.add(c.getTitle());
+	//						}
+	//						mapCount.put(c, mapCount.containsKey(c) ? mapCount.get(c) + 1 : 1);
+	//						numberOfSentencesTotal+=SentenceSegmentator.findNumberOfSentences(content);
+	//						dataset.put(title+" "+sentence, Arrays.asList(c));
+	//					}
+	//				}
+	//			}
+	//			System.out.println("Number of articles: "+dataset.size());
+	//			System.out.println("Start processing");
+	//
+	//		} catch (Exception e) {
+	//			System.out.println(e.getMessage());
+	//		}
+	//		int count =0;
+	//		for (Map.Entry<Category, Integer> entry : mapCount.entrySet()) {
+	//			System.out.println(entry.getKey().getTitle()+"\t"+entry.getValue());
+	//			count+=entry.getValue();
+	//		}
+	//		System.out.println("total Number Of Sentence : "+numberOfSentencesTotal);
+	//		System.out.println("Average number of Sentences : "+numberOfSentencesTotal/count);
+	//		System.out.println(count);
+	//		System.out.println("returned dataset size" + dataset.size());
+	//		return dataset;
+	//	}
 	public  void dataset_20News() {
 		Map<String,List<Category>> dataset = new HashMap<>();
 		Map<String, List<Category>> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_20News());
 		try {
-			NewsgroupParser parser = new NewsgroupParser(DATASET_TEST_20NEWS);
+			NewsgroupParser parser = new NewsgroupParser(Config.getString("DATASET_TEST_20NEWS_RANDOM100",""));
 			parser.parse();
 			Map<String, List<NewsgroupsArticle>> mapArticles = new HashMap<String, List<NewsgroupsArticle>>(parser.getArticles());
 			for(Entry <String, List<NewsgroupsArticle>> e: mapArticles.entrySet() ) {

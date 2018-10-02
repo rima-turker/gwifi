@@ -1,8 +1,6 @@
 package org.fiz.ise.gwifi.test.longDocument;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -12,28 +10,22 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.deeplearning4j.models.word2vec.Word2Vec;
-import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
-import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
-import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
-import org.fiz.ise.gwifi.dataset.shorttext.test.HeuristicApproach;
 import org.fiz.ise.gwifi.dataset.shorttext.test.TestBasedonLongTextDatasets;
-import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.FileUtil;
 import org.fiz.ise.gwifi.util.SynchronizedCounter;
 
 import edu.kit.aifb.gwifi.model.Category;
-import edu.kit.aifb.gwifi.model.Wikipedia;
 
 public class BaselineUsingWords {
-	private final String DATASET_TEST_YOVISTO = Config.getString("DATASET_TEST_YOVISTO","");
+	/*
+	 * This class is a baseline of our approach which considers words to present a document vector by using
+	 *  a pre trained word embeddings. 
+	 *  More specifically it can be considered as a pure dataless classification since we do only a similarity based classification
+	 *  cosine similarity between a document vector and all the other category/word vectors  
+	 */
 	private final static Integer NUMBER_OF_THREADS=  Config.getInt("NUMBER_OF_THREADS",-1);
-	private static boolean LOAD_MODEL_wordEmbeddings = Config.getBoolean("LOAD_MODEL_wordEmbeddings", false);
-	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE"); 
-	private static Wikipedia wikipedia = WikipediaSingleton.getInstance().wikipedia;
-	private static CategorySingleton singCategory;
 	private static SynchronizedCounter counterTruePositive;
 	private static SynchronizedCounter counterFalsePositive;
 	private static SynchronizedCounter counterProcessed;
@@ -42,35 +34,29 @@ public class BaselineUsingWords {
 	private static Map<String, Category> falsePositiveResult = new ConcurrentHashMap<>();
 	private static Map<String, Integer> mapMissClassified = new ConcurrentHashMap<>();
 	private ExecutorService executor;
-	private static List<String> lstCategory;
-	private static int NUMBER_OF_SENTENCES_YOVISTO = Config.getInt("NUMBER_OF_SENTENCES_YOVISTO",-1);
 	private static Map<Category, Set<Category>> mapCategories;
 	long now = System.currentTimeMillis();
+
 	public static void main(String[] args) {
 		counterProcessed= new SynchronizedCounter();
 		counterFalsePositive= new SynchronizedCounter();
 		counterTruePositive= new SynchronizedCounter();
 		LINE_modelSingleton.getInstance();
 
+		TestBasedonLongTextDatasets test = new TestBasedonLongTextDatasets();
+		Map<String,List<Category>> dataset = new HashMap<>(test.initializeDataset()); //here you initialize the dataset also based on a number of sentences
+		test.setCategoryList(dataset);
 		
-		List<Integer> lst = new ArrayList<>();
-		lst.add(3);
+		//			Set<Category> setMainCategories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories);
+		//			Word2Vec model = LINE_modelSingleton.getInstance().lineModel;
+		//			for(Category c : setMainCategories) {
+		//				if (!model.hasWord(c.getTitle())) {
+		//					System.out.println(c.getTitle());
+		//				}
+		//			}
 		
-		for(int i : lst) {
-			NUMBER_OF_SENTENCES_YOVISTO=i;
-			TestBasedonLongTextDatasets test = new TestBasedonLongTextDatasets();
-			Map<String,List<Category>> dataset = new HashMap<>(test.initializeDataset());
-			test.setCategoryList(dataset);
-//			Set<Category> setMainCategories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories);
-//			Word2Vec model = LINE_modelSingleton.getInstance().lineModel;
-//			for(Category c : setMainCategories) {
-//				if (!model.hasWord(c.getTitle())) {
-//					System.out.println(c.getTitle());
-//				}
-//			}
-			BaselineUsingWords base = new BaselineUsingWords();
-			base.startProcessingData(dataset);
-		}
+		BaselineUsingWords base = new BaselineUsingWords();
+		base.startProcessingData(dataset);
 	}
 	public void startProcessingData(Map<String,List<Category>> dataset) {
 		int count=0;

@@ -21,9 +21,10 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import edu.kit.aifb.gwifi.model.Category;
 
 public class BasedOnWordsCategorize {
-	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
+	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE"); //here you get the name of the dataset
 	private static Set<Category> setMainCategories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories);
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
+	
 	public static Category getBestMatchingCategory(String text,List<Category> gtList, Map<Category, Set<Category>> map) {
 		try {
 			Map<Category, Double> mapScore = new HashMap<>(); 
@@ -44,11 +45,23 @@ public class BasedOnWordsCategorize {
 	public static double getSimilarity(String text,String category) {
 		Word2Vec model= LINE_modelSingleton.getInstance().lineModel;
 		final String[] words = text.split(" ");
+		final String[] cats = category.split(" ");
+		double[] catVec2;
+		
 		double[] docVec= getSentenceVector(Arrays.asList(words), model);
-		double[] catVec = model.getWordVector(category);
+		double[] catVec = getSentenceVector(Arrays.asList(category), model);
+//		double[] catVec = model.getWordVector(category);
+//		if(cats.length==1) {
+//			if (cosineSimilarity(docVec, catVec)!=cosineSimilarity(docVec, catVec2)) {
+//				System.out.println("ERROR :" + category);
+//			}
+//		}
 		return cosineSimilarity(docVec, catVec);
 	}
 	private static double[] getSentenceVector(List<String> words, Word2Vec model) {        
+		if (words.size()==1) {
+			return model.getWordVector(words.get(0));
+		}
 		INDArray a = null;
 		try{
 			a = model.getWordVectorsMean(words);
