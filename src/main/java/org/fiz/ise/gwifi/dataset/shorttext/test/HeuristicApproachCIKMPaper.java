@@ -131,6 +131,35 @@ public class HeuristicApproachCIKMPaper {
 		 return (P_e_c*P_Se_c*P_Ce_e);
 	}
 
+
+	
+	private static Map<Integer, Map<Integer, Double>> calculateContextEntitySimilarities(List<Annotation> annotations) {
+		Map<Integer, Map<Integer, Double>> mapContextSimilarity = new HashMap<>();
+		for (Annotation a : annotations) {
+			Map<Integer, Double> temp = new HashMap<>();
+			for (Annotation c : annotations) {
+				double similarity = .0;
+				if (LOAD_MODEL) {
+					similarity = (LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(a.getId()),
+							String.valueOf(c.getId())));
+				} else {
+					similarity = (EmbeddingsService.getSimilarity(String.valueOf(a.getId()),
+							String.valueOf(c.getId())));
+				}
+				temp.put(c.getId(), similarity);
+			}
+			mapContextSimilarity.put(a.getId(), temp);
+		}
+		return mapContextSimilarity;
+	}
+
+	/*
+	 * Popularity of the category
+	 */
+	private static int get_P_c_(Category c) {
+		return c.getChildArticles().length;
+	}
+
 	private static double get_P_e_c(Article article, Category mainCat) {
 		//long now = TimeUtil.getStart();
 		double countNonZero = 0;
