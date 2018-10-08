@@ -296,7 +296,7 @@ public class DatasetGeneration_TFIDF {
 	}
 	private Map<Category, Set<Integer>> generateRandomArticleIDs(){
 		Map<Category, Set<Integer>> result = new HashMap<>();
-		Map<Category, Set<Category>> mapCategories = new HashMap<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).map);
+		Map<Category, Set<Category>> mapCategories = new HashMap<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).mapMainCatAndSubCats);
 		for(Entry<Category, Set<Category>> e : mapCategories.entrySet()) {//iterate over all the main cates and get their child articles
 			List<Article> dirtyChildArticles = new ArrayList<>();
 			dirtyChildArticles.addAll(Arrays.asList(e .getKey().getChildArticles()));

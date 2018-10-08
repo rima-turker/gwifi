@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 
@@ -20,20 +21,22 @@ public class LabelsOfTheTexts {
 		Map<Integer, Category> mapLabel = new HashMap<>();
 		mapLabel.put(1, wikipedia.getCategoryByTitle("World"));
 		mapLabel.put(2, wikipedia.getCategoryByTitle("Sports"));
+//		mapLabel.put(3, wikipedia.getCategoryByTitle("Trade"));
 		mapLabel.put(3, wikipedia.getCategoryByTitle("Business"));
-		mapLabel.put(4, wikipedia.getCategoryByTitle("Science and technology"));
+//		mapLabel.put(4, wikipedia.getCategoryByTitle("Science and technology"));
 //		mapLabel.put(4, wikipedia.getCategoryByTitle("Science"));
-//		mapLabel.put(5, wikipedia.getCategoryByTitle("Technology"));
+//		mapLabel.put(4, wikipedia.getCategoryByTitle("Science"));
+		mapLabel.put(4, wikipedia.getCategoryByTitle("Technology"));
 		return mapLabel;
 	}
 	public static Map<Category,Integer> getCatValue_AG()
 	{
-		Map<Category,Integer> mapLabel = new HashMap<>();
-		mapLabel.put(wikipedia.getCategoryByTitle("World"),1);
-		mapLabel.put(wikipedia.getCategoryByTitle("Sports"),2);
-		mapLabel.put(wikipedia.getCategoryByTitle("Business"),3);
-		mapLabel.put(wikipedia.getCategoryByTitle("Science and technology"),4);
-		return mapLabel;
+		Map<Integer, Category>  mapLabel = new HashMap<>(getLables_AG());
+		Map<Category,Integer> resultLabel = new HashMap<>();
+		for(Entry <Integer, Category> e : mapLabel.entrySet()) {
+			resultLabel.put(e.getValue(),e.getKey());
+		}
+		return resultLabel;
 	}
 	
 	public static Map<String, List<Category>> getLables_20News()

@@ -27,12 +27,16 @@ import org.fiz.ise.gwifi.dataset.shorttext.test.LabelsOfTheTexts;
 import org.fiz.ise.gwifi.dataset.shorttext.test.TestBasedonSortTextDatasets;
 import org.fiz.ise.gwifi.dataset.test.read.ReadTestDataset;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.util.AnnonatationUtil;
 import org.fiz.ise.gwifi.util.Config;
+import org.fiz.ise.gwifi.util.FileUtil;
 import org.fiz.ise.gwifi.util.MapUtil;
 import org.fiz.ise.gwifi.util.Print;
 import org.fiz.ise.gwifi.util.TimeUtil;
 import org.fiz.ise.gwifi.util.VectorUtil;
 import org.nd4j.linalg.api.ndarray.INDArray;
+
+import com.twelvemonkeys.util.LinkedMap;
 
 import edu.kit.aifb.gwifi.annotation.Annotation;
 import edu.kit.aifb.gwifi.model.Category;
@@ -45,29 +49,68 @@ public class KBCorrespondingCategory {
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 
 	public static void main(String[] args) {
-
+		Word2Vec model = LINE_modelSingleton.getInstance().lineModel;
 		KBCorrespondingCategory test = new KBCorrespondingCategory();
 		List<Category> lstCat = new ArrayList<>();
 		lstCat.add(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("World"));
 		lstCat.add(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Sports"));
 		lstCat.add(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Business"));
 		lstCat.add(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Science and technology"));
-		Set<Category> setAllCategories = CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setAllCategories;
-		List<Category> lstAllCategories= new ArrayList<>(setAllCategories);
-		System.out.println("lstAllCategories.size: "+lstAllCategories.size());
-		for(Category c : lstCat ) {
-			secondLOG.info("Start"+c.getTitle()+"------------------------------------------\n");
-			System.out.println("start processing texts"+c.getTitle());
-			List<String> dataset = new ArrayList<>(ReadTestDataset.read_AG_BasedOnCategory(c));
 
-//			test.findMatchingCatgeoryBasedOnSimForAllCats(dataset, lstAllCategories);
-			if (c.getTitle().equals("Science and technology")) {
-				test.findMatchingCatgeoryBasedOnSimDocVecForAllCats(dataset, "dataset_"+c.getTitle());
-			}
-
-		}
-
+		//test.findDistinguishMatchingCatgeoryBasedOnSimDocVecFromEntitiesForAllCats(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Business"),
+			//	WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Science and technology"));
+				for(Category c : lstCat ) {
+					List<String> dataset = new ArrayList<>(ReadTestDataset.read_AG_BasedOnCategory(c));
+					Map<Category, Double> findMatchingCatgeoryBasedOnSimDocVecFromEntitiesForAllCats = new LinkedMap<>(test.findMatchingCatgeoryBasedOnSimDocVecFromEntitiesForAllCats(AnnonatationUtil.filterAnnotation(AnnonatationUtil.findAnnotationAll(dataset))));
+					FileUtil.writeDataToFile(findMatchingCatgeoryBasedOnSimDocVecFromEntitiesForAllCats, c.getTitle()+"_MostSimCatProportionallySampled");
+					
+					//
+//					System.out.println("Started processing category : "+c.getTitle());
+//					Map<String, Double> map = new LinkedHashMap<>(test.findMatchingCatgeoryBasedOnSimDocVecFromEntitiesForAllCats(test.filterAnnotation(test.findAnnotationAll(dataset))));
+//					FileUtil.writeDataToFile(map, c.getTitle()+"_MostSimBasedOnLine");
+//					System.out.println("Finished processing category : "+c.getTitle());
+		//
+		//			//			System.out.println("1st Category: "+c.getTitle());
+		//			//			List<Annotation> annotation_C = new ArrayList<>(test.findAnnotationAll(datasetC));
+		//			//			//Set<Annotation> set_annotation_C = new HashSet()<>(Arrays.asList(test.findAnnotationAll(datasetC)));
+		//			//			System.out.println(c.getTitle()+" annotation size: "+annotation_C.size());
+		//			//
+		//			//			for(Category c2 : lstCat ) {
+		//			//
+		//			//				if (!c.getTitle().equals(c2.getTitle())) {
+		//			//					System.out.println("2nd Category: "+c2.getTitle());
+		//			//					List<String> datasetC2 = new ArrayList<>(ReadTestDataset.read_AG_BasedOnCategory(c2));
+		//			//					List<Annotation> annotation_C2 = new ArrayList<>(test.findAnnotationAll(datasetC2));
+		//			//					System.out.println(c2.getTitle()+" annotation size: "+annotation_C2.size());
+		//			//					
+		//			//					int countCommonElement = 0;
+		//			//					
+		//			//					for(Annotation a : annotation_C2) {
+		//			//						if(annotation_C.contains(a)) {
+		//			//							countCommonElement++;
+		//			//						}
+		//			//					}
+		//			//					System.out.println("Intersection: " + c.getTitle()+", "+c2.getTitle()+ " "+countCommonElement);
+		//			////					test.findIntersectionList(new ArrayList<>(annotation_C), new ArrayList<>(annotation_C2));	
+		//			//				}
+		//			//
+		//			//			}
+				}
 	}
+	
+
+	//		System.out.println("lstAllCategories.size: "+lstAllCategories.size());
+	//		for(Category c : lstCat ) {
+	//			secondLOG.info("Start"+c.getTitle()+"------------------------------------------\n");
+	//			System.out.println("start processing texts"+c.getTitle());
+	//			List<String> dataset = new ArrayList<>(ReadTestDataset.read_AG_BasedOnCategory(c));
+	//			test.findMatchingCatgeoryBasedOnSimDocVecForAllCats(dataset, "dataset_"+c.getTitle());
+	//			//test.findMatchingCatgeoryBasedOnSimForAllCats(dataset, lstAllCategories);
+	////			if (c.getTitle().equals("Science and technology")) {
+	////				test.findMatchingCatgeoryBasedOnSimDocVecForAllCats(dataset, "dataset_"+c.getTitle());
+	////			}
+
+
 	public Map<Category, Integer> findMatchingCatgeoryBasedOnFreq(List<String> lstText) {
 		Map<Category, Integer> mapResult = new HashMap<>();
 		Map<Category, Integer> sortedMap = new HashMap<>();
@@ -107,7 +150,17 @@ public class KBCorrespondingCategory {
 		return sortedMap;
 	}
 
-	public  void findMatchingCatgeoryBasedOnSimDocVecForAllCats(List<String> lstText,String nameOfTheDateSet) {
+	
+
+
+	public  void findIntersectionList(List<Annotation> lstA,List<Annotation> lstB ) {
+		int countListA = lstA.size();
+		int countListB = lstB.size();
+		lstA.retainAll (lstB);
+		System.out.println("List A "+countListA+" List B "+countListB+" intersection "+lstA.size());
+	}
+
+	public  Map<String, Double> findMatchingCatgeoryBasedOnSimDocVecFromCatsForAllCats(List<String> lstText) {
 		Word2Vec model = LINE_modelSingleton.getInstance().lineModel; 
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
 		Map<String, Double>  sortedMap = null; 
@@ -115,18 +168,23 @@ public class KBCorrespondingCategory {
 		try {
 			Double sim =0.0;
 			long now = TimeUtil.getStart();
-			List<String> allEntities = new ArrayList<>();
+			List<String> allCategories = new ArrayList<>();
 			for(String text:lstText) {
 				List<Annotation> lstAnnotations = new ArrayList<>();
 				service.annotate(text, lstAnnotations);
 				for(Annotation a:lstAnnotations) {
 					if (WikipediaSingleton.getInstance().wikipedia.getArticleById(a.getId())!=null) {
-						allEntities.add(String.valueOf(a.getId()));
+						Category[] parentCategories = WikipediaSingleton.getInstance().wikipedia.getArticleById(a.getId()).getParentCategories();
+						for (int i = 0; i < parentCategories.length; i++) {
+							if (WikipediaSingleton.getInstance().wikipedia.getCategoryById(parentCategories[i].getId())!=null) {
+								allCategories.add(String.valueOf(parentCategories[i].getId()));
+							}
+						}
 					}
 				}
 			}
-			double[] documentVec = VectorUtil.getSentenceVector(allEntities,model);
-			System.out.println("Document vec created");
+			double[] documentVec = VectorUtil.getSentenceVector(allCategories,model);
+			System.out.println("Document vector created");
 			int countCat = 0;
 			List<String> categoryLines = new ArrayList<>(FileUtils.readLines(new File("/home/rtue/eclipse-workspace/gwifi/Models/category.node"), "utf-8"));
 			for(String c : categoryLines) {
@@ -140,19 +198,67 @@ public class KBCorrespondingCategory {
 			System.out.println("Finished iteration for one dataset " +TimeUtil.getEnd(TimeUnit.SECONDS, now)+" seconds");
 
 			sortedMap= new LinkedHashMap<>(MapUtil.sortByValueDescending(result));
-			System.out.println("sortedMap size"+sortedMap.size());
-			int count =0;
-			for(Entry<String,Double> e : sortedMap.entrySet()) {
-				secondLOG.info(nameOfTheDateSet+" "+e.getKey()+" "+e.getValue());
-				System.out.println(nameOfTheDateSet+" "+e.getKey()+" "+e.getValue());
-				if (++count>50) {
-					break;
-				}
-			}
+			return sortedMap;
 		}
 		catch (Exception e) {
 			System.out.println(e.getMessage());
 		}
+		return sortedMap;
+	}
+
+	public  void findDistinguishMatchingCatgeoryBasedOnSimDocVecFromEntitiesForAllCats(Category c , Category c2) {
+//		Map<String, Double> result = new HashMap<>();
+//
+//		List<String> dataset = new ArrayList<>(ReadTestDataset.read_AG_BasedOnCategory(c));
+//		Map<String, Double> map = new LinkedHashMap<>(findMatchingCatgeoryBasedOnSimDocVecFromEntitiesForAllCats(AnnonatationUtil.filterAnnotation(AnnonatationUtil.findAnnotationAll(dataset))));
+//
+//		dataset = new ArrayList<>(ReadTestDataset.read_AG_BasedOnCategory(c2));
+//		Map<String, Double> map2 = new LinkedHashMap<>(findMatchingCatgeoryBasedOnSimDocVecFromEntitiesForAllCats(AnnonatationUtil.filterAnnotation(AnnonatationUtil.findAnnotationAll(dataset))));
+//
+//		for(Entry<String,Double> e : map.entrySet()) {
+//			if (e.getValue()-map2.get(e.getKey())>0) {
+//				result.put(e.getKey(), e.getValue()-map2.get(e.getKey()));
+//			}
+//		}
+//		Map<String, Double> sorted = new LinkedHashMap<>(MapUtil.sortByValueDescending(result));
+//		FileUtil.writeDataToFile(sorted, "comparison"+c.getTitle()+"_"+c2.getTitle());
+	}
+
+	public  Map<Category, Double> findMatchingCatgeoryBasedOnSimDocVecFromEntitiesForAllCats(List<Annotation> lstAnnotations) {
+		Word2Vec model = LINE_modelSingleton.getInstance().lineModel; 
+		Map<Category, Double>  sortedMap = null; 
+		Map<Category, Double> result = new HashMap<>();
+		try {
+			Double sim =0.0;
+			long now = TimeUtil.getStart();
+			List<String> allEntities = new ArrayList<>();
+			for(Annotation a:lstAnnotations) {
+				if (WikipediaSingleton.getInstance().wikipedia.getArticleById(a.getId())!=null) {
+					allEntities.add(String.valueOf(a.getId()));
+				}
+			}
+			double[] documentVec = VectorUtil.getSentenceVector(allEntities,model);
+			System.out.println("Document vector based on Entities created");
+			int countCat = 0;
+			List<String> categoryLines = new ArrayList<>(FileUtils.readLines(new File("/home/rtue/eclipse-workspace/gwifi/Models/category.node"), "utf-8"));
+			for(String c : categoryLines) {
+				sim = VectorUtil.cosineSimilarity(documentVec, model.getWordVector(c));
+				if (!Double.isNaN(sim)) {
+					result.put(WikipediaSingleton.getInstance().wikipedia.getCategoryById(Integer.valueOf(c)),sim);
+				}
+				System.out.println("Processed cat number "+ ++countCat);
+			}
+			System.out.println("resultSize "+result.size());
+			System.out.println("Finished iteration for one dataset " +TimeUtil.getEnd(TimeUnit.SECONDS, now)+" seconds");
+
+			sortedMap= new LinkedHashMap<>(MapUtil.sortByValueDescending(result));
+			System.out.println("sortedMap size"+sortedMap.size());
+			return sortedMap;
+		}
+		catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+		return sortedMap;
 	}
 	public  void findMatchingCatgeoryBasedOnSimForAllCats(List<String> lstText, List<Category> lstCat) {
 		Word2Vec model = LINE_modelSingleton.getInstance().lineModel; 
@@ -206,7 +312,7 @@ public class KBCorrespondingCategory {
 			int count =0;
 			for(Entry<Category,Double> e : sortedMap.entrySet()) {
 				secondLOG.info(e.getKey()+" "+e.getValue());
-				if (++count>50) {
+				if (++count>100) {
 					break;
 				}
 			}
@@ -223,9 +329,9 @@ public class KBCorrespondingCategory {
 		lstCats.add(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle(getCatfindmatching().getTitle()));
 		Map<Category, Double>  sortedMap = null; 
 		for(Category mainCat :lstCats ) {
-			Set<Category> subCats = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).map.get(mainCat));
+			Set<Category> subCats = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).mapMainCatAndSubCats.get(mainCat));
 			if (getCatfindmatching().getTitle().equals("Science")) {
-				subCats.addAll(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).map.get(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Technology")));
+				subCats.addAll(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).mapMainCatAndSubCats.get(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Technology")));
 			}
 			Map<Category, Double> result = new HashMap<>();
 			int countLine=0;
@@ -285,54 +391,33 @@ public class KBCorrespondingCategory {
 			}
 		}
 	}
-	public static void findMostCommonCats(List<String> lstText) {
-		//Word2Vec model = LINE_modelSingleton.getInstance().lineModel; 
-		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
+	
+
+	public  Map<Category, Integer> findMostCommonCats(List<Annotation> lstText) {
 		Map<Category, Integer> result = new HashMap<>();
-		int countLine=0;
 		try {
-			for(String text:lstText) {
-				List<Annotation> lstAnnotations = new ArrayList<>();
-				service.annotate(text, lstAnnotations);
-				for(Annotation a:lstAnnotations) {
-					if (WikipediaSingleton.getInstance().wikipedia.getArticleById(a.getId())!=null) {
-						List<Category> cats = new ArrayList<>(Arrays.asList(WikipediaSingleton.getInstance().wikipedia.getArticleById(a.getId()).getParentCategories()));
-						if (cats!=null) {
-							for(Category c:cats) {
-								if (result.containsKey(c)) {
-									result.put(c, (result.get(c)+1));
-								}
-								else{
-									result.put(c, 1);
-								}
+			for(Annotation a:lstText) {
+				if (WikipediaSingleton.getInstance().wikipedia.getArticleById(a.getId())!=null) {
+					List<Category> cats = new ArrayList<>(Arrays.asList(WikipediaSingleton.getInstance().wikipedia.getArticleById(a.getId()).getParentCategories()));
+					if (cats!=null) {
+						for(Category c:cats) {
+							if (result.containsKey(c)) {
+								result.put(c, (result.get(c)+1));
+							}
+							else{
+								result.put(c, 1);
 							}
 						}
 					}
-
-					//					List<String> temp = new LinkedList<>(model.wordsNearest(String.valueOf(a.getId()), 100));
-					//					int countCat=0;
-					//					for(String s : temp) {
-					//						if (WikipediaSingleton.getInstance().wikipedia.getCategoryById(Integer.parseInt(s))!=null) {
-					//							result.merge(WikipediaSingleton.getInstance().wikipedia.getCategoryById(Integer.parseInt(s)), 1, (l, b) -> l + b);
-					//							if (++countCat>10) {
-					//								break;
-					//							}
-					//
-					//						}
-					//					}
 				}
-				//System.out.println(++countLine);
 			}
 			Map<Category, Integer>  sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(result));
-			for (Entry<Category, Integer> e : sortedMap.entrySet()) {
-				System.out.println(e.getKey()+" "+e.getValue());
-			}
-
-			Print.printMap(sortedMap);
+			return sortedMap;
 		}
 		catch (Exception e) {
 			System.out.println(e.getMessage());
 		}
+		return null;
 	}
 
 	public static Category getCatfindmatching() {

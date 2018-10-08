@@ -38,7 +38,7 @@ public class HeuristicApproachConsideringLei {
 	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
 	private static Set<Category> setMainCategories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories);
 	private final static Integer DEPTH_OF_CAT_TREE = Config.getInt("DEPTH_OF_CAT_TREE", 0);
-	private static Map<Category, Set<Category>> mapCategories=new HashMap<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).map);
+	private static Map<Category, Set<Category>> mapCategories=new HashMap<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).mapMainCatAndSubCats);
 	private static final Logger LOG = Logger.getLogger(HeuristicApproachConsideringLei.class);
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 	/*

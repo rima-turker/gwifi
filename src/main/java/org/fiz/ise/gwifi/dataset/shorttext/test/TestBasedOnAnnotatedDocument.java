@@ -74,7 +74,7 @@ public class TestBasedOnAnnotatedDocument {
 		System.out.println("Size of Category list "+lstCategory.size());
 		singCategory= CategorySingleton.getInstance(lstCategory);
 		setMainCategories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories);
-		Map<Category, Set<Category>> mapTemp = new HashMap<>(singCategory.map);
+		Map<Category, Set<Category>> mapTemp = new HashMap<>(singCategory.mapMainCatAndSubCats);
 		for(Entry<Category, Set<Category>> e: mapTemp.entrySet())
 		{
 			Category main = e.getKey();

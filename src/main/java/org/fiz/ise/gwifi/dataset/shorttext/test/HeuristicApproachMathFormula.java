@@ -274,7 +274,7 @@ public class HeuristicApproachMathFormula {
 	public static Entry<Category, Double> getMostSimilarCategory(Annotation annotation,Category mainCategory)
 	{
 		if (annotation!=null) {
-			Set<Category> categories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).map.get(mainCategory));
+			Set<Category> categories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).mapMainCatAndSubCats.get(mainCategory));
 			categories.add(mainCategory);
 			Map<Category, Double> map = new HashMap<>();
 			for(Category category:categories){

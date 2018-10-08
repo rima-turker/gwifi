@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.fiz.ise.gwifi.dataset.shorttext.test.LabelsOfTheTexts;
 import org.fiz.ise.gwifi.dataset.shorttext.test.TestBasedOnAnnotatedDocument;
@@ -75,11 +76,32 @@ public class Categories {
 				"Science","Engineering","Health","Politics","Society","Sports");		
 		return Collections.unmodifiableList(dummySeeds);
 	}
-	private static List<String> getCategories_Ag() {
-		final List<String> dummySeeds = Arrays.asList("World","Sports","Business","Science and technology");
+	public static List<Category> getCategories_AgCats() {
+		Map<Integer, Category> map = new HashMap<>(LabelsOfTheTexts.getLables_AG());
+		final List<Category> dummySeeds = new ArrayList<>();
+		for(Entry <Integer, Category> e: map.entrySet()) {
+			dummySeeds.add(e.getValue());
+		}
 	//	final List<String> dummySeeds = Arrays.asList("World","Sports","Business","Science","Technology");
 //			final List<String> dummySeeds = Arrays.asList("Sports","Science","Technology","World","Trade");//0.80
-	//		final List<String> dummySeeds = Arrays.asList("Sports","Science","Technology","World","Business");
+	
+		
+		//		final List<String> dummySeeds = Arrays.asList("Sports","Science","Technology","World","Business");
+		//	final List<String> dummySeeds = Arrays.asList("World","Business");
+	//	final List<String> dummySeeds = Arrays.asList("Business","World");
+		return Collections.unmodifiableList(dummySeeds);
+	}
+	public static List<String> getCategories_Ag() {
+		Map<Integer, Category> map = new HashMap<>(LabelsOfTheTexts.getLables_AG());
+		final List<String> dummySeeds = new ArrayList<>();
+		for(Entry <Integer, Category> e: map.entrySet()) {
+			dummySeeds.add(e.getValue().getTitle());
+		}
+	//	final List<String> dummySeeds = Arrays.asList("World","Sports","Business","Science","Technology");
+//			final List<String> dummySeeds = Arrays.asList("Sports","Science","Technology","World","Trade");//0.80
+	
+		
+		//		final List<String> dummySeeds = Arrays.asList("Sports","Science","Technology","World","Business");
 		//	final List<String> dummySeeds = Arrays.asList("World","Business");
 	//	final List<String> dummySeeds = Arrays.asList("Business","World");
 		return Collections.unmodifiableList(dummySeeds);
@@ -89,5 +111,7 @@ public class Categories {
 					"Systems Network Architecture","Programming languages","Theory of computation","Theoretical computer science");
 			return Collections.unmodifiableList(dummySeeds);
 		}
+	
+	
 
 }

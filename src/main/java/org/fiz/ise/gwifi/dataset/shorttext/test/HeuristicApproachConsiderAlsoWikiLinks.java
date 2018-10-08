@@ -14,12 +14,14 @@ import java.util.stream.Collectors;
 import org.apache.log4j.Logger;
 import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
 import org.fiz.ise.gwifi.Singleton.CategorySingleton;
+import org.fiz.ise.gwifi.Singleton.CategorySingletonAnnotationFiltering;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
 import org.fiz.ise.gwifi.model.Model_LINE;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
+import org.fiz.ise.gwifi.util.CategoryUtil;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.MapUtil;
 import org.fiz.ise.gwifi.util.Request_LINEServer;
@@ -31,14 +33,16 @@ import edu.kit.aifb.gwifi.model.Category;
 import edu.kit.aifb.gwifi.model.Page;
 import edu.kit.aifb.gwifi.service.NLPAnnotationService;
 
-public class HeuristicApproach {
+public class HeuristicApproachConsiderAlsoWikiLinks {
 
 	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
 	private static boolean LOAD_MODEL = Config.getBoolean("LOAD_MODEL", false);
 	private final static Integer DEPTH_OF_CAT_TREE = Config.getInt("DEPTH_OF_CAT_TREE", 0);
-	private static final Logger LOG = Logger.getLogger(HeuristicApproach.class);
+	private static final Logger LOG = Logger.getLogger(HeuristicApproachConsiderAlsoWikiLinks.class);
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
+	static final Logger trhirLOG = Logger.getLogger("resultLogger");
 	private final double threshold = 0.9;
+	private static final int CATEGORY_DEPTH_FOR_FILTERING = Config.getInt("CATEGORY_DEPTH_FOR_FILTERING", 0);
 
 	/*
 	 * The main purpose of this class is the calculate the similarity and decide 
@@ -48,8 +52,9 @@ public class HeuristicApproach {
 	public static Category getBestMatchingCategory(String shortText,List<Category> gtList) {
 		//shortText="Retail sales improve amid caution The High Street perked up in September,   but consumer confidence is falling as a result of higher interest rates and concerns over the housing market,  figures reveal.";
 		Set<Category> setMainCategories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories);
+		Set<Category> setfilterAnnotationCategories = new HashSet<>(CategorySingletonAnnotationFiltering.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories);
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-		HeuristicApproach heuristic = new HeuristicApproach();
+		HeuristicApproachConsiderAlsoWikiLinks heuristic = new HeuristicApproachConsiderAlsoWikiLinks();
 		StringBuilder mainBuilder = new StringBuilder();
 		try {
 			Map<Category, Double> mapScore = new HashMap<>(); 
@@ -64,14 +69,27 @@ public class HeuristicApproach {
 			Map<Integer, Map<Integer, Double>> contextSimilarity = new HashMap<>(calculateContextEntitySimilarities(lstAnnotations));
 			for (Category mainCat : setMainCategories) {
 				double score = 0.0; 
-				for(Annotation a:lstAnnotations) {
-					if (AnnonatationUtil.hasALink(a, mainCat)) {
+				if (AnnonatationUtil.hasALink(shortText, mainCat, CATEGORY_DEPTH_FOR_FILTERING)) {
+					for(Annotation a:lstAnnotations) {
+						//if (AnnonatationUtil.hasALink(a, mainCat)) {
 						score+=heuristic.calculateScoreBasedInitialFormula(a, mainCat, contextSimilarity);
 					}
 				}
 				mapScore.put(mainCat, score);
+				//	}
 			}
+			boolean write=false;
 			mainBuilder.append("\n");
+			//			if (mapScore.size()==0) {
+			//				write=true;
+			//				for (Category mainCat : setMainCategories) {
+			//					double score = 0.0; 
+			//					for(Annotation a:lstAnnotations) {
+			//						score+=heuristic.calculateScoreBasedInitialFormula(a, mainCat, contextSimilarity);
+			//					}
+			//					mapScore.put(mainCat, score);
+			//				}
+			//			}
 			Map<Category, Double>  sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(mapScore));
 			Category firstElement = MapUtil.getFirst(sortedMap).getKey();
 
@@ -103,9 +121,7 @@ public class HeuristicApproach {
 		double P_Se_c=get_P_Se_c(a);
 		return (P_e_c*P_Se_c);
 	}
-	private double calculateScoreBasedInitialFormula_filterAnnotation(Annotation a, Category mainCat,Map<Integer, Map<Integer, Double>> contextSimilarity) {
-		
-		
+	private double calculateScoreBasedInitialFormula(Annotation a, Category mainCat,Map<Integer, Map<Integer, Double>> contextSimilarity) {
 		double P_e_c=get_P_e_c(a.getId(), mainCat);
 		double P_Se_c=get_P_Se_c(a);
 		double P_Ce_e=1;
@@ -113,16 +129,6 @@ public class HeuristicApproach {
 			P_Ce_e=get_P_Ce_e_efficient(a.getId(),contextSimilarity);
 		}
 		return (P_e_c*P_Se_c*P_Ce_e);
-	}
-	private double calculateScoreBasedInitialFormula(Annotation a, Category mainCat,Map<Integer, Map<Integer, Double>> contextSimilarity) {
-		double P_e_c=get_P_e_c(a.getId(), mainCat);
-//		double P_Se_c=get_P_Se_c(a);
-//		double P_Ce_e=1;
-//		if (contextSimilarity.size()>1) {
-//			P_Ce_e=get_P_Ce_e_efficient(a.getId(),contextSimilarity);
-//		}
-		return P_e_c;
-		//return (P_e_c*P_Se_c*P_Ce_e);
 	}
 	private  Map<Integer, Double>  calculateCoherency(List<Annotation> lstAnnotations) {
 		Map<Integer, Double> mapContextSimilarity = new HashMap<>();
@@ -191,27 +197,80 @@ public class HeuristicApproach {
 	private static int get_P_c_(Category c){
 		return c.getChildArticles().length;
 	}
-	
-	
+
 	private static double get_P_e_c(int articleID,Category mainCat) {
 		Set<Category> childCategories;
 		double result =0.0;
 		double countNonZero=0.0;
-		//		if (DEPTH_OF_CAT_TREE==0) {
-		//			double P_Cr_c=0.0;
-		//			double P_e_Cr =0.0;
-		//			if (LOAD_MODEL) {
-		//				P_e_Cr =LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(articleID), String.valueOf(mainCat.getId()));
-		//			}
-		//			else {
-		//				P_e_Cr =EmbeddingsService.getSimilarity(String.valueOf(articleID), String.valueOf(mainCat.getId()));
-		//			}
-		//			if (!Double.isNaN(P_e_Cr)) {
-		//				result+=P_e_Cr;
-		//				countNonZero++;
-		//			}
+		int countNan=0;
+		childCategories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).mapMainCatAndSubCats.get(mainCat));
+
+		Set<Category> finalSet = new HashSet<>();
+
+		if (mainCat.getTitle().equals("World")) {	
+			finalSet.add(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Human migration"));
+			finalSet.add(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Missing people"));
+			finalSet.add(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("International relations"));
+			childCategories = new HashSet<>(finalSet);
+
+		}	
+		else if (mainCat.getTitle().equals("Business")) {	
+			finalSet.add(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Life insurance companies"));
+			finalSet.add(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Employment classifications"));
+			finalSet.add(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Finance fraud"));
+			childCategories = new HashSet<>(finalSet);
+		}	
+		else if (mainCat.getTitle().equals("Sports")) {	
+			finalSet.add(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Museums established in 1910"));
+			finalSet.add(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("American male triathletes"));
+			finalSet.add(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("FINA World Junior Synchronised Swimming Championships"));
+			childCategories = new HashSet<>(finalSet);
+		}	
+		else if (mainCat.getTitle().equals("Science and technology")) {	
+			finalSet.add(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Crowdsourcing"));
+			finalSet.add(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Anti-competitive behaviour"));
+			finalSet.add(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Auditing"));
+			childCategories = new HashSet<>(finalSet);
+		}
+
+		if (WikipediaSingleton.getInstance().wikipedia.getArticleById(articleID)==null) {
+			return 0;
+		}
+		Map<String,Double> map = new HashMap<>();
+		for(Category c:childCategories) {
+			double P_Cr_c=0.0;
+			double P_e_Cr =0.0;
+			P_Cr_c =1;
+			P_e_Cr =LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(articleID), String.valueOf(c.getId()));
+			double temp =P_e_Cr*P_Cr_c;
+			if (!Double.isNaN(temp)) {
+				map.put(WikipediaSingleton.getInstance().wikipedia.getArticleById(articleID).getTitle()+", "+c.getTitle(), P_e_Cr);
+				result+=temp;
+				countNonZero++;
+			}
+			else{
+				countNan++;
+				LOG.info("similarity could not be calculated category: "+c.getTitle()+" "+c.getChildArticles().length);
+			}
+		}
+
+		if (countNonZero==0) {
+			return 0.0;
+		}
+		Map<String, Double>  sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(map));
+		//sortedMap.forEach((k,v) -> System.out.println("key: "+k+" value:"+v));
+		//		if (mainCat.getTitle().equals("Trade") || mainCat.getTitle().equals("World")) {
+		//System.out.println(MapUtil.getFirst(sortedMap).getKey()+" "+MapUtil.getFirst(sortedMap).getValue());
+		//secondLOG.info(mainCat.getTitle() +"\n"+WikipediaSingleton.getInstance().wikipedia.getArticleById(articleID).getTitle() +", key: "+MapUtil.getFirst(sortedMap).getKey()+" value:"+MapUtil.getFirst(sortedMap).getValue());
 		//		}
-		//		else {
+		//return MapUtil.getFirst(sortedMap).getValue();
+		return result/countNonZero;
+	}
+	private static double get_P_e_c_old(int articleID,Category mainCat) {
+		Set<Category> childCategories;
+		double result =0.0;
+		double countNonZero=0.0;
+
 		childCategories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).mapMainCatAndSubCats.get(mainCat));
 		for(Category c:childCategories) {
 			double P_Cr_c=0.0;
