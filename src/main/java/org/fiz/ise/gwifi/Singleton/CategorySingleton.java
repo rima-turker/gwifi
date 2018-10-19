@@ -13,7 +13,9 @@ import java.util.stream.Stream;
 
 import org.fiz.ise.gwifi.categoryTree.CategorySeedLoaderFromMemory;
 import org.fiz.ise.gwifi.categoryTree.CategorySeedloader;
+import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
 import org.fiz.ise.gwifi.util.Config;
+import org.fiz.ise.gwifi.util.Print;
 
 import edu.kit.aifb.gwifi.model.Category;
 import edu.kit.aifb.gwifi.model.Wikipedia;
@@ -83,16 +85,59 @@ public class CategorySingleton {
 				}
 			}
 		}
-//		for(Entry <String, Set<Category>> e : mapCategoryDept.entrySet()) {
-//			System.out.println(e.getKey()+" "+e.getValue());
+		filterCategories();
+
+	}
+	private void filterCategories() {
+		List<Category> mainCats = new ArrayList<>(setMainCategories);
+		Set<Category> intersectionAllRemove = new HashSet<>();
+		
+		for (int i = 0; i < mainCats.size(); i++) {
+			Set<Category> setTemp = new HashSet<>(mapMainCatAndSubCats.get(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle(mainCats.get(i).getTitle())));
+			System.out.println(mainCats.get(i).getTitle()+" "+mapMainCatAndSubCats.get(mainCats.get(i)).size());
+			for (int j = i+1; j < mainCats.size(); j++) {
+				Set<Category> intersectionFiltered = new HashSet<>();
+				System.out.println(mainCats.get(j).getTitle()+" "+mapMainCatAndSubCats.get(mainCats.get(j)).size());
+				for(Category cT : mapMainCatAndSubCats.get(mainCats.get(j))) {
+					if (!setTemp.contains(cT)) {
+						intersectionFiltered.add(cT);
+					}
+					else {
+						intersectionAllRemove.add(cT);
+					}
+				}
+				System.out.println(mainCats.get(j).getTitle()+" "+intersectionFiltered.size());
+				mapMainCatAndSubCats.put(mainCats.get(j), intersectionFiltered);
+			}
+			Set<Category> oTemp = new HashSet<>(mapMainCatAndSubCats.get(mainCats.get(i)));
+			Set<Category> intersectionFilterO = new HashSet<>();
+			for(Category c : oTemp) {
+				if (!intersectionAllRemove.contains(c)) {
+					intersectionFilterO.add(c);
+				}
+			}
+			System.out.println(mainCats.get(i).getTitle()+" "+intersectionFilterO.size());
+			mapMainCatAndSubCats.put(mainCats.get(i), intersectionFilterO);
+		}
+		///////////////////////////////////////////////////////////////////////DELETE/////////////////////////////////
+//		Set<Category> tech = new HashSet<>(mapMainCatAndSubCats.get(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Technology")));
+//		Set<Category> sci = new HashSet<>(mapMainCatAndSubCats.get(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Science")));
+//		
+//		tech.addAll(sci);
+//		mapMainCatAndSubCats.put(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Technology"), tech);
+//		System.out.println("New tech size "+mapMainCatAndSubCats.get(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Technology")).size());
+//		
+//		for(Entry<String,Set<Category>> e : mapCategoryDept.entrySet()) {
 //			
-//			
-//			if (e.getValue().contains(WikipediaSingleton.getInstance().wikipedia.getCategoryById(36603726))) {
-//				System.out.println(e.getKey());
+//			if (e.getKey().contains("Technology")) {
+//				String depth= e.getKey().split("\t")[1];
+//				Set<Category> setSci = new HashSet<>(mapCategoryDept.get("Science\t"+depth));
+//				Set<Category> setTech = new HashSet<>(e.getValue());
+//				setTech.addAll(setSci);
+//				mapCategoryDept.put(e.getKey(), setTech);
 //			}
 //		}
 	}
-
 	private Set<Category> getChildCategoriesSet(Set<Category> setParent) {
 		Set<Category> child = new HashSet<>();
 		for (Category category : setParent) {

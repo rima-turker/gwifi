@@ -17,6 +17,7 @@
 /src/main/java/TEST/
 /ag_news_csv/
 /src/main/environment/*
+/TrainTFIDF_WEB_*/*
 /TestDataset/
 /Results/*
 /TestDataset_TFIDF_WEB/*
@@ -24,3 +25,5 @@
 /TrainTFID_AG_fromOriginalDataset/*
 /TrainDataset*/*
 /Results*/*
+/AG_DatasetAnalysis/*
+parsed_title*
