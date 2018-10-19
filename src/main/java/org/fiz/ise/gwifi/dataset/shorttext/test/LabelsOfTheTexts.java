@@ -21,12 +21,15 @@ public class LabelsOfTheTexts {
 		Map<Integer, Category> mapLabel = new HashMap<>();
 		mapLabel.put(1, wikipedia.getCategoryByTitle("World"));
 		mapLabel.put(2, wikipedia.getCategoryByTitle("Sports"));
-//		mapLabel.put(3, wikipedia.getCategoryByTitle("Trade"));
 		mapLabel.put(3, wikipedia.getCategoryByTitle("Business"));
-//		mapLabel.put(4, wikipedia.getCategoryByTitle("Science and technology"));
-//		mapLabel.put(4, wikipedia.getCategoryByTitle("Science"));
-//		mapLabel.put(4, wikipedia.getCategoryByTitle("Science"));
 		mapLabel.put(4, wikipedia.getCategoryByTitle("Technology"));
+		
+		
+//		mapLabel.put(5, wikipedia.getCategoryByTitle("Science"));
+//		mapLabel.put(4, wikipedia.getCategoryByTitle("Technology"));
+//		mapLabel.put(4, wikipedia.getCategoryByTitle("Digital technology"));
+//		mapLabel.put(4, wikipedia.getCategoryByTitle("Electronic games"));
+//		mapLabel.put(4, wikipedia.getCategoryByTitle("Technology"));
 		return mapLabel;
 	}
 	public static Map<Category,Integer> getCatValue_AG()

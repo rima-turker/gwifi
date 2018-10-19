@@ -46,7 +46,6 @@ public class HeuristicApproach {
 	 * 
 	 */
 	public static Category getBestMatchingCategory(String shortText,List<Category> gtList) {
-		//shortText="Retail sales improve amid caution The High Street perked up in September,   but consumer confidence is falling as a result of higher interest rates and concerns over the housing market,  figures reveal.";
 		Set<Category> setMainCategories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories);
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
 		HeuristicApproach heuristic = new HeuristicApproach();

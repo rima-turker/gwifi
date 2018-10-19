@@ -1,4 +1,4 @@
-package org.fiz.ise.gwifi.dataset.shorttext.test;
+package org.fiz.ise.gwifi.longText;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +25,6 @@ import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
 import org.fiz.ise.gwifi.dataset.shorttext.test.HeuristicApproach;
 import org.fiz.ise.gwifi.dataset.shorttext.test.LabelsOfTheTexts;
-import org.fiz.ise.gwifi.dataset.shorttext.test.SentenceSegmentator;
 import org.fiz.ise.gwifi.model.NewsgroupsArticle;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
 import org.fiz.ise.gwifi.test.longDocument.NewsgroupParser;
@@ -33,6 +32,7 @@ import org.fiz.ise.gwifi.test.longDocument.YovistoParser;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.FileUtil;
 import org.fiz.ise.gwifi.util.Print;
+import org.fiz.ise.gwifi.util.SentenceSegmentator;
 import org.fiz.ise.gwifi.util.SynchronizedCounter;
 
 import edu.kit.aifb.gwifi.annotation.Annotation;
@@ -142,7 +142,7 @@ public class TestBasedonLongTextDatasets {
 		}
 		System.out.println("Size of Category list "+lstCategory.size());
 		singCategory= CategorySingleton.getInstance(lstCategory);
-		Map<Category, Set<Category>> mapTemp = new HashMap<>(singCategory.map);
+		Map<Category, Set<Category>> mapTemp = new HashMap<>(singCategory.mapMainCatAndSubCats);
 		for(Entry<Category, Set<Category>> e: mapTemp.entrySet())
 		{
 			Category main = e.getKey();
@@ -287,7 +287,7 @@ public class TestBasedonLongTextDatasets {
 	}
 	private Runnable handle(String description, List<Category> gtList,int i) {
 		return () -> {
-			Category bestMatchingCategory= HeuristicApproach.getBestMatchingCategory(description,gtList,mapCategories);
+			Category bestMatchingCategory= HeuristicApproach.getBestMatchingCategory(description,gtList);
 			counterProcessed.increment();
 			if (gtList.contains(bestMatchingCategory)) {
 				counterTruePositive.increment();

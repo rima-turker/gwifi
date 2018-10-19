@@ -9,6 +9,8 @@ public class TimeUtil {
 	
 	public static long getEnd(TimeUnit u,long now) {
 		switch (u) {
+		case MILLISECONDS:
+			return System.currentTimeMillis()-now;
 		case SECONDS:
 			return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()-now);
 		case NANOSECONDS:

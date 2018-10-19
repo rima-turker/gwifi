@@ -41,7 +41,7 @@ public class NLPTopicDetector {
 	private boolean strictDisambiguation;
 	private boolean allowDisambiguations;
 
-	private int maxTopicsForRelatedness = 25;
+	private int maxTopicsForRelatedness = 26;
 	private float disambigConfidenceThreshold = 0.0f;
 
 	private final static String NP1 = "(NN|NR|NNP|NNS|NNPS)+";

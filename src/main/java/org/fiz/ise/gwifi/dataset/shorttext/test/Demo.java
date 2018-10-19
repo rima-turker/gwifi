@@ -29,7 +29,7 @@ public class Demo {
 			LINE_modelSingleton.getInstance();
 		}
 		CategorySingleton singCategory= CategorySingleton.getInstance(Categories.getCategoryList(TestDatasetType_Enum.AG));
-		Map<Category, Set<Category>> mapTemp = new HashMap<>(singCategory.map);
+		Map<Category, Set<Category>> mapTemp = new HashMap<>(singCategory.mapMainCatAndSubCats);
 		for(Entry<Category, Set<Category>> e: mapTemp.entrySet())
 		{
 			Category main = e.getKey();
@@ -49,7 +49,7 @@ public class Demo {
 				if (input.equals(null)) {
 					continue;
 				}
-				Category bestMatchingCategory = HeuristicApproach.getBestMatchingCategory(input,null,mapCategories);
+				Category bestMatchingCategory = HeuristicApproach.getBestMatchingCategory(input,null);
 				System.out.println("predicted: "+bestMatchingCategory.getTitle());
 			} catch (IOException e) {
 				// TODO Auto-generated catch block

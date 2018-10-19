@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -21,7 +22,6 @@ import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
 import org.fiz.ise.gwifi.dataset.shorttext.test.LabelsOfTheTexts;
-import org.fiz.ise.gwifi.dataset.shorttext.test.SentenceSegmentator;
 import org.fiz.ise.gwifi.dataset.shorttext.test.TestBasedonSortTextDatasets;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
 import org.fiz.ise.gwifi.test.longDocument.YovistoParser;
@@ -31,6 +31,8 @@ import org.fiz.ise.gwifi.util.FileUtil;
 import org.fiz.ise.gwifi.util.MergeTwoFiles;
 import org.fiz.ise.gwifi.util.Print;
 import org.fiz.ise.gwifi.util.WikipediaFilesUtil;
+
+import com.hp.hpl.jena.sparql.pfunction.library.listIndex;
 
 import edu.kit.aifb.gwifi.model.Article;
 import edu.kit.aifb.gwifi.model.Category;
@@ -46,6 +48,8 @@ public class DatasetGeneration_TFIDF {
 	private final static String WIKI_ALL_FILES= Config.getString("WIKI_ALL_FILES","");
 	private final static String DATASET_TEST_AG= Config.getString("DATASET_TEST_AG","");
 	private final static String DATASET_TEST_WEB= Config.getString("DATASET_TEST_WEB","");
+	private final static String DATASET_TRAIN_AG= Config.getString("DATASET_TRAIN_AG","");
+	private final static String DATASET_TRAIN_WEB= Config.getString("DATASET_TRAIN_WEB","");
 	private final static Integer NUMBER_OF_ARTICLES_PER_LABEL=Config.getInt("NUMBER_OF_ARTICLES_PER_LABEL",0);
 	private final static String DATASET_TEST_YOVISTO = Config.getString("DATASET_TEST_YOVISTO","");
 	private static Wikipedia wikipedia = WikipediaSingleton.getInstance().wikipedia;
@@ -56,8 +60,22 @@ public class DatasetGeneration_TFIDF {
 		//	generateTestSetTFIDF_YOVISTO();
 		//generateTestSetTFIDF_AG();
 		//splitDataset("TrainDataset_TFIDF_Yovisto",0.3);
-		generateDataSetTFIDF_YOVISTO(3);
+		//generateDataSetTFIDF_YOVISTO(3);
 
+		
+		
+//		List<Integer> lst = new ArrayList<>();
+////		lst.add(100);
+////		lst.add(500);
+////		lst.add(1000);
+//		lst.add(3000);
+//		for(int m : lst ) {
+//			for (int i = 0; i < 10; i++) {
+//				generateTrainSetPartitionTFIDF_WEB(m,i);
+//
+//			}
+//		}
+		generateTrainSetPartitionTFIDF_AG(50, 0);
 	}
 
 	private static void generateDataSetTFIDF_YOVISTO(Integer numberOfSentences) {
@@ -215,10 +233,102 @@ public class DatasetGeneration_TFIDF {
 			System.out.println(e.getMessage());
 		}
 	}
+	private static void generateTrainSetPartitionTFIDF_WEB(int numberOfSamples,int folderNumber) {
+		try {
+			File directory = new File("TrainTFID_WEB_fromOriginalDataset_"+numberOfSamples+"_"+folderNumber);
+			if (! directory.exists()){
+				directory.mkdir();
+			}
+			List<String> lines = FileUtils.readLines(new File(DATASET_TRAIN_WEB), "utf-8");
+			Collections.shuffle(lines);
+			List<String> subList = new ArrayList<>(lines.subList(0, numberOfSamples));
+			Map<String, List<String>> mapResult = new HashMap<>();
+			String[] arrLines = new String[subList.size()];
+			arrLines = subList.toArray(arrLines);
+			int i=0;
+			for (i = 0; i < arrLines.length; i++) {
+				String[] split = arrLines[i].split(" ");
+				String label = split[split.length-1];
+				String snippet = arrLines[i].substring(0, arrLines[i].length()-(label).length()).trim();
+				List<String> temp ;
+				if (mapResult.containsKey(label) ) {
+					temp = new ArrayList<>(mapResult.get(label));
+					temp.add(snippet);
+				}
+				else {
+					temp = new ArrayList<>();
+					temp.add(snippet);
+				}
+				mapResult.put(label, temp);
+			}
+			for(Entry<String, List<String>> e: mapResult.entrySet() ) {
+				i=0;
+				String folderName = e.getKey();
+				directory = new File("TrainTFID_WEB_fromOriginalDataset_"+numberOfSamples+"_"+folderNumber+File.separator+folderName);
+				if (! directory.exists()){
+					directory.mkdir();
+				}
+				List<String> lstData = new ArrayList<>(e.getValue());
+				for(String s : lstData) {
+					FileUtil.writeDataToFile(Arrays.asList(s), directory+File.separator+ ++i,false);
+				}
+			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+
+	}
+	private static void generateTrainSetPartitionTFIDF_AG(int numberOfSamples,int folderNumber) {
+		try {
+			File directory = new File("TrainTFID_AG_fromOriginalDataset_"+numberOfSamples+"_"+folderNumber);
+			if (! directory.exists()){
+				directory.mkdir();
+			}
+			List<String> lines = FileUtils.readLines(new File(DATASET_TRAIN_AG), "utf-8");
+			Collections.shuffle(lines);
+			List<String> subList = new ArrayList<>(lines.subList(0, numberOfSamples));
+			Map<String, List<String>> mapResult = new HashMap<>();
+			Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG());
+			String[] arrLines = new String[subList.size()];
+			arrLines = subList.toArray(arrLines);
+			int i=0;
+			for (i = 0; i < arrLines.length; i++) {
+				String[] split = arrLines[i].split("\",\"");
+				String label = split[0].replace("\"", "");
+				String title = split[1].replace("\"", "");
+				String description = split[2].replace("\"", "");
+
+				List<String> temp ;
+				if (mapResult.containsKey(label) ) {
+					temp = new ArrayList<>(mapResult.get(label));
+					temp.add(title+" "+description);
+				}
+				else {
+					temp = new ArrayList<>();
+					temp.add(title+" "+description);
+				}
+				mapResult.put(label, temp);
+			}
+			for(Entry<String, List<String>> e: mapResult.entrySet() ) {
+				i=0;
+				String folderName = mapLabel.get(Integer.parseInt(e.getKey())).getTitle();
+				directory = new File("TrainTFID_AG_fromOriginalDataset_"+numberOfSamples+"_"+folderNumber+File.separator+folderName);
+				if (! directory.exists()){
+					directory.mkdir();
+				}
+				List<String> lstData = new ArrayList<>(e.getValue());
+				for(String s : lstData) {
+					FileUtil.writeDataToFile(Arrays.asList(s), directory+File.separator+ ++i,false);
+				}
+			}
+
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+	}
 	private static void generateTestSetTFIDF_AG() {
 		try {
-			//			List<String> lines = FileUtils.readLines(new File(DATASET_TEST_AG), "utf-8");
-			List<String> lines = FileUtils.readLines(new File("/home/rima/playground/GeneralFiles/gwifi/Dataset_ShortTextClassification/ag_news_csv/train.csv"), "utf-8");
+			List<String> lines = FileUtils.readLines(new File(DATASET_TEST_AG), "utf-8");
 			Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG());
 			String[] arrLines = new String[lines.size()];
 			arrLines = lines.toArray(arrLines);
@@ -229,13 +339,54 @@ public class DatasetGeneration_TFIDF {
 				String title = split[1].replace("\"", "");
 				String description = split[2].replace("\"", "");
 				String folderName = mapLabel.get(Integer.parseInt(label)).getTitle();
-				//				File directory = new File("TestDataset"+File.separator+folderName);
 				File directory = new File("TrainTFID_AG_fromOriginalDataset"+File.separator+folderName);
 				if (! directory.exists()){
 					directory.mkdir();
 				}
 				FileUtil.writeDataToFile(Arrays.asList(title+" "+description), directory+File.separator+i,false);
 			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+	}
+	private static void generateTrainSetTFIDF_AG_BasedOnCertainNumber(int numberOfFilesPerCategory) {
+		try {
+			List<String> lines = FileUtils.readLines(new File(DATASET_TRAIN_AG), "utf-8");
+			Map<String, List<String>> mapResult = new HashMap<>();
+			Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG());
+			String[] arrLines = new String[lines.size()];
+			arrLines = lines.toArray(arrLines);
+			int i=0;
+			for (i = 0; i < arrLines.length; i++) {
+				String[] split = arrLines[i].split("\",\"");
+				String label = split[0].replace("\"", "");
+				String title = split[1].replace("\"", "");
+				String description = split[2].replace("\"", "");
+
+				List<String> temp ;
+				if (mapResult.containsKey(label) && mapResult.get(label).size()<numberOfFilesPerCategory) {
+					temp = new ArrayList<>(mapResult.get(label));
+					temp.add(title+" "+description);
+				}
+				else {
+					temp = new ArrayList<>();
+					temp.add(title+" "+description);
+				}
+				mapResult.put(label, temp);
+			}
+			for(Entry<String, List<String>> e: mapResult.entrySet() ) {
+				i=0;
+				String folderName = mapLabel.get(Integer.parseInt(e.getKey())).getTitle();
+				File directory = new File("TrainTFID_AG_fromOriginalDataset_50"+File.separator+folderName);
+				if (! directory.exists()){
+					directory.mkdir();
+				}
+				List<String> lstData = new ArrayList<>(e.getValue());
+				for(String s : lstData) {
+					FileUtil.writeDataToFile(Arrays.asList(s), directory+File.separator+ ++i,false);
+				}
+			}
+
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 		}

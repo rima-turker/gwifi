@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
@@ -26,6 +27,7 @@ public class PageCategorySingleton {
 			Set<Category> childCategories = new HashSet<>(
 					CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).mapMainCatAndSubCats
 							.get(c));
+		//	System.out.println("Page sing: "+c.getTitle()+" "+childCategories.size());
 			Set<Article> sArticle = new HashSet<>();
 			sArticle.addAll(Arrays.asList(c.getChildArticles()));
 			for (Category child : childCategories) {

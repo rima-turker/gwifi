@@ -49,7 +49,7 @@ public class HeuristicApproachConsideringCategorySemantics {
 	 * 
 	 */
 	public static Category getBestMatchingCategory(String shortText,List<Category> gtList) {
-		List<Integer> blackList = new ArrayList<>(AnnonatationUtil.getEntityBlackList());
+		List<Integer> blackList = new ArrayList<>(AnnonatationUtil.getEntityBlackList_AGNews());
 		
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
 		HeuristicApproachConsideringCategorySemantics heuristic = new HeuristicApproachConsideringCategorySemantics();

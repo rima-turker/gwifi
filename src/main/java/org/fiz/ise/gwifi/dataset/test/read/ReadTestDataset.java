@@ -8,8 +8,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.fiz.ise.gwifi.dataset.shorttext.test.LabelsOfTheTexts;
 import org.fiz.ise.gwifi.util.Config;
+import org.fiz.ise.gwifi.util.Print;
 
 import edu.kit.aifb.gwifi.model.Category;
 
@@ -52,5 +54,26 @@ public class ReadTestDataset {
 			e.printStackTrace();
 		}
 		return dataset;
+	}
+	public static List<String> read_WEB_BasedOnCategory(Category c){
+		try {
+			List<String> dataset = new ArrayList<>();
+			List<String> lines = FileUtils.readLines(new File(Config.getString("DATASET_TEST_WEB","")), "utf-8");
+			System.out.println("size of the file "+lines.size());
+			String[] arrLines = new String[lines.size()];
+			arrLines = lines.toArray(arrLines);
+			for (int i = 0; i < arrLines.length; i++) {
+				String[] split = arrLines[i].split(" ");
+				String label = split[split.length-1];
+				String snippet = arrLines[i].substring(0, arrLines[i].length()-(label).length()).trim();
+				if (label.contains(c.getTitle().toLowerCase())) {
+					dataset.add(snippet);
+				}
+			}
+			return dataset;
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return null;
 	}
 }
