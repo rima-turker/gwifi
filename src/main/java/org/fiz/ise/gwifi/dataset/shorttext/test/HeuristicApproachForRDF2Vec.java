@@ -1,5 +1,4 @@
 package org.fiz.ise.gwifi.dataset.shorttext.test;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -20,6 +19,7 @@ import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
 import org.fiz.ise.gwifi.model.Model_LINE;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.util.AnnonatationUtil;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.EmbeddingsService;
 import org.fiz.ise.gwifi.util.MapUtil;
@@ -36,16 +36,18 @@ import edu.kit.aifb.gwifi.model.Wikipedia;
 import edu.kit.aifb.gwifi.service.NLPAnnotationService;
 import gnu.trove.impl.hash.THashIterator;
 
-public class HeuristicApproach_CONLL {
-
-	private final static TestDatasetType_Enum TEST_DATASET_TYPE = Config.getEnum("TEST_DATASET_TYPE");
+public class HeuristicApproachForRDF2Vec {
+	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
+	private static Set<Category> setMainCategories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories);
 	private static boolean LOAD_MODEL = Config.getBoolean("LOAD_MODEL", false);
 	private final static Integer DEPTH_OF_CAT_TREE = Config.getInt("DEPTH_OF_CAT_TREE", 0);
-	private static final Logger LOG = Logger.getLogger(HeuristicApproachCIKMPaperAGNews.class);
+	private static Map<Category, Set<Category>> mapCategories;
+	private static final Logger LOG = Logger.getLogger(HeuristicApproach_CONLL.class);
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
+	static final Logger resultLog = Logger.getLogger("reportsLogger");
 	private final static Map<String, Set<Category>> mapDepthCategory = new HashMap<>(
 			CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).mapCategoryDept);
-	static final Logger resultLog = Logger.getLogger("reportsLogger");
+
 	/*
 	 * The main purpose of this class is the calculate the similarity and decide 
 	 * which category a text belongs to based on the probability
@@ -54,52 +56,60 @@ public class HeuristicApproach_CONLL {
 		Set<Category> setMainCategories = new HashSet<>(
 				CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories); //get predefined cats
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-		HeuristicApproach_CONLL heuristic = new HeuristicApproach_CONLL();
+		HeuristicApproachForRDF2Vec heuristic = new HeuristicApproachForRDF2Vec();
 		StringBuilder mainBuilder = new StringBuilder();
 		try {
-			Map<Category, Double> mapScore = new HashMap<>(); 
-			mainBuilder.append(shortText+"\n");
+			Map<Category, Double> mapScore = new HashMap<>();
+			mainBuilder.append(shortText + "\n");
 			StringBuilder strBuild = new StringBuilder();
-			for(Category c: gtList)	{
-				strBuild.append(c+" ");
+			for (Category c : gtList) {
+				strBuild.append(c + " ");
 			}
 			List<Annotation> lstAnnotations = new ArrayList<>();
-			service.annotate(shortText, lstAnnotations);
-			mainBuilder.append(strBuild.toString()+"\n");
-			Map<Integer, Map<Integer, Double>> contextSimilarity = new HashMap<>(calculateContextEntitySimilarities(lstAnnotations));
-			for (Category mainCat : setMainCategories) {
+			service.annotate(shortText, lstAnnotations);//annotate the given text
+			List<Annotation> filteredAnnotations = new ArrayList<>(filterEntitiesNotInVectorSpace(lstAnnotations));
+			mainBuilder.append(strBuild.toString() + "\n" + "\n");
+			Map<Integer, Map<Integer, Double>> contextSimilarity = new HashMap<>(
+					calculateContextEntitySimilarities(filteredAnnotations));//the similarity between entities present in the text are calculated 
+			for (Category mainCat : setMainCategories) { //iterate over categories and calculate a score for each of them
 				double score = 0.0; 
-				for(Annotation a:lstAnnotations) {
-					score+=heuristic.calculateScore(a, mainCat, contextSimilarity);
-				}
+				for (Annotation a : filteredAnnotations) {
+					//if (!AnnonatationUtil.getEntityBlackList_AGNews().contains(a.getId())) { //we had so many noisy entities therefore filtering required
+					if (!AnnonatationUtil.getEntityBlackList_WebSnippets().contains(a.getId())) {
+						double tempScore = heuristic.calculateScore(a, mainCat, contextSimilarity);
+						score +=tempScore ;
+					} 
+				}  
 				mapScore.put(mainCat, score);
 			}
 			mainBuilder.append("\n");
-			Map<Category, Double>  sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(mapScore));
+			Map<Category, Double> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(mapScore));
 			Category firstElement = MapUtil.getFirst(sortedMap).getKey();
 
-			for(Entry<Category, Double> e: sortedMap.entrySet()){			
-				mainBuilder.append(e.getKey()+" "+e.getValue()+"\n");
+			for (Entry<Category, Double> e : sortedMap.entrySet()) {
+				mainBuilder.append(e.getKey() + " " + e.getValue() + "\n");
 			}
-			mainBuilder.append(""+"\n");
-			mainBuilder.append(""+"\n");
-//			if (!gtList.contains(firstElement)) {
-//				secondLOG.info(mainBuilder.toString());
-//			}
+			if (lstAnnotations.size()<1) {
+				secondLOG.info("Could not find any annpotation");
+			}
+			if (!gtList.contains(firstElement)) {
+				secondLOG.info(mainBuilder.toString());
+			}
 			return firstElement;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
-	private double calculateScoreBasedWeightMaxCatSimilarity(Annotation a, Category mainCat) {
-		Entry<Category, Double> entry = getMostSimilarCategory(a,mainCat);
-		double P_e_c = 0.0;
-		if (entry!=null) {
-			P_e_c= entry.getValue();
+
+	public static List<Annotation> filterEntitiesNotInVectorSpace(List<Annotation> lstAnnotations) {
+		List<Annotation> result = new ArrayList<>();
+		for(Annotation a : lstAnnotations) {
+			if (LINE_modelSingleton.getInstance().lineModel.hasWord(convertURIToRDF2VecBased(a.getURL(),true))) {
+				result.add(a);
+			}
 		}
-		double P_Se_c=get_P_Se_c(a);
-		return (P_e_c*P_Se_c);
+		return result;
 	}
 	private double calculateScore(Annotation a, Category mainCat,
 			Map<Integer, Map<Integer, Double>> contextSimilarity) {
@@ -113,13 +123,22 @@ public class HeuristicApproach_CONLL {
 		}
 		return (P_e_c*P_Se_c*P_Ce_e);
 	}
+	public static String convertURIToRDF2VecBased(String uri,boolean entity) {
+		if (entity) {
+			return "e_"+uri.replace("http://en.wikipedia.org/wiki/", "").toLowerCase().replaceAll(" ", "_");
+		}
+		return "c_"+uri.replace(" ", "_").toLowerCase();
+//		if (entity) {
+//			return "<http://dbpedia.org/resource/"+uri.replace("http://en.wikipedia.org/wiki/", "").replaceAll(" ", "_")+">";
+//		}
+//		return "<http://dbpedia.org/resource/Category:"+uri.replace("http://en.wikipedia.org/wiki/", "").replaceAll(" ", "_")+">";
+	}
 	private static String convertURIToConllBased(String uri,boolean entity) {
 		if (entity) {
 			return "e_"+uri.replace("http://en.wikipedia.org/wiki/", "").toLowerCase().replaceAll(" ", "_");
 		}
 		return "c_"+uri.replace(" ", "_").toLowerCase();
 	}
-	
 	private static Map<Integer, Map<Integer, Double>>  calculateContextEntitySimilarities(List<Annotation> annotations) {
 		Map<Integer, Map<Integer, Double>> mapContextSimilarity = new HashMap<>();
 		for(Annotation a: annotations){
@@ -127,19 +146,19 @@ public class HeuristicApproach_CONLL {
 			for(Annotation c: annotations){
 				double similarity=.0;
 				if (LOAD_MODEL) {
-					similarity=(LINE_modelSingleton.getInstance().lineModel.similarity(convertURIToConllBased(a.getTitle(),true), convertURIToConllBased(c.getTitle(),true)));
+					similarity=(LINE_modelSingleton.getInstance().lineModel.similarity(convertURIToRDF2VecBased(a.getTitle(),true), convertURIToRDF2VecBased(c.getTitle(),true)));
 
-					if (!LINE_modelSingleton.getInstance().lineModel.hasWord(convertURIToConllBased(a.getTitle(),true))) {
-						secondLOG.info(convertURIToConllBased(a.getTitle(),true));
+					if (!LINE_modelSingleton.getInstance().lineModel.hasWord(convertURIToRDF2VecBased(a.getTitle(),true))) {
+						secondLOG.info(convertURIToRDF2VecBased(a.getTitle(),true));
 					}
 					else {
-						resultLog.info(convertURIToConllBased(a.getTitle(),true));
+						resultLog.info(convertURIToRDF2VecBased(a.getTitle(),true));
 					}
-					if (!LINE_modelSingleton.getInstance().lineModel.hasWord(convertURIToConllBased(c.getTitle(),true))) {
-						secondLOG.info(convertURIToConllBased(c.getTitle(),true));
+					if (!LINE_modelSingleton.getInstance().lineModel.hasWord(convertURIToRDF2VecBased(c.getTitle(),true))) {
+						secondLOG.info(convertURIToRDF2VecBased(c.getTitle(),true));
 					}
 					else {
-						resultLog.info(convertURIToConllBased(c.getTitle(),true));
+						resultLog.info(convertURIToRDF2VecBased(c.getTitle(),true));
 					}
 				}
 				temp.put(c.getId(), similarity);
@@ -202,7 +221,7 @@ public class HeuristicApproach_CONLL {
 					continue;
 				}
 				double P_cm_c = 1.0 / (depth + 1.0);
-				double P_e_c = LINE_modelSingleton.getInstance().lineModel.similarity(convertURIToConllBased(an.getURL(),true),convertURIToConllBased(c.getTitle(),false));
+				double P_e_c = LINE_modelSingleton.getInstance().lineModel.similarity(convertURIToRDF2VecBased(an.getURL(),true),convertURIToRDF2VecBased(c.getTitle(),false));
 				//double P_e_c = getSimilarity(String.valueOf(article.getId()), String.valueOf(c.getId()));
 				double temp = P_cm_c * P_e_c;
 
@@ -372,3 +391,6 @@ public class HeuristicApproach_CONLL {
 		return null;
 	}
 }
+
+
+

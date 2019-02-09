@@ -24,7 +24,7 @@ import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
 import org.fiz.ise.gwifi.dataset.shorttext.test.HeuristicApproach;
-import org.fiz.ise.gwifi.dataset.shorttext.test.LabelsOfTheTexts;
+import org.fiz.ise.gwifi.dataset.test.LabelsOfTheTexts;
 import org.fiz.ise.gwifi.model.NewsgroupsArticle;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
 import org.fiz.ise.gwifi.test.longDocument.NewsgroupParser;
@@ -171,7 +171,7 @@ public class TestBasedonLongTextDatasets {
 				String[] categories = split[1].split(",");
 				String content = split[2];
 				String sentence=segment2Sentence(content,numberOfSentences);
-					//			if (categories.length==1 && !categories[0].contains(" ")) { //58 is number of multi word categories I ignore them. 1452 is the total number of the dataset
+				//			if (categories.length==1 && !categories[0].contains(" ")) { //58 is number of multi word categories I ignore them. 1452 is the total number of the dataset
 				if (categories.length==1) { //58 is number of multi word categories I ignore them. 1452 is the total number of the dataset
 					Category c = wikipedia.getCategoryByTitle(StringUtils.capitalize(categories[0]));
 					if (c!=null) {

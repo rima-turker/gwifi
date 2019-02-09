@@ -10,16 +10,18 @@ import java.util.Map.Entry;
 
 import org.apache.commons.io.FileUtils;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
-import org.fiz.ise.gwifi.dataset.shorttext.test.LabelsOfTheTexts;
+import org.fiz.ise.gwifi.dataset.test.LabelsOfTheTexts;
 
 import edu.kit.aifb.gwifi.model.Category;
 
 public class EvaluateClassifictaionResults 
 {
 	public static void main(String[] args) {
-		String fileName = "/home/rtue/eclipse-workspace/DatalessClassificationResults/WebSnippets.txt";
-		String fileClassification= "/home/rtue/eclipse-workspace/DatalessClassificationResults/WEB_TopDown/WEB_TopDown.txt";
+//		String fileName = "AG_News.txt";
+		String fileName = "/home/rtue/eclipse-workspace/Resources/DatalessClassificationResults/WebSnippets.txt";
+		String fileClassification= "/home/rtue/eclipse-workspace/Resources/DatalessClassificationResults/WEB_W2V_TopDown/log";
 		evaluateWebNews(fileName,fileClassification);
+		//evaluateAGNews(fileName,fileClassification);
 	}
 	public static void evaluateWebNews(String fileName, String fileClassification) {
 		try {
@@ -78,17 +80,16 @@ public class EvaluateClassifictaionResults
 		}
 
 	}
-	public static void evaluateAGNews(String fileName) {
+	public static void evaluateAGNews(String dataset, String classificationResults) {
 		try {
-			List<String> lines = new ArrayList<>(FileUtils.readLines(new File("/home/rtue/eclipse-workspace/DatalessClassificationResults/AG_News.txt"), "utf-8"));
+			List<String> lines = new ArrayList<>(FileUtils.readLines(new File(dataset), "utf-8"));
 //			List<String> linesClassification = new ArrayList<>(FileUtils.readLines(new File("/home/rtue/eclipse-workspace/DatalessClassificationResults/AG_BottomUp/AG_BottomUp.txt"), "utf-8"));
-			List<String> linesClassification = new ArrayList<>(FileUtils.readLines(new File("/home/rtue/eclipse-workspace/DatalessClassificationResults/AG_TopDown/AG_TopDown.txt"), "utf-8"));
+			List<String> linesClassification = new ArrayList<>(FileUtils.readLines(new File(classificationResults), "utf-8"));
 			Map<String, String> mapDataset = new HashMap<>();
 			Map<String, String> mapClassificaton = new HashMap<>();
 			Map<Integer, Category> catValue_AG = LabelsOfTheTexts.getLables_AG();
 			catValue_AG.put(1, WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Society"));
 			catValue_AG.put(4, WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Science and technology"));
-
 
 			for(String line: lines) {
 				String[] split = line.split("\t");

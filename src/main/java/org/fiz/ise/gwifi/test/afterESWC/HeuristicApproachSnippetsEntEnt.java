@@ -1,4 +1,4 @@
-package org.fiz.ise.gwifi.dataset.shorttext.test;
+package org.fiz.ise.gwifi.test.afterESWC;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +17,7 @@ import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.PageCategorySingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
+import org.fiz.ise.gwifi.dataset.shorttext.test.HeuristicApproachCIKMPaperAGNews;
 import org.fiz.ise.gwifi.model.Model_LINE;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
@@ -31,13 +32,13 @@ import edu.kit.aifb.gwifi.model.Article;
 import edu.kit.aifb.gwifi.model.Category;
 import edu.kit.aifb.gwifi.model.Page;
 import edu.kit.aifb.gwifi.service.NLPAnnotationService;
-
-public class HeuristicApproachCIKMPaper {
+@Deprecated
+public class HeuristicApproachSnippetsEntEnt {
 
 	private final static TestDatasetType_Enum TEST_DATASET_TYPE = Config.getEnum("TEST_DATASET_TYPE");
 	private static boolean LOAD_MODEL = Config.getBoolean("LOAD_MODEL", false);
 	private final static Integer DEPTH_OF_CAT_TREE = Config.getInt("DEPTH_OF_CAT_TREE", 0);
-	private static final Logger LOG = Logger.getLogger(HeuristicApproachCIKMPaper.class);
+	private static final Logger LOG = Logger.getLogger(HeuristicApproachSnippetsEntEnt.class);
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 	private final static Map<String, Set<Category>> mapDepthCategory = new HashMap<>(
 			CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).mapCategoryDept);
@@ -50,12 +51,10 @@ public class HeuristicApproachCIKMPaper {
 	 * 
 	 */
 	public static Category getBestMatchingCategory(String shortText, List<Category> gtList) {
-	//	shortText="diegomaradona info diego maradona information website dedicated argentine football legend diego maradona";
-		
 		Set<Category> setMainCategories = new HashSet<>(
 				CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories); //get predefined cats
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-		HeuristicApproachCIKMPaper heuristic = new HeuristicApproachCIKMPaper();
+		HeuristicApproachSnippetsEntEnt heuristic = new HeuristicApproachSnippetsEntEnt();
 		StringBuilder mainBuilder = new StringBuilder();
 		try {
 			Map<Category, Double> mapScore = new HashMap<>();
@@ -66,14 +65,26 @@ public class HeuristicApproachCIKMPaper {
 			}
 			List<Annotation> lstAnnotations = new ArrayList<>();
 			service.annotate(shortText, lstAnnotations);//annotate the given text
+			List<Annotation> filteredAnnotations = new ArrayList<>(HeuristicApproachCIKMPaperAGNews.filterEntitiesNotInVectorSpace(lstAnnotations));
 			mainBuilder.append(strBuild.toString() + "\n" + "\n");
+			
 			Map<Integer, Map<Integer, Double>> contextSimilarity = new HashMap<>(
-					calculateContextEntitySimilarities(lstAnnotations));//the similarity between entities present in the text are calculated 
+					calculateContextEntitySimilarities(filteredAnnotations));//the similarity between entities present in the text are calculated 
+			
 			for (Category mainCat : setMainCategories) { //iterate over categories and calculate a score for each of them
 				double score = 0.0; 
-				for (Annotation a : lstAnnotations) {
-						score += heuristic.calculateScore(a, mainCat, contextSimilarity);
-				}  
+				for (Annotation a : filteredAnnotations) {
+					if (!AnnonatationUtil.getEntityBlackList_WebSnippets().contains(a.getId())&&WikipediaSingleton.getInstance().getArticle(a.getTitle())!=null)  {
+						double tempScore;
+						if (mainCat.getTitle().equalsIgnoreCase("Sports")) {
+							tempScore = heuristic.calculateScore(a, WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Sport"), contextSimilarity);
+						}
+						else{
+							tempScore = heuristic.calculateScore(a, WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(mainCat.getTitle()), contextSimilarity);
+						}
+						score +=tempScore ;
+					}
+				} 
 				mapScore.put(mainCat, score);
 			}
 			mainBuilder.append("\n");
@@ -95,11 +106,24 @@ public class HeuristicApproachCIKMPaper {
 	/*
 	 * This function calculates a score for a given annotation and a main category
 	 */
-	private double calculateScore(Annotation a, Category mainCat, Map<Integer, Map<Integer, Double>> contextSimilarity) {
-		double P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle(a.getTitle()), mainCat); 
-		double P_Se_c=get_P_Se_c(a);
-		double P_Ce_e=1;
+	private double calculateScore(Annotation a, Article cArticle, Map<Integer, Map<Integer, Double>> contextSimilarity) {
+		double P_e_c=0; 
+		double P_Se_c=1;
+		//		if(a.getId()==30653) {
+		if(a.getMention().getTerm().toLowerCase().trim().equals("consumption")||a.getMention().getTerm().toLowerCase().trim().equals("consumption")) {
+			P_e_c = HeuristicApproachAGNewsEntEnt.get_P_e_c(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Consumption (economics)"), cArticle); 
+		}
+		if(a.getId()==13930) {//House band --> white house
+			P_e_c = HeuristicApproachAGNewsEntEnt.get_P_e_c(WikipediaSingleton.getInstance().wikipedia.getArticleById(33057), cArticle); 
+		}
 		
+		else {
+			P_e_c = HeuristicApproachAGNewsEntEnt.get_P_e_c(WikipediaSingleton.getInstance().getArticle(a.getTitle()), cArticle);
+			P_Se_c=get_P_Se_c(a);
+		}
+
+
+		double P_Ce_e=1;
 		if (contextSimilarity.size()>1) {
 			P_Ce_e=get_P_Ce_e_efficient(a.getId(),contextSimilarity);
 		}
@@ -124,81 +148,7 @@ public class HeuristicApproachCIKMPaper {
 		}
 		return mapContextSimilarity;
 	}
-	private static double get_P_e_c(Article article, Category mainCat) {
-		double countNonZero = 0;
-		double result = 0.0;
-		final Set<Article> cArticle = new HashSet<>(
-				PageCategorySingleton.getInstance().mapMainCatAndArticles.get(mainCat));
-		final Set<Article> setOfArticleWithCategoryAndEntity = new HashSet<>();
-		for (final Article art : cArticle) {
-			List<Article> linksOutList = TestBasedonSortTextDatasets.CACHE.get(art);
-			if(linksOutList!=null) {
-				if(linksOutList.contains(article)) {
-					setOfArticleWithCategoryAndEntity.add(art);
-				}
-			}else {
-				linksOutList = Arrays.asList(art.getLinksOut());
-				TestBasedonSortTextDatasets.CACHE.put(art,new ArrayList<>(linksOutList));
-				if(linksOutList.contains(article)) {
-					setOfArticleWithCategoryAndEntity.add(art);
-				}
-			}
-			//			if (Arrays.asList(art.getLinksOut()).contains(article)) {
-			//				setOfArticleWithCategoryAndEntity.add(art);
-			//			}
-		}
-		if (setOfArticleWithCategoryAndEntity.size() > 0) {
-			final HashSet<Category> setOfArticleCategory = new HashSet<>();
-			for (final Article a : setOfArticleWithCategoryAndEntity) {
-				final HashSet<Category> temp = new HashSet<>(Arrays.asList(a.getParentCategories()));
-				setOfArticleCategory.addAll(temp);
-			}
-			boolean check = false;
-			for (Category c : setOfArticleCategory) {
-				int depth = -1;
-
-				if (c.getTitle().equals(mainCat.getTitle())) {
-					depth = 0;
-					check = true;
-				}
-				else {
-					for (Entry<String, Set<Category>> e : mapDepthCategory.entrySet()) {
-						if (e.getKey().contains(mainCat.getTitle()) && e.getValue().contains(c)) {
-							String Sdept = e.getKey().split("\t")[1];
-							depth = Integer.valueOf(Sdept)+1;
-							check = true;
-							break;
-						}
-					}
-				}
-				if (depth == -1) {
-					continue;
-				}
-				double P_cm_c = 1.0 / (depth + 1.0);
-				double P_e_c = LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(article.getId()), String.valueOf(c.getId()));
-
-				double temp = P_cm_c * P_e_c;
-
-				if (!Double.isNaN(temp)) {
-					result += temp;
-					countNonZero++;
-				} else {
-					LOG.info("similarity could not be calculated category: " + c.getTitle() + " "
-							+ c.getChildArticles().length);
-				}
-			}
-			if (check == false) {
-				System.out.println("The depth is zero could not find the category in the category tree");
-				System.out.println(mainCat);
-				System.out.println(setOfArticleCategory);
-				System.exit(0);
-			}
-
-			return result;
-		}
-		return 0.0;
-	}
-
+	
 	private static double get_P_Se_c(Annotation a) {// comes from EL system weight value because we calculate the
 		// confidence based on the prior prob
 		return a.getWeight();

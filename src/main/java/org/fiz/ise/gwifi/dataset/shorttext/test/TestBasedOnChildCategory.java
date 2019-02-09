@@ -23,6 +23,7 @@ import org.fiz.ise.gwifi.Singleton.LINE_2modelSingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
+import org.fiz.ise.gwifi.dataset.test.LabelsOfTheTexts;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.FileUtil;

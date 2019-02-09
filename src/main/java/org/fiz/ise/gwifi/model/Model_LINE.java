@@ -14,5 +14,5 @@ public enum Model_LINE {
 	CONLL,
 	GOOGLE,
 	PTE_modified,
-	PTE_modified_categoryUndirected;
+	RDF2Vec;
 }

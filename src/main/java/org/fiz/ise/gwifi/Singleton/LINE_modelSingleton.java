@@ -41,15 +41,17 @@ public class LINE_modelSingleton {
     		else if (LINE_MODEL_NAME.equals(Model_LINE.PTE_modified)) {
     			ADDRESS_OF_LINE_MODEL = Config.getString("ADDRESS_OF_PTE_modified","");
 			}
-    		else if (LINE_MODEL_NAME.equals(Model_LINE.PTE_modified_categoryUndirected)) {
-    			ADDRESS_OF_LINE_MODEL = Config.getString("ADDRESS_OF_PTE_modified_categoryUndirected","");
+    		else if (LINE_MODEL_NAME.equals(Model_LINE.RDF2Vec)) {
+    			ADDRESS_OF_LINE_MODEL = Config.getString("ADDRESS_OF_RDF2VEC","");
 			}
+    		
     		
 			System.out.println("ADDRESS_OF_LINE_MODEL "+ADDRESS_OF_LINE_MODEL);
     		lineModel=WordVectorSerializer.readWord2VecModel(ADDRESS_OF_LINE_MODEL);
     		System.out.println("Time took to load model minutes :"+ TimeUnit.SECONDS.toMinutes(TimeUtil.getEnd(TimeUnit.SECONDS, now)));
 		} catch (Exception e) {
 			System.out.println("Exception initializing LINE_modelSingleton");
+			System.out.println(e.getMessage());
 		}
     }
     public static LINE_modelSingleton getInstance()

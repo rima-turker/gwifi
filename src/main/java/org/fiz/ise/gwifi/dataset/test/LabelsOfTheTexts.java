@@ -1,4 +1,4 @@
-package org.fiz.ise.gwifi.dataset.shorttext.test;
+package org.fiz.ise.gwifi.dataset.test;
 
 import java.util.ArrayList;
 import java.util.Arrays;

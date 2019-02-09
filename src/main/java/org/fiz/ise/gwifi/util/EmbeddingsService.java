@@ -1,4 +1,4 @@
-package org.fiz.ise.gwifi.dataset.shorttext.test;
+package org.fiz.ise.gwifi.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,7 +46,7 @@ public class EmbeddingsService {
 	}
 	public static double getSimilarity(String id1, String id2 ){
 		try {
-			Double similarity = Request_LINEServer.getSimilarity(id1,id2,Model_LINE.LINE_COMBINED_Complex);
+			Double similarity = Request_LINEServer.getSimilarity(id1,id2,Model_LINE.PTE_modified);
 			return similarity;
 		} catch (Exception e) {
 			return 0.0;

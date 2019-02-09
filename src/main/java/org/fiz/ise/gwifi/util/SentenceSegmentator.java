@@ -15,10 +15,10 @@ public class SentenceSegmentator {
 
 	public static void main(String[] args) {
 		String text = "I need to get a list of all the files in a directory, including files in all the sub-directories. What is the standard way to accomplish directory iteration with Java?";
-
-		final ArrayList<String> sentenceList = segment2Sentence(text);
-
-		sentenceList.forEach(p -> System.err.println(p));
+		wordCount("hello & & & hello hello. hello \",  \"bye\", \"ciao  \", \"bye\", \"ciao");
+//		final ArrayList<String> sentenceList = segment2Sentence(text);
+//
+//		sentenceList.forEach(p -> System.err.println(p));
 	}
 
 	public static ArrayList<String> segment2Sentence(String text) {
@@ -79,11 +79,10 @@ public class SentenceSegmentator {
 
 		while (tokenizer.hasNext()) {
 			CoreLabel t = tokenizer.next();
-			if (!CharactersUtils.CHARACTER.contains(t.toString())) {
+			if (!CharactersUtils.CHARACTER.contains(t.toString())&&!CharactersUtils.isStringNumeric(t.toString())) {
 				tokens.add(t);
 			}
 		}
-
 		return tokens.size();
 	}
 

@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.fiz.ise.gwifi.dataset.shorttext.test.LabelsOfTheTexts;
 import org.fiz.ise.gwifi.dataset.shorttext.test.TestBasedOnAnnotatedDocument;
+import org.fiz.ise.gwifi.dataset.test.LabelsOfTheTexts;
 import org.fiz.ise.gwifi.longText.TestBasedonLongTextDatasets;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
 

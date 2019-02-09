@@ -21,6 +21,7 @@ import org.fiz.ise.gwifi.model.Model_LINE;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
 import org.fiz.ise.gwifi.util.Config;
+import org.fiz.ise.gwifi.util.EmbeddingsService;
 import org.fiz.ise.gwifi.util.MapUtil;
 import org.fiz.ise.gwifi.util.Request_LINEServer;
 
@@ -65,12 +66,15 @@ public class HeuristicApproachCIKMPaperWebSnippets {
 			}
 			List<Annotation> lstAnnotations = new ArrayList<>();
 			service.annotate(shortText, lstAnnotations);//annotate the given text
+			List<Annotation> filteredAnnotations = new ArrayList<>(HeuristicApproachCIKMPaperAGNews.filterEntitiesNotInVectorSpace(lstAnnotations));
 			mainBuilder.append(strBuild.toString() + "\n" + "\n");
+			
 			Map<Integer, Map<Integer, Double>> contextSimilarity = new HashMap<>(
-					calculateContextEntitySimilarities(lstAnnotations));//the similarity between entities present in the text are calculated 
+					calculateContextEntitySimilarities(filteredAnnotations));//the similarity between entities present in the text are calculated 
+			
 			for (Category mainCat : setMainCategories) { //iterate over categories and calculate a score for each of them
 				double score = 0.0; 
-				for (Annotation a : lstAnnotations) {
+				for (Annotation a : filteredAnnotations) {
 					if (!AnnonatationUtil.getEntityBlackList_WebSnippets().contains(a.getId())) {
 						score += heuristic.calculateScore(a, mainCat, contextSimilarity);
 					}

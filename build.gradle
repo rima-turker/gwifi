@@ -20,14 +20,10 @@ applicationDefaultJvmArgs = ["-Xmx50g", "-d64", "-XX:+UseParallelGC", "-server"]
 
 description = """Graph-based Wikifier"""
 
-//mainClassName="org.fiz.ise.gwifi.dataset.shorttext.test.TestBasedonSortTextDatasets"
-mainClassName="org.fiz.ise.gwifi.dataset.LINE.Category.AnalyseCategoryOfAnnotationBasedOnWiki"
-
-//mainClassName="org.fiz.ise.gwifi.dataset.shorttext.baseline.DatasetGeneration_TFIDF"
-//mainClassName="org.fiz.ise.gwifi.test.longDocument.YovistoParser"
-//mainClassName="org.fiz.ise.gwifi.dataset.shorttext.baseline.SampleData"
-//mainClassName="org.fiz.ise.gwifi.util.MergeTwoFiles"
-//mainClassName="org.fiz.ise.gwifi.dataset.train.NormalizeLINE_Dataset"
+mainClassName="org.fiz.ise.gwifi.dataset.shorttext.test.TestBasedonSortTextDatasets"
+//mainClassName="org.fiz.ise.gwifi.test.afterESWC.TestBasedonSortTextDatasets"
+//mainClassName="org.fiz.ise.gwifi.dataset.LINE.Category.CategoryHieararcyAnalysis"
+//mainClassName="org.fiz.ise.gwifi.test.afterESWC.TestBasedonSortTextDatasets"
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8

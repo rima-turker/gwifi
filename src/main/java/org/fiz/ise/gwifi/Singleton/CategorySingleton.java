@@ -94,10 +94,10 @@ public class CategorySingleton {
 		
 		for (int i = 0; i < mainCats.size(); i++) {
 			Set<Category> setTemp = new HashSet<>(mapMainCatAndSubCats.get(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle(mainCats.get(i).getTitle())));
-			System.out.println(mainCats.get(i).getTitle()+" "+mapMainCatAndSubCats.get(mainCats.get(i)).size());
+//			System.out.println(mainCats.get(i).getTitle()+" "+mapMainCatAndSubCats.get(mainCats.get(i)).size());
 			for (int j = i+1; j < mainCats.size(); j++) {
 				Set<Category> intersectionFiltered = new HashSet<>();
-				System.out.println(mainCats.get(j).getTitle()+" "+mapMainCatAndSubCats.get(mainCats.get(j)).size());
+				//System.out.println(mainCats.get(j).getTitle()+" "+mapMainCatAndSubCats.get(mainCats.get(j)).size());
 				for(Category cT : mapMainCatAndSubCats.get(mainCats.get(j))) {
 					if (!setTemp.contains(cT)) {
 						intersectionFiltered.add(cT);
@@ -106,7 +106,7 @@ public class CategorySingleton {
 						intersectionAllRemove.add(cT);
 					}
 				}
-				System.out.println(mainCats.get(j).getTitle()+" "+intersectionFiltered.size());
+				//System.out.println(mainCats.get(j).getTitle()+" "+intersectionFiltered.size());
 				mapMainCatAndSubCats.put(mainCats.get(j), intersectionFiltered);
 			}
 			Set<Category> oTemp = new HashSet<>(mapMainCatAndSubCats.get(mainCats.get(i)));
@@ -116,7 +116,7 @@ public class CategorySingleton {
 					intersectionFilterO.add(c);
 				}
 			}
-			System.out.println(mainCats.get(i).getTitle()+" "+intersectionFilterO.size());
+		//	System.out.println(mainCats.get(i).getTitle()+" "+intersectionFilterO.size());
 			mapMainCatAndSubCats.put(mainCats.get(i), intersectionFilterO);
 		}
 		///////////////////////////////////////////////////////////////////////DELETE/////////////////////////////////

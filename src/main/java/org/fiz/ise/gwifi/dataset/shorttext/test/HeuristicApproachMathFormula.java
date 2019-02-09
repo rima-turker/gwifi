@@ -19,6 +19,7 @@ import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
 import org.fiz.ise.gwifi.model.Model_LINE;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
 import org.fiz.ise.gwifi.util.Config;
+import org.fiz.ise.gwifi.util.EmbeddingsService;
 import org.fiz.ise.gwifi.util.MapUtil;
 import org.fiz.ise.gwifi.util.Request_LINEServer;
 

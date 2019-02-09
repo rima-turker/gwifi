@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -28,13 +29,16 @@ public class BasedOnWordsCategorize {
 	public static Category getBestMatchingCategory(String text,List<Category> gtList, Map<Category, Set<Category>> map) {
 		try {
 			Map<Category, Double> mapScore = new HashMap<>(); 
-			//System.out.println(text);
+			secondLOG.info(text);
 			for (Category mainCat : setMainCategories) {
 				double score=getSimilarity(text,mainCat.getTitle());
 				//System.out.println(mainCat.getTitle()+" "+score);
 				mapScore.put(mainCat, score);
 			}
 			Map<Category, Double>  sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(mapScore));
+			for(Entry<Category, Double> e : sortedMap.entrySet()) {
+				secondLOG.info(e.getKey()+": "+e.getValue());
+			}
 			Category firstElement = MapUtil.getFirst(sortedMap).getKey();
 			return firstElement;
 		} catch (Exception e) {
@@ -56,7 +60,10 @@ public class BasedOnWordsCategorize {
 //				System.out.println("ERROR :" + category);
 //			}
 //		}
-		return cosineSimilarity(docVec, catVec);
+		if (docVec!=null && catVec!=null) {
+			return cosineSimilarity(docVec, catVec);
+		}
+		return 0;
 	}
 	private static double[] getSentenceVector(List<String> words, Word2Vec model) {        
 		if (words.size()==1) {
@@ -66,6 +73,7 @@ public class BasedOnWordsCategorize {
 		try{
 			a = model.getWordVectorsMean(words);
 		}catch(Exception e) {
+			System.out.println(words);
 			e.printStackTrace();
 			return null;
 		}

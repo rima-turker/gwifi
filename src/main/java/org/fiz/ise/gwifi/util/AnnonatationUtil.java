@@ -22,6 +22,19 @@ import edu.kit.aifb.gwifi.service.NLPAnnotationService;
 
 public class AnnonatationUtil {
 	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
+	public static String getAnnotationsXML(String shortText) {
+		try {
+			NLPAnnotationService service = AnnotationSingleton.getInstance().service;
+			List<Annotation> lstAnnotations = new ArrayList<>();
+			String xmlResponce= service.annotate(shortText, lstAnnotations);
+			return xmlResponce;
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+		
+	}
 	public static List<Annotation> findAnnotationAll(List<String> lst) {
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
 		List<Annotation> result = new ArrayList<>();
@@ -109,7 +122,6 @@ public class AnnonatationUtil {
 		Map<String, Integer> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(resultFreq));
 		FileUtil.writeDataToFile(sortedMap,fileName);
 		System.out.println("Finished one dataset writing: " + fileName);
-
 	}
 	public Map<Annotation, Double> analizeWeightOfAnnotations(List<Annotation> lst) {
 		Map<Annotation, Double> annotations = new HashMap<>();
@@ -136,6 +148,9 @@ public class AnnonatationUtil {
 		lstidBlack.add(35524);//2004
 		lstidBlack.add(4249942);//Dollar (band)-4249942
 		lstidBlack.add(557667);//Face (professional wrestling)
+		lstidBlack.add(1220573);//UPDATE news
+		lstidBlack.add(13623073);//CUT film
+		lstidBlack.add(2605250);//CUTS
 		
 		return lstidBlack;
 		

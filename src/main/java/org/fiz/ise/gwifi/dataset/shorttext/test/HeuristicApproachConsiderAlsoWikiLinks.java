@@ -23,6 +23,7 @@ import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
 import org.fiz.ise.gwifi.util.CategoryUtil;
 import org.fiz.ise.gwifi.util.Config;
+import org.fiz.ise.gwifi.util.EmbeddingsService;
 import org.fiz.ise.gwifi.util.MapUtil;
 import org.fiz.ise.gwifi.util.Request_LINEServer;
 
@@ -32,7 +33,7 @@ import edu.kit.aifb.gwifi.annotation.detection.Topic;
 import edu.kit.aifb.gwifi.model.Category;
 import edu.kit.aifb.gwifi.model.Page;
 import edu.kit.aifb.gwifi.service.NLPAnnotationService;
-
+@Deprecated
 public class HeuristicApproachConsiderAlsoWikiLinks {
 
 	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");

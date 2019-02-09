@@ -1,4 +1,4 @@
-package org.fiz.ise.gwifi.dataset.shorttext.test;
+package org.fiz.ise.gwifi.test.afterESWC;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,13 +68,14 @@ public class TestBasedonSortTextDatasets {
 
 	public static final Map<Article,List<Article>> CACHE = new HashMap<>();
 	static {
-		if (LOAD_MODEL) {
-			LINE_modelSingleton.getInstance();
-		}
+		System.out.println("running TestBasedonSortTextDatasets After ESWC");
+//		if (LOAD_MODEL) {
+//			System.out.println("Start loading model..");
+//			LINE_modelSingleton.getInstance();
+//		}
 		PageCategorySingleton.getInstance();
 	}
 	public static void main(String[] args) {
-		System.out.println("running TestBasedonSortTextDatasets");
 		TestBasedonSortTextDatasets test = new TestBasedonSortTextDatasets();
 		test.initializeVariables();
 	}
@@ -86,9 +87,7 @@ public class TestBasedonSortTextDatasets {
 		counterFalsePositive= new SynchronizedCounter();
 		counterTruePositive= new SynchronizedCounter();
 		counterWorldFalsePositive= new SynchronizedCounter();
-
 		TestBasedonSortTextDatasets test = new TestBasedonSortTextDatasets();
-
 		if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
 			System.out.println("Start reading AG News data");
 			startProcessingData(test.read_dataset_AG(AG_DataType.TITLEANDDESCRIPTION));
@@ -96,12 +95,6 @@ public class TestBasedonSortTextDatasets {
 		else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.WEB_SNIPPETS)) {
 			System.out.println("Start reading WEB data");
 			startProcessingData(test.read_dataset_WEB());
-		}
-		else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.DBLP)) {
-			test.dataset_DBLP();
-		}
-		else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.YAHOO)) {
-			test.dataset_Yahoo();
 		}
 	}
 
@@ -200,15 +193,14 @@ public class TestBasedonSortTextDatasets {
 	private Runnable handle(String description, List<Category> gtList,int i ) {
 		return () -> {
 			Category bestMatchingCategory=null;
-			if (TEST_DATASET_TYPE==TestDatasetType_Enum.AG ) {
-				bestMatchingCategory = HeuristicApproachCIKMPaperAGNews.getBestMatchingCategory(description,gtList);
-			}
-			else if(TEST_DATASET_TYPE==TestDatasetType_Enum.WEB_SNIPPETS ) {
-				bestMatchingCategory = HeuristicApproachCIKMPaperWebSnippets.getBestMatchingCategory(description,gtList);
-			}
-			else {
-				bestMatchingCategory = HeuristicApproachCIKMPaper.getBestMatchingCategory(description,gtList);
-			}
+			bestMatchingCategory = HeuristicBasedOnLinkStructure.getBestMatchingCategory(description,gtList);
+//			bestMatchingCategory = HeuristicAproachEntEnt.getBestMatchingCategory(description,gtList);
+//			if (TEST_DATASET_TYPE==TestDatasetType_Enum.AG ) {
+//				bestMatchingCategory = HeuristicApproachAGNewsEntEnt.getBestMatchingCategory(description,gtList);
+//			}
+//			else if(TEST_DATASET_TYPE==TestDatasetType_Enum.WEB_SNIPPETS ) {
+//				bestMatchingCategory = HeuristicApproachSnippetsEntEnt.getBestMatchingCategory(description,gtList);
+//			}
 			counterProcessed.increment();
 			StringBuilder builderGt = new StringBuilder();
 			for(Category g : gtList) {
