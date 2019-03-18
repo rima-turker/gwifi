@@ -44,6 +44,9 @@ public class LINE_modelSingleton {
     		else if (LINE_MODEL_NAME.equals(Model_LINE.RDF2Vec)) {
     			ADDRESS_OF_LINE_MODEL = Config.getString("ADDRESS_OF_RDF2VEC","");
 			}
+    		else if (LINE_MODEL_NAME.equals(Model_LINE.Ent_Ent)) {
+    			ADDRESS_OF_LINE_MODEL = Config.getString("ADDRESS_OF_LINE_Ent_Ent","");
+			}
     		
     		
 			System.out.println("ADDRESS_OF_LINE_MODEL "+ADDRESS_OF_LINE_MODEL);

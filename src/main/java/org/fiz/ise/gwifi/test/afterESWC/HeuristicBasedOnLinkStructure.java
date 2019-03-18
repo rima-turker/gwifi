@@ -34,7 +34,7 @@ public class HeuristicBasedOnLinkStructure {
 
 	private final static TestDatasetType_Enum TEST_DATASET_TYPE = Config.getEnum("TEST_DATASET_TYPE");
 	private static boolean LOAD_MODEL = Config.getBoolean("LOAD_MODEL", false);
-	private static final Logger LOG = Logger.getLogger(HeuristicApproachAGNewsEntEnt.class);
+	private static final Logger LOG = Logger.getLogger(HeuristicBasedOnLinkStructure.class);
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 	/*
 	 * The input of the function is a short text( List<Category> gtList is just for printing purpose)

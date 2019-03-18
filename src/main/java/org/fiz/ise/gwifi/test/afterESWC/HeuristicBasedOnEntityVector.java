@@ -1,25 +1,24 @@
 package org.fiz.ise.gwifi.test.afterESWC;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
 import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
-import org.fiz.ise.gwifi.Singleton.PageCategorySingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
-import org.fiz.ise.gwifi.dataset.shorttext.test.HeuristicApproachCIKMPaperAGNews;
 import org.fiz.ise.gwifi.model.Model_LINE;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.test.longDocument.BasedOnWordsCategorize;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.EmbeddingsService;
@@ -27,22 +26,16 @@ import org.fiz.ise.gwifi.util.MapUtil;
 import org.fiz.ise.gwifi.util.Request_LINEServer;
 
 import edu.kit.aifb.gwifi.annotation.Annotation;
-import edu.kit.aifb.gwifi.annotation.detection.Topic;
 import edu.kit.aifb.gwifi.model.Article;
 import edu.kit.aifb.gwifi.model.Category;
-import edu.kit.aifb.gwifi.model.Page;
 import edu.kit.aifb.gwifi.service.NLPAnnotationService;
-@Deprecated
-public class HeuristicApproachSnippetsEntEnt {
 
+public class HeuristicBasedOnEntityVector {
 	private final static TestDatasetType_Enum TEST_DATASET_TYPE = Config.getEnum("TEST_DATASET_TYPE");
 	private static boolean LOAD_MODEL = Config.getBoolean("LOAD_MODEL", false);
-	private final static Integer DEPTH_OF_CAT_TREE = Config.getInt("DEPTH_OF_CAT_TREE", 0);
-	private static final Logger LOG = Logger.getLogger(HeuristicApproachSnippetsEntEnt.class);
+	private static final Logger LOG = Logger.getLogger(HeuristicAproachEntEnt.class);
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
-	private final static Map<String, Set<Category>> mapDepthCategory = new HashMap<>(
-			CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).mapCategoryDept);
-
+	static final Logger resultLog = Logger.getLogger("reportsLogger");
 	/*
 	 * The input of the function is a short text( List<Category> gtList is just for printing purpose)
 	 *  
@@ -50,84 +43,195 @@ public class HeuristicApproachSnippetsEntEnt {
 	 * and return the most similar category to given text
 	 * 
 	 */
-	public static Category getBestMatchingCategory(String shortText, List<Category> gtList) {
+
+	public static String getBestMatchingCategory(String shortText) {
 		Set<Category> setMainCategories = new HashSet<>(
 				CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories); //get predefined cats
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-		HeuristicApproachSnippetsEntEnt heuristic = new HeuristicApproachSnippetsEntEnt();
 		StringBuilder mainBuilder = new StringBuilder();
 		try {
 			Map<Category, Double> mapScore = new HashMap<>();
 			mainBuilder.append(shortText + "\n");
 			StringBuilder strBuild = new StringBuilder();
-			for (Category c : gtList) {
-				strBuild.append(c + " ");
-			}
 			List<Annotation> lstAnnotations = new ArrayList<>();
 			service.annotate(shortText, lstAnnotations);//annotate the given text
-			List<Annotation> filteredAnnotations = new ArrayList<>(HeuristicApproachCIKMPaperAGNews.filterEntitiesNotInVectorSpace(lstAnnotations));
+			List<Annotation> filteredAnnotations = new ArrayList<>(filterEntitiesNotInVectorSpace(lstAnnotations));
 			mainBuilder.append(strBuild.toString() + "\n" + "\n");
-			
-			Map<Integer, Map<Integer, Double>> contextSimilarity = new HashMap<>(
-					calculateContextEntitySimilarities(filteredAnnotations));//the similarity between entities present in the text are calculated 
-			
+
 			for (Category mainCat : setMainCategories) { //iterate over categories and calculate a score for each of them
-				double score = 0.0; 
+				List<String> lstEntites = new ArrayList<String>();
 				for (Annotation a : filteredAnnotations) {
-					if (!AnnonatationUtil.getEntityBlackList_WebSnippets().contains(a.getId())&&WikipediaSingleton.getInstance().getArticle(a.getTitle())!=null)  {
-						double tempScore;
-						if (mainCat.getTitle().equalsIgnoreCase("Sports")) {
-							tempScore = heuristic.calculateScore(a, WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Sport"), contextSimilarity);
-						}
-						else{
-							tempScore = heuristic.calculateScore(a, WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(mainCat.getTitle()), contextSimilarity);
-						}
-						score +=tempScore ;
-					}
-				} 
+					if (!AnnonatationUtil.getEntityBlackList_AGNews().contains(a.getId())&&WikipediaSingleton.getInstance().getArticle(a.getTitle())!=null) { //we had so many noisy entities therefore filtering required
+						lstEntites.add(String.valueOf(a.getId()));
+					} 
+				}  
+				double score=BasedOnWordsCategorize.getSimilarity(lstEntites, String.valueOf(WikipediaSingleton.getInstance().getArticle(mainCat.getTitle()).getId()));
 				mapScore.put(mainCat, score);
 			}
-			mainBuilder.append("\n");
 			Map<Category, Double> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(mapScore));
 			Category firstElement = MapUtil.getFirst(sortedMap).getKey();
 
-			for (Entry<Category, Double> e : sortedMap.entrySet()) {
-				mainBuilder.append(e.getKey() + " " + e.getValue() + "\n");
-			}
-			if (!gtList.contains(firstElement)) {
-				secondLOG.info(mainBuilder.toString());
-			}
-			return firstElement;
+			return firstElement.getTitle()+"\t\t"+sortedMap.get(firstElement);
+			//			return firstElement;
+
 		} catch (Exception e) {
+			System.out.println();
 			e.printStackTrace();
 		}
 		return null;
 	}
-	/*
-	 * This function calculates a score for a given annotation and a main category
-	 */
-	private double calculateScore(Annotation a, Article cArticle, Map<Integer, Map<Integer, Double>> contextSimilarity) {
+	public static Category getBestMatchingCategory(String shortText, List<Category> gtList) {
+		Set<Category> setMainCategories = new HashSet<>(
+				CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories); //get predefined cats
+		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
+		StringBuilder mainBuilder = new StringBuilder();
+		try {
+			Map<Category, Double> mapScore = new HashMap<>();
+			mainBuilder.append(shortText + "\n");
+			StringBuilder strBuild = new StringBuilder();
+			if (gtList!=null) {
+				for (Category c : gtList) {
+					strBuild.append(c + " ");
+				}
+			}
+			List<Annotation> lstAnnotations = new ArrayList<>();
+			service.annotate(shortText, lstAnnotations);//annotate the given text
+			List<Annotation> filteredAnnotations = new ArrayList<>(filterEntitiesNotInVectorSpace(lstAnnotations));
+			mainBuilder.append(strBuild.toString() + "\n" + "\n");
+
+			for (Category mainCat : setMainCategories) { //iterate over categories and calculate a score for each of them
+				List<String> lstEntites = new ArrayList<String>();
+				for (Annotation a : filteredAnnotations) {
+					if (!AnnonatationUtil.getEntityBlackList_AGNews().contains(a.getId())&&WikipediaSingleton.getInstance().getArticle(a.getTitle())!=null) { //we had so many noisy entities therefore filtering required
+						lstEntites.add(String.valueOf(a.getId()));
+					} 
+				}  
+				//				mapScore.put(mainCat, BasedOnWordsCategorize.getSimilarity(lstEntites, String.valueOf(WikipediaSingleton.getInstance().getArticle(mainCat.getTitle()).getId())));
+				//Article a = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(mainCat.getTitle());
+				double score=BasedOnWordsCategorize.getSimilarity(lstEntites, String.valueOf(WikipediaSingleton.getInstance().getArticle(mainCat.getTitle()).getId()));
+				mapScore.put(mainCat, score);
+			}
+			Map<Category, Double> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(mapScore));
+			List<Double> valuesList = new LinkedList<Double>(sortedMap.values());
+			Category firstElement = MapUtil.getFirst(sortedMap).getKey();
+			int index=1;
+			for (Entry<Category, Double> e : sortedMap.entrySet()) {
+				mainBuilder.append(e.getKey().getTitle()+"\t"+e.getValue()+"\n");
+			}
+			mainBuilder.append(firstElement.getTitle()+"\n");
+
+//			if (lstAnnotations.size()<1) {
+//				secondLOG.info("Could not find any annpotation");
+//			}
+//			if (!gtList.contains(firstElement)) {
+//				secondLOG.info(mainBuilder.toString());
+//			}
+//			else {
+////				resultLog.info(mainBuilder.toString());
+//			}
+
+			//			for (Entry<Category, Double> e : sortedMap.entrySet()) {
+			//				if (index<setMainCategories.size()) {
+			//					mainBuilder.append(e.getKey() + " " +e.getValue()+" " + (e.getValue()/totalScore) +" "+((e.getValue()/totalScore)-(valuesList.get(index)/totalScore)) +"\n");
+			//				}
+			//				index++;
+			//			}
+			//			if (lstAnnotations.size()<1) {
+			//				secondLOG.info("Could not find any annotation");
+			//			}
+						if (!gtList.contains(firstElement)) {
+							//				secondLOG.info(firstElement+"\t"+sortedMap.get(firstElement)/totalScore);
+							secondLOG.info(firstElement+"\t"+sortedMap.get(firstElement)+"\t"+((sortedMap.get(firstElement))-(valuesList.get(index))+"\t"+(sortedMap.get(firstElement))/(valuesList.get(index))));
+						}
+						else {
+							//				resultLog.info(firstElement+"\t"+sortedMap.get(firstElement)/totalScore);
+							resultLog.info(firstElement+"\t"+sortedMap.get(firstElement)+"\t"+(sortedMap.get(firstElement)-valuesList.get(index))+"\t"+(sortedMap.get(firstElement))/(valuesList.get(index)));
+						}
+
+			return firstElement;
+
+		} catch (Exception e) {
+			System.out.println();
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public static List<Annotation> filterEntitiesNotInVectorSpace(List<Annotation> lstAnnotations) {
+		List<Annotation> result = new ArrayList<>();
+		for(Annotation a : lstAnnotations) {
+			if (LINE_modelSingleton.getInstance().lineModel.hasWord(String.valueOf(a.getId()))) {
+				result.add(a);
+			}
+		}
+		return result;
+	}
+	private double calculateScore_WEB(Annotation a, Article cArticle, Map<Integer, Map<Integer, Double>> contextSimilarity) {
 		double P_e_c=0; 
 		double P_Se_c=1;
 		//		if(a.getId()==30653) {
 		if(a.getMention().getTerm().toLowerCase().trim().equals("consumption")||a.getMention().getTerm().toLowerCase().trim().equals("consumption")) {
-			P_e_c = HeuristicApproachAGNewsEntEnt.get_P_e_c(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Consumption (economics)"), cArticle); 
+			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Consumption (economics)"), cArticle); 
 		}
 		if(a.getId()==13930) {//House band --> white house
-			P_e_c = HeuristicApproachAGNewsEntEnt.get_P_e_c(WikipediaSingleton.getInstance().wikipedia.getArticleById(33057), cArticle); 
+			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().wikipedia.getArticleById(33057), cArticle); 
 		}
-		
+
 		else {
-			P_e_c = HeuristicApproachAGNewsEntEnt.get_P_e_c(WikipediaSingleton.getInstance().getArticle(a.getTitle()), cArticle);
+			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle(a.getTitle()), cArticle);
 			P_Se_c=get_P_Se_c(a);
 		}
-
-
 		double P_Ce_e=1;
 		if (contextSimilarity.size()>1) {
 			P_Ce_e=get_P_Ce_e_efficient(a.getId(),contextSimilarity);
 		}
 		return (P_e_c*P_Se_c*P_Ce_e);
+	}
+	/*
+	 * This function calculates a score for a given annotation and a main category
+	 */
+	private double calculateScore_AG(Annotation a, Article cArticle,
+			Map<Integer, Map<Integer, Double>> contextSimilarity) {
+		//		double P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle(a.getTitle()), mainCat); 
+		//		double P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle(a.getTitle()), mainCat); 
+		double P_e_c=0; 
+		double P_Se_c=1;
+		if(a.getId()==25614) {
+			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle("Racing"), cArticle); 
+		}
+		else if(a.getId()==12240) {
+			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle("Gold medal"), cArticle); 
+		}
+		else if(a.getMention().getTerm().toLowerCase().trim().equals("enterprise")||a.getMention().getTerm().toLowerCase().trim().equals("enterprises")) 
+		{
+			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle("Enterprise (computer)"), cArticle); 
+		}
+		else if(a.getId()==870936) 
+		{
+			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle("Coach (sport)"), cArticle); 
+		}
+		else if(a.getId()==60930) 
+		{
+			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle("New product development"), cArticle); 
+		} 
+		else if(a.getId()==2532101) 
+		{
+			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle("Profit (accounting)"), cArticle); 
+		}
+		else if(a.getId()==16888425) 
+		{
+			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle("Job"), cArticle); 
+		}
+		else {
+			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle(a.getTitle()), cArticle);
+			P_Se_c=get_P_Se_c(a);
+		}
+		double P_Ce_e=1;
+		//		if (contextSimilarity.size()>1) {
+		//			P_Ce_e=get_P_Ce_e_efficient(a.getId(),contextSimilarity);
+		//		}
+		return P_e_c;
+		//return (P_e_c*P_Se_c*P_Ce_e);
 	}
 	private static Map<Integer, Map<Integer, Double>> calculateContextEntitySimilarities(List<Annotation> annotations) {
 		Map<Integer, Map<Integer, Double>> mapContextSimilarity = new HashMap<>();
@@ -148,9 +252,27 @@ public class HeuristicApproachSnippetsEntEnt {
 		}
 		return mapContextSimilarity;
 	}
-	
+
+	public static double get_P_e_c(Article article, Article cArticle) {
+		//		System.out.println(article+" "+cArticle);
+		//		for(Entry<String,List<String>> e : TestBasedonSortTextDatasets.CACHE_nearestWords.entrySet()) {
+		//			System.out.println(e.getKey()+" "+e.getValue());
+		//		}
+		//		List<String> lst = new ArrayList<>(TestBasedonSortTextDatasets.CACHE_nearestWords.get(cArticle.getTitle()));
+		//		System.out.println("List of most sim:" + lst);
+		//		double score=LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(article.getId()), String.valueOf(cArticle.getId()));
+		//		System.out.println(score);
+		//		for(String s: lst) {
+		//			score+=LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(article.getId()), String.valueOf(s));
+		//		}
+		//		System.out.println("return score "+score);
+		return LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(article.getId()), String.valueOf(cArticle.getId()));
+	}
+	//	public static double get_P_e_c(Article article, Article cArticle) {
+	//		return LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(article.getId()), String.valueOf(cArticle.getId()));
+	//	}
+
 	private static double get_P_Se_c(Annotation a) {// comes from EL system weight value because we calculate the
-		// confidence based on the prior prob
 		return a.getWeight();
 	}
 
@@ -181,36 +303,6 @@ public class HeuristicApproachSnippetsEntEnt {
 		}
 		return result / countNonZero;
 		// return result;
-	}
-
-	/**
-	 * This method takes the all the context entities and tries to calculate the
-	 * probabilities of the given an entitiy and all the other context entities and
-	 * sums them up
-	 * 
-	 * @return
-	 */
-	private static double get_P_Ce_e(Integer mainId, List<Annotation> contextEntities) { // Context entities an the
-		// entity(already
-		// disambiguated)
-		double result = 0.0;
-		double countNonZero = 0;
-		for (Annotation a : contextEntities) {
-			double temp = .0;
-			if (LOAD_MODEL) {
-				temp = (LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(mainId),
-						String.valueOf(a.getId())));
-			} else {
-				temp = (EmbeddingsService.getSimilarity(String.valueOf(mainId), String.valueOf(a.getId())));
-			}
-			if (!Double.isNaN(temp) && temp > 0.0) {
-				countNonZero++;
-				result += temp;
-			} else {
-				LOG.info("similarity could not be calculated entity-entity: " + mainId + " " + a.getURL());
-			}
-		}
-		return result / countNonZero;
 	}
 
 	public static Entry<Category, Double> getMostSimilarCategory(Annotation annotation, Category mainCategory) {
@@ -298,3 +390,4 @@ public class HeuristicApproachSnippetsEntEnt {
 		return null;
 	}
 }
+

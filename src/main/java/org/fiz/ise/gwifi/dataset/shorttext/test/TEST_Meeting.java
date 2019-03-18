@@ -28,6 +28,7 @@ import org.fiz.ise.gwifi.util.Print;
 import org.fiz.ise.gwifi.util.Request_LINEServer;
 
 import edu.kit.aifb.gwifi.annotation.Annotation;
+import edu.kit.aifb.gwifi.mingyuzuo.Wiki;
 import edu.kit.aifb.gwifi.model.Article;
 import edu.kit.aifb.gwifi.model.Category;
 import edu.kit.aifb.gwifi.model.Wikipedia;
@@ -40,39 +41,48 @@ public class TEST_Meeting {
 	static NLPAnnotationService service = AnnotationSingleton.getInstance().service;
 
 	public static void main(String[] args) throws Exception {
-		Category c = wikipedia.getCategoryByTitle("Technology");
-		Category c1 = wikipedia.getCategoryByTitle("World");
-		Set<Category> setC = new HashSet<>(Arrays.asList(c.getChildCategories()));
 		
-		System.out.println(Arrays.asList(setC));
-		Set<Category> setC1 = new HashSet<>(Arrays.asList(c1.getChildCategories()));
-		System.out.println(Arrays.asList(setC1));
+		System.out.println(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Trainer (aircraft)"));
+		System.out.println(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Trainer (aircraft)").getId());
+		System.out.println(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Personal trainer"));
+		System.out.println(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Personal trainer").getId());
 		
-		setC.retainAll(setC1);
-//		for(Article a: setA)
-//			System.out.println(a.getTitle());
-		
-		for(Category i: setC1) {
-			
-//			Set<Article> setA = new HashSet<>(Arrays.asList(i.getChildArticles()));
-//			for(Category i1: setC1) {
-//				
-//				Set<Article> setB = new HashSet<>(Arrays.asList(i1.getChildArticles()));
-//				
-//				setA.retainAll(setB);
-//				for(Article a: setA)
-//					System.out.println(a.getTitle());
-//			}
-			System.out.println(i.getTitle());
-		}
-		
-		
-//		System.out.println(i.getTitle());
+		//findSimilarityBetweenCats();
 
-		setC.retainAll(setC1);
-		for(Category i: setC)
-			System.out.println(i.getTitle());
-		
+		//		System.out.println(wikipedia.getArticleById(18935732));
+		//		Category c = wikipedia.getCategoryByTitle("Technology");
+		//		Category c1 = wikipedia.getCategoryByTitle("World");
+		//		Set<Category> setC = new HashSet<>(Arrays.asList(c.getChildCategories()));
+		//		
+		//		System.out.println(Arrays.asList(setC));
+		//		Set<Category> setC1 = new HashSet<>(Arrays.asList(c1.getChildCategories()));
+		//		System.out.println(Arrays.asList(setC1));
+		//		
+		//		setC.retainAll(setC1);
+		////		for(Article a: setA)
+		////			System.out.println(a.getTitle());
+		//		
+		//		for(Category i: setC1) {
+		//			
+		////			Set<Article> setA = new HashSet<>(Arrays.asList(i.getChildArticles()));
+		////			for(Category i1: setC1) {
+		////				
+		////				Set<Article> setB = new HashSet<>(Arrays.asList(i1.getChildArticles()));
+		////				
+		////				setA.retainAll(setB);
+		////				for(Article a: setA)
+		////					System.out.println(a.getTitle());
+		////			}
+		//			System.out.println(i.getTitle());
+		//		}
+		//		
+		//		
+		////		System.out.println(i.getTitle());
+		//
+		//		setC.retainAll(setC1);
+		//		for(Category i: setC)
+		//			System.out.println(i.getTitle());
+
 		//		dataset_WEB();
 		//		String DATASET_TEST_WEB ="/home/rtue/eclipse-workspace/Dataset_ShortTextClassification/ag_news_csv/test.csv";
 		//		List<String> lines = FileUtils.readLines(new File(DATASET_TEST_WEB), "utf-8");
@@ -108,14 +118,15 @@ public class TEST_Meeting {
 
 		//		
 		//		List<String> lines = new ArrayList<>(TestBasedonDatasets.generateRandomDataset_AG());
-		//		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-		//		String str = "Mozart was a prolific and influential composer.";
-		//		List<Annotation> lstAnnotations = new ArrayList<>();
-		//		service.annotate(str, lstAnnotations);
-		//
-		//		for(Annotation a : lstAnnotations) {
-		//			System.out.println(a);
-		//		}
+//		System.out.println("Rima");
+//		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
+//		String str = "Intel Delays Launch of Projection TV Chip";//"China's Red Flag Linux to focus on enterprise";//"North Korea Talks Still On, China Tells Downer";//"Loosing the War on Terrorism";
+//		List<Annotation> lstAnnotations = new ArrayList<>();
+//		service.annotate(str, lstAnnotations);
+//		//
+//		for(Annotation a : lstAnnotations) {
+//			System.out.println(a);
+//		}
 
 		//		String[] arrLines = new String[lines.size()];
 		//		arrLines = lines.toArray(arrLines);
@@ -148,23 +159,23 @@ public class TEST_Meeting {
 		//		}
 
 		//	
-		List<String> entityList = new ArrayList<>();
-//		entityList.add("Sports");
-//		entityList.add("Physics");
-		entityList.add("Trade");
-//		entityList.add("World");
-
-		for(String entity : entityList) {
-			System.out.println(entity+"  "+wikipedia.getCategoryByTitle(entity)+ " "+String.valueOf(wikipedia.getCategoryByTitle(entity).getId()));
-			List<String> result = new ArrayList<>(LINE_modelSingleton.getInstance().lineModel.wordsNearest(String.valueOf(wikipedia.getCategoryByTitle(entity).getId()), 20));
-			for(String str: result) {
-				System.out.println(wikipedia.getPageById(Integer.parseInt(str)).getTitle());
-			}
-			System.out.println();
-		}
-		//		entityList.add("Company");
-		//		entityList.add("London");
+		//		List<String> entityList = new ArrayList<>();
+		////		entityList.add("Sports");
+		////		entityList.add("Physics");
+		//		entityList.add("Trade");
+		////		entityList.add("World");
+		//
 		//		for(String entity : entityList) {
+		//			System.out.println(entity+"  "+wikipedia.getCategoryByTitle(entity)+ " "+String.valueOf(wikipedia.getCategoryByTitle(entity).getId()));
+		//			List<String> result = new ArrayList<>(LINE_modelSingleton.getInstance().lineModel.wordsNearest(String.valueOf(wikipedia.getCategoryByTitle(entity).getId()), 20));
+		//			for(String str: result) {
+		//				System.out.println(wikipedia.getPageById(Integer.parseInt(str)).getTitle());
+		//			}
+		//			System.out.println();
+		//		}
+		//		//		entityList.add("Company");
+		//		//		entityList.add("London");
+		//		//		for(String entity : entityList) {
 		//			System.out.println(entity+"  "+wikipedia.getArticleByTitle(entity)+ " "+String.valueOf(wikipedia.getArticleByTitle(entity).getId()));
 		//			
 		////			System.out.println(entity);
@@ -186,24 +197,24 @@ public class TEST_Meeting {
 		//		}
 
 
-//		System.out.println(" "+"  "+wikipedia.getCategoryByTitle("Sports")+ " "+String.valueOf(wikipedia.getCategoryByTitle("Sports").getId()));
-//		System.out.println(" "+"  "+wikipedia.getCategoryByTitle("Physics")+ " "+String.valueOf(wikipedia.getCategoryByTitle("Physics").getId()));
-//		System.out.println(" "+"  "+wikipedia.getCategoryByTitle("Trade")+ " "+String.valueOf(wikipedia.getCategoryByTitle("Trade").getId()));
-//
-//		entityList = new ArrayList<>();
-//
-//		entityList.add("Sports");
-//		entityList.add("Physics");
-//		entityList.add("Trade");
-//
-//		for(String entity : entityList) {
-//			System.out.println(entity+"  "+wikipedia.getCategoryByTitle(entity)+ " "+String.valueOf(wikipedia.getCategoryByTitle(entity).getId()));
-//			List<String> result = new ArrayList<>(model.wordsNearest(String.valueOf(wikipedia.getCategoryByTitle(entity).getId()), 10));
-//			for(String str: result) {
-//				System.out.println(wikipedia.getPageById(Integer.parseInt(str)).getTitle());
-//			}
-//			System.out.println();
-//		}
+		//		System.out.println(" "+"  "+wikipedia.getCategoryByTitle("Sports")+ " "+String.valueOf(wikipedia.getCategoryByTitle("Sports").getId()));
+		//		System.out.println(" "+"  "+wikipedia.getCategoryByTitle("Physics")+ " "+String.valueOf(wikipedia.getCategoryByTitle("Physics").getId()));
+		//		System.out.println(" "+"  "+wikipedia.getCategoryByTitle("Trade")+ " "+String.valueOf(wikipedia.getCategoryByTitle("Trade").getId()));
+		//
+		//		entityList = new ArrayList<>();
+		//
+		//		entityList.add("Sports");
+		//		entityList.add("Physics");
+		//		entityList.add("Trade");
+		//
+		//		for(String entity : entityList) {
+		//			System.out.println(entity+"  "+wikipedia.getCategoryByTitle(entity)+ " "+String.valueOf(wikipedia.getCategoryByTitle(entity).getId()));
+		//			List<String> result = new ArrayList<>(model.wordsNearest(String.valueOf(wikipedia.getCategoryByTitle(entity).getId()), 10));
+		//			for(String str: result) {
+		//				System.out.println(wikipedia.getPageById(Integer.parseInt(str)).getTitle());
+		//			}
+		//			System.out.println();
+		//		}
 
 
 		//		List<String> catList = new ArrayList<>();
@@ -248,7 +259,17 @@ public class TEST_Meeting {
 		//		}
 
 	}
-
+	public static void findSimilarityBetweenCats() {
+		Set<Category> categories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories);
+		for(Category c : categories) {
+			int aId = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(c.getTitle()).getId();
+			
+			for(Category cC : categories) {
+				int cId = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(cC.getTitle()).getId();
+				System.out.println(c.getTitle()+" "+cC.getTitle()+": "+LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(aId), String.valueOf(cId)));
+			}
+		}
+	}
 	public static void dataset_WEB() {
 		String DATASET_TEST_WEB ="/home/rtue/eclipse-workspace/Dataset_ShortTextClassification/data-web-snippets/test.txt";
 		try {

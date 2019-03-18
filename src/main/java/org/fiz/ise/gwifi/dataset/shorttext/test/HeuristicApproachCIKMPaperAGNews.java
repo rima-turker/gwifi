@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -39,6 +40,7 @@ public class HeuristicApproachCIKMPaperAGNews {
 	private final static Integer DEPTH_OF_CAT_TREE = Config.getInt("DEPTH_OF_CAT_TREE", 0);
 	private static final Logger LOG = Logger.getLogger(HeuristicApproachCIKMPaperAGNews.class);
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
+	static final Logger thirdLOG = Logger.getLogger("reportsLogger");
 	private final static Map<String, Set<Category>> mapDepthCategory = new HashMap<>(
 			CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).mapCategoryDept);
 
@@ -70,6 +72,7 @@ public class HeuristicApproachCIKMPaperAGNews {
 			mainBuilder.append(strBuild.toString() + "\n" + "\n");
 			Map<Integer, Map<Integer, Double>> contextSimilarity = new HashMap<>(
 					calculateContextEntitySimilarities(filteredAnnotations));//the similarity between entities present in the text are calculated 
+			double totalScore=0.0;
 			for (Category mainCat : setMainCategories) { //iterate over categories and calculate a score for each of them
 				double score = 0.0; 
 				for (Annotation a : filteredAnnotations) {
@@ -78,20 +81,30 @@ public class HeuristicApproachCIKMPaperAGNews {
 						score +=tempScore ;
 					} 
 				}  
+				totalScore+=score;
 				mapScore.put(mainCat, score);
 			}
 			mainBuilder.append("\n");
 			Map<Category, Double> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(mapScore));
 			Category firstElement = MapUtil.getFirst(sortedMap).getKey();
-
+			List<Double> valuesList = new LinkedList<Double>(sortedMap.values());
+			int index=1;
 			for (Entry<Category, Double> e : sortedMap.entrySet()) {
-				mainBuilder.append(e.getKey() + " " + e.getValue() + "\n");
+				if (index<setMainCategories.size()) {
+					mainBuilder.append(e.getKey() + " " +e.getValue()+" " + (e.getValue()/totalScore) +" "+((e.getValue()/totalScore)-(valuesList.get(index)/totalScore)) +"\n");
+				}
+				index++;
 			}
 			if (lstAnnotations.size()<1) {
-				secondLOG.info("Could not find any annpotation");
+				//secondLOG.info("Could not find any annotation");
 			}
 			if (!gtList.contains(firstElement)) {
 				secondLOG.info(mainBuilder.toString());
+//				secondLOG.info(firstElement+"\t"+sortedMap.get(firstElement));
+			}
+			else {
+//				thirdLOG.info(firstElement+"\t"+sortedMap.get(firstElement));
+				thirdLOG.info(mainBuilder.toString());
 			}
 			return firstElement;
 		} catch (Exception e) {

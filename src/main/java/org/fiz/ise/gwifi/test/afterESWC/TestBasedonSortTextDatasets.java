@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -63,16 +64,16 @@ public class TestBasedonSortTextDatasets {
 	private static Map<String, String> falsePositiveResult = new ConcurrentHashMap<>();
 	private static Map<String, Integer> mapMissClassified = new ConcurrentHashMap<>();
 	private ExecutorService executor;
-	private static Map<Category, Set<Category>> mapCategories;
 	long now = System.currentTimeMillis();
-
+	private static Set<Category> setMainCategories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories);
+	public static final Map<String,List<String>> CACHE_nearestWords = new HashMap<>();
+	
 	public static final Map<Article,List<Article>> CACHE = new HashMap<>();
 	static {
-		System.out.println("running TestBasedonSortTextDatasets After ESWC");
-//		if (LOAD_MODEL) {
-//			System.out.println("Start loading model..");
-//			LINE_modelSingleton.getInstance();
-//		}
+		if (LOAD_MODEL) {
+			System.out.println("Start loading model..");
+			LINE_modelSingleton.getInstance();
+		}
 		PageCategorySingleton.getInstance();
 	}
 	public static void main(String[] args) {
@@ -80,7 +81,7 @@ public class TestBasedonSortTextDatasets {
 		test.initializeVariables();
 	}
 	private void initializeVariables() {
-		System.out.println("NUMBER_OF_THREADS: "+NUMBER_OF_THREADS);
+		System.out.println("running: "+this.getClass().getSimpleName());
 		System.out.println("TEST_DATASET_TYPE: "+TEST_DATASET_TYPE);
 		singCategory= CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE));
 		counterProcessed= new SynchronizedCounter();
@@ -88,6 +89,23 @@ public class TestBasedonSortTextDatasets {
 		counterTruePositive= new SynchronizedCounter();
 		counterWorldFalsePositive= new SynchronizedCounter();
 		TestBasedonSortTextDatasets test = new TestBasedonSortTextDatasets();
+		
+//		for (Category mainCat : setMainCategories) {
+//			if (!CACHE_nearestWords.containsKey(mainCat.getTitle())) {
+//				Article a = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(mainCat.getTitle());
+//				Collection<String> wordsNearest = LINE_modelSingleton.getInstance().lineModel.wordsNearest(String.valueOf(a.getId()), 10);
+//				List<String> lst = new ArrayList<>();
+//				for (String s : wordsNearest) {
+//					lst.add(s);
+//				}
+//				System.out.println(a.getTitle()+" "+ lst);
+//				System.out.println();
+//				CACHE_nearestWords.put(a.getTitle(), lst);
+//			}
+//			else
+//				break;
+//		}
+//		System.out.println("Finished initializing cache..");
 		if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
 			System.out.println("Start reading AG News data");
 			startProcessingData(test.read_dataset_AG(AG_DataType.TITLEANDDESCRIPTION));
@@ -170,6 +188,8 @@ public class TestBasedonSortTextDatasets {
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 			System.out.println("Total time minutes " + TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis() - now));
 			System.out.println("Number of true positive: "+counterTruePositive.value()+" number of processed: "+counterProcessed.value());
+			
+			
 			Double d = (counterTruePositive.value()*0.1)/(counterProcessed.value()*0.1);
 			System.out.println("Accuracy: "+d);
 			//			System.out.println("counterWorldFalsePositive: "+counterWorldFalsePositive.value());
@@ -190,17 +210,13 @@ public class TestBasedonSortTextDatasets {
 			System.out.println(e.getMessage());
 		}
 	}
-	private Runnable handle(String description, List<Category> gtList,int i ) {
+
+		private Runnable handle(String description, List<Category> gtList,int i ) {
 		return () -> {
 			Category bestMatchingCategory=null;
-			bestMatchingCategory = HeuristicBasedOnLinkStructure.getBestMatchingCategory(description,gtList);
-//			bestMatchingCategory = HeuristicAproachEntEnt.getBestMatchingCategory(description,gtList);
-//			if (TEST_DATASET_TYPE==TestDatasetType_Enum.AG ) {
-//				bestMatchingCategory = HeuristicApproachAGNewsEntEnt.getBestMatchingCategory(description,gtList);
-//			}
-//			else if(TEST_DATASET_TYPE==TestDatasetType_Enum.WEB_SNIPPETS ) {
-//				bestMatchingCategory = HeuristicApproachSnippetsEntEnt.getBestMatchingCategory(description,gtList);
-//			}
+//			bestMatchingCategory = HeuristicBasedOnLinkStructure.getBestMatchingCategory(description,gtList);
+			bestMatchingCategory = HeuristicAproachEntEnt.getBestMatchingCategory(description,gtList);
+	//		bestMatchingCategory = HeuristicBasedOnEntityVector.getBestMatchingCategory(description,gtList);
 			counterProcessed.increment();
 			StringBuilder builderGt = new StringBuilder();
 			for(Category g : gtList) {
@@ -375,5 +391,60 @@ public class TestBasedonSortTextDatasets {
 			// TODO: handle exception
 		}
 		return null;
+	}
+	
+	private Runnable handleToCreateDataset(String description, List<Category> gtList,int i ) {
+		return () -> {
+			String bestMatchingCategorywithAvg = HeuristicAproachEntEnt.getBestMatchingCategoryWithAvg(description,gtList);
+			Category bestMatchingCategory = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle(bestMatchingCategorywithAvg.split("\t")[0]);
+			Double avg = Double.valueOf(bestMatchingCategorywithAvg.split("\t")[1]);
+			if (avg>0.81) {
+				DatasetGenerationBasedOnVector.writeGeneratedDataToFile(bestMatchingCategorywithAvg.split("\t")[0], description, i);
+				counterProcessed.increment();
+				if (gtList.contains(bestMatchingCategory)) {
+					counterTruePositive.increment();
+				}
+			}
+
+			StringBuilder builderGt = new StringBuilder();
+			for(Category g : gtList) {
+				builderGt.append(StringUtils.capitalize(g.getTitle()));
+			}
+			if (gtList.contains(bestMatchingCategory)) {
+				//counterTruePositive.increment();
+				truePositive.put(builderGt.toString(), truePositive.getOrDefault(builderGt.toString(), 0) + 1);
+				System.out.println(" total processed: "+i+" True positive "+counterTruePositive.value());
+			}
+			else{
+				try {
+					//					String key=builderGt.toString()+"\t"+"predicted: "+bestMatchingCategory;
+					String key=builderGt.toString()+"\t"+"predicted: ";
+
+					if(bestMatchingCategory.getTitle().contains("Culture")||bestMatchingCategory.getTitle().contains("Arts")
+							||bestMatchingCategory.getTitle().contains("Entertainment")) {
+
+						falsePositiveResult.put(description+"\n gt:"+builderGt.toString(), "CultureArtsEntertainment");
+						key=key.concat("CultureArtsEntertainment");
+					}
+					else if(bestMatchingCategory.getTitle().contains("Education")||bestMatchingCategory.getTitle().contains("Science")){
+						falsePositiveResult.put(description+"\n gt:"+builderGt.toString(),"EducationScience");
+						key=key.concat("EducationScience");
+					}
+					else {
+						falsePositiveResult.put(description+"\n gt:"+builderGt.toString(), bestMatchingCategory.getTitle());
+						key=key.concat(bestMatchingCategory.getTitle());
+					}
+					falsePositive.put(builderGt.toString(), falsePositive.getOrDefault(builderGt.toString(), 0) + 1);
+					counterFalsePositive.increment();
+					mapMissClassified.put(key, mapMissClassified.getOrDefault(key, 0) + 1);
+
+				} catch (Exception e) {
+					System.out.println("Exception msg "+e.getMessage());
+					System.out.println("description "+description+" "+gtList+" "+bestMatchingCategory );
+					System.exit(1);
+				}
+
+			}
+		};
 	}
 }

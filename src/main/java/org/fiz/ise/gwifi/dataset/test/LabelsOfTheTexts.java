@@ -19,10 +19,12 @@ public class LabelsOfTheTexts {
 	public static Map<Integer, Category> getLables_AG()
 	{
 		Map<Integer, Category> mapLabel = new HashMap<>();
-		mapLabel.put(1, wikipedia.getCategoryByTitle("World"));
+//		mapLabel.put(1, wikipedia.getCategoryByTitle("World"));
+		mapLabel.put(1, wikipedia.getCategoryByTitle("Politics"));
 		mapLabel.put(2, wikipedia.getCategoryByTitle("Sports"));
+//		mapLabel.put(3, wikipedia.getCategoryByTitle("Corporations"));
 		mapLabel.put(3, wikipedia.getCategoryByTitle("Business"));
-		mapLabel.put(4, wikipedia.getCategoryByTitle("Technology"));
+		mapLabel.put(4, wikipedia.getCategoryByTitle("Software"));
 		
 		
 //		mapLabel.put(5, wikipedia.getCategoryByTitle("Science"));

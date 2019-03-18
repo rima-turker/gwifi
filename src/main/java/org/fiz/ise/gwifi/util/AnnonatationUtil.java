@@ -33,7 +33,25 @@ public class AnnonatationUtil {
 			e.printStackTrace();
 		}
 		return null;
-		
+
+	}
+	public static List<Annotation> findAnnotationAll_FilterAG(List<String> lst) {
+		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
+		List<Annotation> result = new ArrayList<>();
+		try {
+			for(String text:lst) {
+				List<Annotation> lstAnnotations = new ArrayList<>();
+				service.annotate(text, lstAnnotations);
+				for(Annotation a : lstAnnotations) {
+					if (!AnnonatationUtil.getEntityBlackList_AGNews().contains(a.getId())) { //we had so many noisy entities therefore filtering required
+						result.add(a);
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return result;
 	}
 	public static List<Annotation> findAnnotationAll(List<String> lst) {
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
@@ -67,9 +85,9 @@ public class AnnonatationUtil {
 	}
 	public static boolean hasALink(Annotation a, Category c) {
 		Set<Category> categories = new HashSet<>(CategorySingletonAnnotationFiltering.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).mapMainCatAndSubCats.get(c));
-//		if (c.getTitle().equals("Science")||c.getTitle().equals("Technology")) {
-//			categories.addAll(CategoryUtil.generateCategoryTree(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Science and technology"), depth));
-//		}
+		//		if (c.getTitle().equals("Science")||c.getTitle().equals("Technology")) {
+		//			categories.addAll(CategoryUtil.generateCategoryTree(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Science and technology"), depth));
+		//		}
 		if (WikipediaSingleton.getInstance().wikipedia.getArticleById(a.getId())!=null) {
 			Set<Category> entityCats = new HashSet<>(Arrays.asList(WikipediaSingleton.getInstance().wikipedia.getArticleById(a.getId()).getParentCategories()));
 			for(Category t: entityCats) {
@@ -78,7 +96,7 @@ public class AnnonatationUtil {
 				}
 			}
 		}
-	return false;
+		return false;
 	}
 	public static boolean hasALink(String str, Category c, int depth) {
 		Set<Category> categories = new HashSet<>(CategorySingletonAnnotationFiltering.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).mapMainCatAndSubCats.get(c));
@@ -109,6 +127,34 @@ public class AnnonatationUtil {
 		}
 		return false;
 	}
+	public static void findFreqOfWord(List<String> lst ,String fileName) {
+		Map<String, Integer> resultFreq = new HashMap<>();
+		for(String a :lst  ) {
+			if (resultFreq.containsKey(a)) {
+				resultFreq.put(a, (resultFreq.get(a)+1));
+			}
+			else{
+				resultFreq.put(a, 1);
+			}
+		}
+		Map<String, Integer> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(resultFreq));
+		FileUtil.writeDataToFile(sortedMap,fileName);
+		System.out.println("Finished one dataset writing: " + fileName);
+	}
+
+	public static Map<String, Integer> findFreqOfEntitySortedMap(List<Annotation> lst ) {
+		Map<String, Integer> resultFreq = new HashMap<>();
+		for(Annotation a :lst  ) {
+			if (resultFreq.containsKey(a.getTitle()+"\t"+a.getId())) {
+				resultFreq.put(a.getTitle()+"\t"+a.getId(), (resultFreq.get(a.getTitle()+"\t"+a.getId())+1));
+			}
+			else{
+				resultFreq.put(a.getTitle()+"\t"+a.getId(), 1);
+			}
+		}
+		Map<String, Integer> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(resultFreq));
+		return sortedMap;
+	}
 	public static void findFreqOfEntity(List<Annotation> lst ,String fileName) {
 		Map<String, Integer> resultFreq = new HashMap<>();
 		for(Annotation a :lst  ) {
@@ -134,12 +180,12 @@ public class AnnonatationUtil {
 	public static List<Integer> getEntityBlackList_AGNews(){
 		List<Integer> lstidBlack = new ArrayList<>();
 		lstidBlack.add(18935732);
-		lstidBlack.add(60534);
-		lstidBlack.add(18998750);
+		lstidBlack.add(60534); //Shilling
+		lstidBlack.add(18998750); //Reuters
 		lstidBlack.add(3434750);//Inited States
 		lstidBlack.add(54635);//Tuesday
 		lstidBlack.add(54407);
-	
+
 		//New black list
 		lstidBlack.add(54634);//Wednesday
 		lstidBlack.add(266139);//ThursdayBand
@@ -151,15 +197,17 @@ public class AnnonatationUtil {
 		lstidBlack.add(1220573);//UPDATE news
 		lstidBlack.add(13623073);//CUT film
 		lstidBlack.add(2605250);//CUTS
-		
+		lstidBlack.add(1691433);//NEW (TV station)
+		lstidBlack.add(471981);//Agence France-Presse
+
 		return lstidBlack;
-		
+
 	}
 	public static List<Integer> getEntityBlackList_WebSnippets(){
 		List<Integer> lstidBlack = new ArrayList<>();
 		lstidBlack.add(5043734); //Wikipedia
 		return lstidBlack;
-		
+
 	}
 	public static List<Annotation> filterAnnotation(List<Annotation> lst) {
 		List<Integer> lstidBlack = new ArrayList<>(getEntityBlackList_AGNews());

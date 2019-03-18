@@ -26,6 +26,7 @@ import org.fiz.ise.gwifi.Singleton.PageCategorySingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
 import org.fiz.ise.gwifi.dataset.test.LabelsOfTheTexts;
+import org.fiz.ise.gwifi.dataset.test.ReadTestDataset;
 import org.fiz.ise.gwifi.model.AG_DataType;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
@@ -52,18 +53,15 @@ public class TestBasedonSortTextDatasets {
 	private static boolean LOAD_MODEL = Config.getBoolean("LOAD_MODEL", false);
 	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE"); 
 	private static Wikipedia wikipedia = WikipediaSingleton.getInstance().wikipedia;
-	private static CategorySingleton singCategory;
 	private static SynchronizedCounter counterTruePositive;
 	private static SynchronizedCounter counterFalsePositive;
 	private static SynchronizedCounter counterProcessed;
-	private static SynchronizedCounter counterWorldFalsePositive;
 	private static Map<Category, Integer> numberOfSamplesPerCategory = new ConcurrentHashMap<>();
 	private static Map<String, Integer> truePositive = new ConcurrentHashMap<>();
 	private static Map<String, Integer> falsePositive = new ConcurrentHashMap<>();
 	private static Map<String, String> falsePositiveResult = new ConcurrentHashMap<>();
 	private static Map<String, Integer> mapMissClassified = new ConcurrentHashMap<>();
 	private ExecutorService executor;
-	private static Map<Category, Set<Category>> mapCategories;
 	long now = System.currentTimeMillis();
 
 	public static final Map<Article,List<Article>> CACHE = new HashMap<>();
@@ -74,24 +72,24 @@ public class TestBasedonSortTextDatasets {
 		PageCategorySingleton.getInstance();
 	}
 	public static void main(String[] args) {
-		System.out.println("running TestBasedonSortTextDatasets");
 		TestBasedonSortTextDatasets test = new TestBasedonSortTextDatasets();
 		test.initializeVariables();
 	}
 	private void initializeVariables() {
+		System.out.println("running: "+this.getClass().getSimpleName());
 		System.out.println("NUMBER_OF_THREADS: "+NUMBER_OF_THREADS);
 		System.out.println("TEST_DATASET_TYPE: "+TEST_DATASET_TYPE);
-		singCategory= CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE));
+		//singCategory= CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE));
 		counterProcessed= new SynchronizedCounter();
 		counterFalsePositive= new SynchronizedCounter();
 		counterTruePositive= new SynchronizedCounter();
-		counterWorldFalsePositive= new SynchronizedCounter();
+		//counterWorldFalsePositive= new SynchronizedCounter();
 
 		TestBasedonSortTextDatasets test = new TestBasedonSortTextDatasets();
 
 		if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
 			System.out.println("Start reading AG News data");
-			startProcessingData(test.read_dataset_AG(AG_DataType.TITLEANDDESCRIPTION));
+			startProcessingData(ReadTestDataset.read_dataset_AG(AG_DataType.TITLEANDDESCRIPTION));
 		}
 		else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.WEB_SNIPPETS)) {
 			System.out.println("Start reading WEB data");
@@ -103,68 +101,6 @@ public class TestBasedonSortTextDatasets {
 		else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.YAHOO)) {
 			test.dataset_Yahoo();
 		}
-	}
-
-	public Map<String,List<Category>> read_dataset_AG(AG_DataType type) {
-		Map<String,List<Category>> dataset = new HashMap<>();
-		Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG());
-		List<String> lst = new ArrayList<>(Categories.getCategories_Ag());
-		int count=0;
-		try {
-			NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-			List<String> lines = FileUtils.readLines(new File(DATASET_TEST_AG), "utf-8");
-			String[] arrLines = new String[lines.size()];
-			arrLines = lines.toArray(arrLines);
-			int i=0;
-			for (i = 0; i < arrLines.length; i++) {
-				List<Category> gtList = new ArrayList<>(); 
-				String[] split = arrLines[i].split("\",\"");
-				String label = split[0].replace("\"", "");
-				if (mapLabel.containsKey(Integer.valueOf(label))) {
-					//				numberOfSamplesPerCategory.put(mapLabel.get(Integer.valueOf(label)), numberOfSamplesPerCategory.getOrDefault(mapLabel.get(Integer.valueOf(label)), 0) + 1);
-					//				gtList.add(mapLabel.get(Integer.valueOf(label)));
-					if (label.equals("4")) {
-						numberOfSamplesPerCategory.put(mapLabel.get(4), numberOfSamplesPerCategory.getOrDefault(mapLabel.get(4), 0) + 1);
-						//numberOfSamplesPerCategory.put(mapLabel.get(5), numberOfSamplesPerCategory.getOrDefault(mapLabel.get(5), 0) + 1);
-						gtList.add(mapLabel.get(4));
-						//gtList.add(mapLabel.get(5));
-					}
-					else {
-						numberOfSamplesPerCategory.put(mapLabel.get(Integer.valueOf(label)), numberOfSamplesPerCategory.getOrDefault(mapLabel.get(Integer.valueOf(label)), 0) + 1);
-						gtList.add(mapLabel.get(Integer.valueOf(label)));
-					}
-					if (type==AG_DataType.TITLE) {
-						String title = split[1].replace("\"", "");
-						List<Annotation> lstAnnotations = new ArrayList<>();
-						service.annotate(title, lstAnnotations);//annotate the given text
-						if (lstAnnotations.size()<1) {
-							//System.out.println(title);
-							count++;
-						}
-						if (dataset.containsKey(title)) {
-							if (!gtList.contains(dataset.get(title).get(0))) {
-								gtList.addAll(dataset.get(title));
-							}
-							title=title+" ";
-						}
-						dataset.put(title, gtList);
-					}
-					else if (type==AG_DataType.DESCRIPTION) {
-						String description = split[2].replace("\"", "");
-						dataset.put(description, gtList);
-
-					}
-					if (type==AG_DataType.TITLEANDDESCRIPTION) {
-						String title = split[1].replace("\"", "");
-						String description = split[2].replace("\"", "");
-						dataset.put(title+" "+description, gtList);
-					}
-				}
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return dataset;
 	}
 	private void startProcessingData(Map<String,List<Category>> dataset) {
 		int count=0;

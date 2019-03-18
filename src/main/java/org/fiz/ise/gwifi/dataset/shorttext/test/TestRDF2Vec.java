@@ -21,7 +21,7 @@ public class TestRDF2Vec {
 		
 		
 		
-		List<String> dataset = new ArrayList<>(ReadTestDataset.read_AG_BasedOnType(Config.getString("DATASET_TEST_AG",""), AG_DataType.TITLEANDDESCRIPTION));
+		List<String> dataset = new ArrayList<>(ReadTestDataset.read_AG_BasedOnType(AG_DataType.TITLEANDDESCRIPTION));
 		List<Annotation> lstAllAnnotation = new ArrayList<>(AnnonatationUtil.findAnnotationAll(dataset));
 		int totalExist =0;
 		System.out.println("TestRDF2Vec:Size of list: "+lstAllAnnotation.size());
