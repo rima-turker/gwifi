@@ -16,7 +16,7 @@ import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
 import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
-import org.fiz.ise.gwifi.dataset.test.ReadTestDataset;
+import org.fiz.ise.gwifi.dataset.test.ReadDataset;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
 import org.fiz.ise.gwifi.util.CategoryUtil;
@@ -52,7 +52,7 @@ public class AnalyseCategoryOfAnnotationBasedOnWiki {
 //						Category cDataset=WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Technology");
 			System.out.println(c.getTitle());
 			Category cDataset=c;
-			List<String> dataset = new ArrayList<>(ReadTestDataset.read_WEB_BasedOnCategory(cDataset));
+			List<String> dataset = new ArrayList<>(ReadDataset.read_WEB_BasedOnCategory(cDataset,Config.getString("DATASET_TEST_WEB","")));
 			test.analyseAnchorText(dataset);
 			
 			//			List<Annotation> lstAllAnnotation = new ArrayList<>(AnnonatationUtil.findAnnotationAll(dataset));

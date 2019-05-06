@@ -35,6 +35,24 @@ public class AnnonatationUtil {
 		return null;
 
 	}
+	public static List<Annotation> findAnnotationAll_FilterWEB(List<String> lst) {
+		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
+		List<Annotation> result = new ArrayList<>();
+		try {
+			for(String text:lst) {
+				List<Annotation> lstAnnotations = new ArrayList<>();
+				service.annotate(text, lstAnnotations);
+				for(Annotation a : lstAnnotations) {
+					if (!AnnonatationUtil.getEntityBlackList_WebSnippets().contains(a.getId())) { //we had so many noisy entities therefore filtering required
+						result.add(a);
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
 	public static List<Annotation> findAnnotationAll_FilterAG(List<String> lst) {
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
 		List<Annotation> result = new ArrayList<>();

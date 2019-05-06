@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
-import org.fiz.ise.gwifi.dataset.test.ReadTestDataset;
+import org.fiz.ise.gwifi.dataset.test.ReadDataset;
 import org.fiz.ise.gwifi.model.AG_DataType;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
@@ -28,7 +28,7 @@ public class GenerateDatasetForNN {
 		}
 		String fileName="AG_TitleDesc_FreqWord";
 		for(Category c : lstDatasetCatList ) {
-		List<String> dataset = new ArrayList<>(ReadTestDataset.read_AG_BasedOnCategory(c, (AG_DataType.TITLEANDDESCRIPTION)));
+		List<String> dataset = new ArrayList<>(ReadDataset.read_AG_BasedOnCategory(c, (AG_DataType.TITLEANDDESCRIPTION)));
 		findFreqOfWords(dataset,fileName+"_"+c.getTitle());
 		}
 	}

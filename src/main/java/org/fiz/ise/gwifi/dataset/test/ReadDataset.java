@@ -20,7 +20,7 @@ import edu.kit.aifb.gwifi.annotation.Annotation;
 import edu.kit.aifb.gwifi.model.Category;
 import edu.kit.aifb.gwifi.service.NLPAnnotationService;
 
-public class ReadTestDataset {
+public class ReadDataset {
 	private static Map<Category, Integer> numberOfSamplesPerCategory = new ConcurrentHashMap<>();
 	
 	public static Map<String,List<Category>> read_dataset_AG(AG_DataType type) {
@@ -77,10 +77,10 @@ public class ReadTestDataset {
 		}
 		return dataset;
 	}
-	public static List<String> read_AG_BasedOnType(AG_DataType type){
+	public static List<String> read_AG_BasedOnType(String file,AG_DataType type){
 		List<String> dataset = new ArrayList<>();
 		try {
-			List<String>  lines = new ArrayList<>(FileUtils.readLines(new File(Config.getString("DATASET_TEST_AG","")), "utf-8"));
+			List<String>  lines = new ArrayList<>(FileUtils.readLines(new File(file), "utf-8"));
 			String[] arrLines = new String[lines.size()];
 			arrLines = lines.toArray(arrLines);
 			int i=0;
@@ -153,10 +153,10 @@ public class ReadTestDataset {
 		}
 		return null;
 	}
-	public static List<String> read_WEB_BasedOnCategory(Category c){
+	public static List<String> read_WEB_BasedOnCategory(Category c,String file){
 		try {
 			List<String> dataset = new ArrayList<>();
-			List<String> lines = FileUtils.readLines(new File(Config.getString("DATASET_TEST_WEB","")), "utf-8");
+			List<String> lines = FileUtils.readLines(new File(file), "utf-8");
 			System.out.println("size of the file "+lines.size());
 			String[] arrLines = new String[lines.size()];
 			arrLines = lines.toArray(arrLines);

@@ -1,17 +1,33 @@
 package org.fiz.ise.gwifi.util;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class FileUtil {
 
+	public static void writeDataToFile(Set<Integer> data,final String fileName) {
+		try {
+			final FileWriter fw = new FileWriter(fileName, false);
+			for(Integer s:data) {
+				fw.write(s+"\n");
+			}
+			fw.close();
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public static void writeDataToFile(List<String> data,final File file) {
 		try {
 			final FileWriter fw = new FileWriter(file);
@@ -45,6 +61,7 @@ public class FileUtil {
 			e.printStackTrace();
 		}
 	}
+
 	public static void writeDataToFile(Map<String,Long> data,final String fileName,final boolean append) {
 		try {
 			final FileWriter fw = new FileWriter(fileName, append);

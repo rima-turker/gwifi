@@ -42,6 +42,10 @@ public class Categories {
 //				"Science","Engineering","Health","Politics","Society","Sports");		
 //		final List<String> dummySeeds = Arrays.asList("Business","Computer hardware","Culture","Arts","Entertainment","Education",
 //				"Science","Engineering","Health","Politics","Society","Sports");
+		
+//		final List<String> dummySeeds = Arrays.asList("Business","Software","Music",
+//				"Science","Automotive industry","Health","Politics","Sports");
+		
 		final List<String> dummySeeds = Arrays.asList("Business","Computers","Culture","Arts","Entertainment","Education",
 				"Science","Engineering","Health","Politics","Society","Sports");
 		return Collections.unmodifiableList(dummySeeds);

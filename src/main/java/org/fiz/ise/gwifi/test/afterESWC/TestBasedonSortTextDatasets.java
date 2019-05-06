@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -46,6 +47,7 @@ import edu.kit.aifb.gwifi.service.NLPAnnotationService;
 public class TestBasedonSortTextDatasets {
 
 	private final String DATASET_TEST_AG = Config.getString("DATASET_TEST_AG","");
+	private final String DATASET_TRAIN_AG = Config.getString("DATASET_TRAIN_AG","");
 	private final String DATASET_TEST_WEB = Config.getString("DATASET_TEST_WEB","");
 	private final String DATASET_TEST_DBLP = Config.getString("DATASET_TEST_DBLP","");
 	private final String DATASET_TEST_YAHOO = Config.getString("DATASET_TEST_YAHOO","");
@@ -67,7 +69,7 @@ public class TestBasedonSortTextDatasets {
 	long now = System.currentTimeMillis();
 	private static Set<Category> setMainCategories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories);
 	public static final Map<String,List<String>> CACHE_nearestWords = new HashMap<>();
-	
+
 	public static final Map<Article,List<Article>> CACHE = new HashMap<>();
 	static {
 		if (LOAD_MODEL) {
@@ -89,41 +91,41 @@ public class TestBasedonSortTextDatasets {
 		counterTruePositive= new SynchronizedCounter();
 		counterWorldFalsePositive= new SynchronizedCounter();
 		TestBasedonSortTextDatasets test = new TestBasedonSortTextDatasets();
-		
-//		for (Category mainCat : setMainCategories) {
-//			if (!CACHE_nearestWords.containsKey(mainCat.getTitle())) {
-//				Article a = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(mainCat.getTitle());
-//				Collection<String> wordsNearest = LINE_modelSingleton.getInstance().lineModel.wordsNearest(String.valueOf(a.getId()), 10);
-//				List<String> lst = new ArrayList<>();
-//				for (String s : wordsNearest) {
-//					lst.add(s);
-//				}
-//				System.out.println(a.getTitle()+" "+ lst);
-//				System.out.println();
-//				CACHE_nearestWords.put(a.getTitle(), lst);
-//			}
-//			else
-//				break;
-//		}
-//		System.out.println("Finished initializing cache..");
+
+		//		for (Category mainCat : setMainCategories) {
+		//			if (!CACHE_nearestWords.containsKey(mainCat.getTitle())) {
+		//				Article a = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(mainCat.getTitle());
+		//				Collection<String> wordsNearest = LINE_modelSingleton.getInstance().lineModel.wordsNearest(String.valueOf(a.getId()), 10);
+		//				List<String> lst = new ArrayList<>();
+		//				for (String s : wordsNearest) {
+		//					lst.add(s);
+		//				}
+		//				System.out.println(a.getTitle()+" "+ lst);
+		//				System.out.println();
+		//				CACHE_nearestWords.put(a.getTitle(), lst);
+		//			}
+		//			else
+		//				break;
+		//		}
+		//		System.out.println("Finished initializing cache..");
 		if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
 			System.out.println("Start reading AG News data");
-			startProcessingData(test.read_dataset_AG(AG_DataType.TITLEANDDESCRIPTION));
+			startProcessingData(test.read_dataset_AG(AG_DataType.TITLEANDDESCRIPTION,DATASET_TRAIN_AG));
 		}
 		else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.WEB_SNIPPETS)) {
 			System.out.println("Start reading WEB data");
-			startProcessingData(test.read_dataset_WEB());
+			startProcessingData(test.read_dataset_WEB(DATASET_TEST_WEB));
 		}
 	}
 
-	public Map<String,List<Category>> read_dataset_AG(AG_DataType type) {
+	public Map<String,List<Category>> read_dataset_AG(AG_DataType type, String dataset_AG) {
 		Map<String,List<Category>> dataset = new HashMap<>();
 		Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG());
 		List<String> lst = new ArrayList<>(Categories.getCategories_Ag());
 		int count=0;
 		try {
 			NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-			List<String> lines = FileUtils.readLines(new File(DATASET_TEST_AG), "utf-8");
+			List<String> lines = FileUtils.readLines(new File(dataset_AG), "utf-8");
 			String[] arrLines = new String[lines.size()];
 			arrLines = lines.toArray(arrLines);
 			int i=0;
@@ -166,6 +168,8 @@ public class TestBasedonSortTextDatasets {
 
 					}
 					if (type==AG_DataType.TITLEANDDESCRIPTION) {
+//						String title = split[1];//.replace("\"", "");
+//						String description = split[2].substring(0,split[2].length()-1); //.replace("\"", "");
 						String title = split[1].replace("\"", "");
 						String description = split[2].replace("\"", "");
 						dataset.put(title+" "+description, gtList);
@@ -188,8 +192,8 @@ public class TestBasedonSortTextDatasets {
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 			System.out.println("Total time minutes " + TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis() - now));
 			System.out.println("Number of true positive: "+counterTruePositive.value()+" number of processed: "+counterProcessed.value());
-			
-			
+
+
 			Double d = (counterTruePositive.value()*0.1)/(counterProcessed.value()*0.1);
 			System.out.println("Accuracy: "+d);
 			//			System.out.println("counterWorldFalsePositive: "+counterWorldFalsePositive.value());
@@ -211,12 +215,13 @@ public class TestBasedonSortTextDatasets {
 		}
 	}
 
-		private Runnable handle(String description, List<Category> gtList,int i ) {
+	private Runnable handle(String description, List<Category> gtList,int i ) {
 		return () -> {
 			Category bestMatchingCategory=null;
-//			bestMatchingCategory = HeuristicBasedOnLinkStructure.getBestMatchingCategory(description,gtList);
-			bestMatchingCategory = HeuristicAproachEntEnt.getBestMatchingCategory(description,gtList);
-	//		bestMatchingCategory = HeuristicBasedOnEntityVector.getBestMatchingCategory(description,gtList);
+			//			bestMatchingCategory = HeuristicBasedOnLinkStructure.getBestMatchingCategory(description,gtList);
+			//			bestMatchingCategory = HeuristicAproachEntEnt.getBestMatchingCategory(description,gtList);
+			bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingCategory(description,gtList);
+			//		bestMatchingCategory = HeuristicBasedOnEntityVector.getBestMatchingCategory(description,gtList);
 			counterProcessed.increment();
 			StringBuilder builderGt = new StringBuilder();
 			for(Category g : gtList) {
@@ -338,10 +343,82 @@ public class TestBasedonSortTextDatasets {
 			// TODO: handle exception
 		}
 	}
-	public Map<String,List<Category>> read_dataset_WEB() {
+
+	public Map<String,List<Category>> read_dataset_WEB_for_DatasetGeneration(String file) {
 		try {
 			Map<String,List<Category>> dataset = new HashMap<>();
-			List<String> lines = FileUtils.readLines(new File(DATASET_TEST_WEB), "utf-8");
+			List<String> temp = new ArrayList<String>();
+			List<String> lines = FileUtils.readLines(new File(file), "utf-8");
+			System.out.println("size of the file "+lines.size());
+			String[] arrLines = new String[lines.size()];
+			arrLines = lines.toArray(arrLines);
+			for (int i = 0; i < arrLines.length; i++) {
+				String[] split = arrLines[i].split(" ");
+				String label = split[split.length-1];
+				String snippet = arrLines[i].substring(0, arrLines[i].length()-(label).length()).trim();
+				List<Category> gtList = new ArrayList<>(); 
+				/*
+				 * "Business","Software","Art",
+				"Science","Automotive industry","Health","Politics","Sports");
+
+				 */
+				if (label.contains("-")) {
+					String[] splitLabel = label.split("-");
+					if (Arrays.asList(splitLabel).contains("culture")) {
+						Category cTemp = wikipedia.getCategoryByTitle("Music"); 
+						gtList.add(cTemp);
+						numberOfSamplesPerCategory.put(cTemp, numberOfSamplesPerCategory.getOrDefault(cTemp, 0) + 1);
+					}
+
+					else if (Arrays.asList(splitLabel).contains("science")) {
+						Category cTemp = wikipedia.getCategoryByTitle("Science"); 
+						gtList.add(cTemp);
+						numberOfSamplesPerCategory.put(cTemp, numberOfSamplesPerCategory.getOrDefault(cTemp, 0) + 1);
+					}
+					else if (Arrays.asList(splitLabel).contains("politics")) {
+						Category cTemp = wikipedia.getCategoryByTitle("Politics"); 
+						gtList.add(cTemp);
+						numberOfSamplesPerCategory.put(cTemp, numberOfSamplesPerCategory.getOrDefault(cTemp, 0) + 1);
+					}
+
+				}
+				else if (label.equalsIgnoreCase("computers")) {
+					Category cTemp = wikipedia.getCategoryByTitle(StringUtils.capitalize("Software")); 
+					gtList.add(cTemp);
+					numberOfSamplesPerCategory.put(cTemp, numberOfSamplesPerCategory.getOrDefault(cTemp, 0) + 1);
+				}
+				else if (label.equalsIgnoreCase("Engineering")) {
+					Category cTemp = wikipedia.getCategoryByTitle(StringUtils.capitalize("Automotive industry")); 
+					gtList.add(cTemp);
+					numberOfSamplesPerCategory.put(cTemp, numberOfSamplesPerCategory.getOrDefault(cTemp, 0) + 1);
+				}
+				else{
+					gtList.add(wikipedia.getCategoryByTitle(StringUtils.capitalize(label)));
+					numberOfSamplesPerCategory.put(wikipedia.getCategoryByTitle(StringUtils.capitalize(label)), numberOfSamplesPerCategory.getOrDefault(wikipedia.getCategoryByTitle(StringUtils.capitalize(label)), 0) + 1);
+
+				}
+				temp.add(snippet);
+				if (dataset.containsKey(snippet)) {
+					Random rand = new Random();
+					int n = rand.nextInt(99999999);
+					dataset.put(snippet+" "+n, gtList);
+				}
+				else {
+					dataset.put(snippet, gtList);
+				}
+			}
+			Print.printMap(numberOfSamplesPerCategory);
+			System.out.println("Dataset Size: "+dataset.size());
+			return dataset;
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return null;
+	}
+	public Map<String,List<Category>> read_dataset_WEB(String file) {
+		try {
+			Map<String,List<Category>> dataset = new HashMap<>();
+			List<String> lines = FileUtils.readLines(new File(file), "utf-8");
 			System.out.println("size of the file "+lines.size());
 			String[] arrLines = new String[lines.size()];
 			arrLines = lines.toArray(arrLines);
@@ -392,7 +469,7 @@ public class TestBasedonSortTextDatasets {
 		}
 		return null;
 	}
-	
+
 	private Runnable handleToCreateDataset(String description, List<Category> gtList,int i ) {
 		return () -> {
 			String bestMatchingCategorywithAvg = HeuristicAproachEntEnt.getBestMatchingCategoryWithAvg(description,gtList);

@@ -9,7 +9,7 @@ public class Print
 {
 	
 	public static<K, V> void printMap (Map<K, V> hm) {
-		hm.forEach((k,v) -> System.out.println("key: "+k+" value:"+v));
+		hm.forEach((k,v) -> System.out.println("key:\t"+k+"\tvalue:\t"+v));
 	}
 	
 	public static void printMapSize(Map<Category, Set<Category>> map) {

@@ -24,7 +24,7 @@ import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.shorttext.test.HeuristicApproachConsideringCategorySemantics;
 import org.fiz.ise.gwifi.dataset.shorttext.test.TestBasedonSortTextDatasets;
-import org.fiz.ise.gwifi.dataset.test.ReadTestDataset;
+import org.fiz.ise.gwifi.dataset.test.ReadDataset;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
 import org.fiz.ise.gwifi.util.Config;
@@ -59,7 +59,7 @@ public class KBCorrespondingCategory {
 		//test.findDistinguishMatchingCatgeoryBasedOnSimDocVecFromEntitiesForAllCats(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Business"),
 			//	WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Science and technology"));
 				for(Category c : lstCat ) {
-					List<String> dataset = new ArrayList<>(ReadTestDataset.read_AG_BasedOnCategory(c, null));
+					List<String> dataset = new ArrayList<>(ReadDataset.read_AG_BasedOnCategory(c, null));
 					Map<Category, Double> findMatchingCatgeoryBasedOnSimDocVecFromEntitiesForAllCats = new LinkedMap<>(test.findMatchingCatgeoryBasedOnSimDocVecFromEntitiesForAllCats(AnnonatationUtil.filterAnnotation(AnnonatationUtil.findAnnotationAll(dataset))));
 					FileUtil.writeDataToFile(findMatchingCatgeoryBasedOnSimDocVecFromEntitiesForAllCats, c.getTitle()+"_MostSimCatProportionallySampled");
 					

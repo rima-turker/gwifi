@@ -18,13 +18,30 @@ public class VectorUtil {
 	    }   
 	    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 	}
+	public static double[] getSentenceVector(List<String> words, Word2Vec model,String sentence) {        
+        INDArray a = null;
+        try{
+            a = model.getWordVectorsMean(words);
+        }catch(Exception e) {
+        	System.out.println("I am in getSentenceVector "+ words.size()+" "+a+"\n"+sentence);
+        	e.printStackTrace();
+            return null;
+        }
+        int cols = a.columns();
+        double[] result = new double[cols];
+        for(int i=0;i<cols;i++) {
+            result[i] = a.getDouble(i);
+        }
+        return result;
+    }
 	
 	public static double[] getSentenceVector(List<String> words, Word2Vec model) {        
         INDArray a = null;
         try{
             a = model.getWordVectorsMean(words);
         }catch(Exception e) {
-            e.printStackTrace();
+        	System.out.println("I am in getSentenceVector "+ words.size()+" "+a);
+        	e.printStackTrace();
             return null;
         }
         int cols = a.columns();

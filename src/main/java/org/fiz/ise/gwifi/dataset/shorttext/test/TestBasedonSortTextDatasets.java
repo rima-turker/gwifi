@@ -26,7 +26,7 @@ import org.fiz.ise.gwifi.Singleton.PageCategorySingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
 import org.fiz.ise.gwifi.dataset.test.LabelsOfTheTexts;
-import org.fiz.ise.gwifi.dataset.test.ReadTestDataset;
+import org.fiz.ise.gwifi.dataset.test.ReadDataset;
 import org.fiz.ise.gwifi.model.AG_DataType;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
@@ -89,7 +89,7 @@ public class TestBasedonSortTextDatasets {
 
 		if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
 			System.out.println("Start reading AG News data");
-			startProcessingData(ReadTestDataset.read_dataset_AG(AG_DataType.TITLEANDDESCRIPTION));
+			startProcessingData(ReadDataset.read_dataset_AG(AG_DataType.TITLEANDDESCRIPTION));
 		}
 		else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.WEB_SNIPPETS)) {
 			System.out.println("Start reading WEB data");

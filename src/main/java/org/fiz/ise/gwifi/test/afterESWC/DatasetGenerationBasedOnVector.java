@@ -18,7 +18,7 @@ import org.apache.log4j.Logger;
 import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
-import org.fiz.ise.gwifi.dataset.test.ReadTestDataset;
+import org.fiz.ise.gwifi.dataset.test.ReadDataset;
 import org.fiz.ise.gwifi.model.AG_DataType;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
@@ -30,24 +30,123 @@ import org.fiz.ise.gwifi.util.Print;
 import com.mongodb.util.Hash;
 
 import edu.kit.aifb.gwifi.annotation.Annotation;
+import edu.kit.aifb.gwifi.model.Article;
 import edu.kit.aifb.gwifi.model.Category;
 
 public class DatasetGenerationBasedOnVector {
 
 	private final static TestDatasetType_Enum TEST_DATASET_TYPE = Config.getEnum("TEST_DATASET_TYPE");
-	private static boolean LOAD_MODEL = Config.getBoolean("LOAD_MODEL", false);
-	private static final Logger LOG = Logger.getLogger(HeuristicAproachEntEnt.class);
+	private final static String TRAIN_SET_AG = Config.getString("DATASET_TRAIN_AG","");
+	private final static String TRAIN_SET_WEB = Config.getString("DATASET_TRAIN_WEB","");
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 	static final Logger resultLog = Logger.getLogger("reportsLogger");
 	static int numberOfSamples=50;
 	static int countCorrect=0;
+	static int countWrong=0;
 
 	public static void main(String[] args) {
-		//		datasetGenerateFromTestSet();
-
+		datasetGenerateFromTrainSet();
 	}
 	private static void datasetGenerateFromTrainSet() {
-
+		Map<String, Integer> mapResult = new HashMap<String, Integer>();
+		try {
+			Set<Category> setMainCategories = new HashSet<>(
+					CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories);	
+//			for(Category c : setMainCategories) {
+//				File directory = new File(c.getTitle());
+//				if (! directory.exists()){
+//					directory.mkdir();
+//				}
+//			}
+			TestBasedonSortTextDatasets datasetRead =  new TestBasedonSortTextDatasets();
+			Map<String, List<Category>> dataset = null;
+			Map<String, List<Category>> map_result_To_Compare = new HashedMap<String, List<Category>>();
+			Category bestMatchingCategory=null;
+			if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
+				dataset = datasetRead.read_dataset_AG(AG_DataType.TITLEANDDESCRIPTION, TRAIN_SET_AG);
+				int i =0;
+				for(Entry<String, List<Category>> e: dataset.entrySet()) {
+					bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingCategory(e.getKey(),e.getValue());
+					i++;
+					//FileUtil.writeDataToFile(Arrays.asList(e.getKey()), bestMatchingCategory.getTitle()+File.separator+ i,false);
+					
+					if (e.getValue().contains(bestMatchingCategory)) {
+						countCorrect++;
+					}
+					else if(e.getValue().get(0).getTitle().equals("Sports")&&bestMatchingCategory.getTitle().equals("Sport")) {
+						countCorrect++;
+					}
+					else
+					{
+//						String key = bestMatchingCategory.getTitle();
+						String key = bestMatchingCategory.getTitle()+"-"+e.getValue().get(0).getTitle();
+						int count = mapResult.containsKey(key) ? mapResult.get(key) : 0;
+						mapResult.put(key, count + 1);
+						resultLog.info("wrong classified: "+ bestMatchingCategory.getTitle()+"\t"+i+"\t"+e.getKey()+"\n");
+//						System.out.println("wrong classified: "+ bestMatchingCategory.getTitle()+"\t"+i+"\t"+e.getKey());
+						countWrong++;
+					}
+					//System.out.println(i+" files are processed. Correctly: "+countCorrect+" Wrongly: "+countWrong);
+					if (bestMatchingCategory.getTitle().equals("Sport")) {
+						map_result_To_Compare.put(e.getKey(), Arrays.asList(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Sports")));
+					}
+					else {
+						map_result_To_Compare.put(e.getKey(), Arrays.asList(bestMatchingCategory));
+					}
+				}
+			}
+			else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.WEB_SNIPPETS)) {
+				dataset = datasetRead.read_dataset_WEB_for_DatasetGeneration(TRAIN_SET_WEB);
+				System.out.println("Dataset size: "+dataset.size());
+				int i =0;
+				for(Entry<String, List<Category>> e: dataset.entrySet()) {
+					Article bestMatchingArticle = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticle(e.getKey(),e.getValue());
+					bestMatchingCategory= WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle(bestMatchingArticle.getTitle());
+					i++;
+					//FileUtil.writeDataToFile(Arrays.asList(e.getKey()), bestMatchingCategory.getTitle()+File.separator+ i,false);
+					
+					if (e.getValue().get(0).equals(bestMatchingCategory)) {
+						secondLOG.info("classified: "+ bestMatchingArticle.getTitle()+"\t"+i+"\t"+e.getKey()+"\n");
+						countCorrect++;
+					}
+					else if(e.getValue().get(0).getTitle().equals("Sports")&&bestMatchingCategory.getTitle().equals("Sport")) {
+						countCorrect++;
+					}
+					else//wrong classified
+					{
+						String key = bestMatchingCategory.getTitle()+"-"+e.getValue().get(0).getTitle();
+						int count = mapResult.containsKey(key) ? mapResult.get(key) : 0;
+						mapResult.put(key, count + 1);
+						resultLog.info("wrong classified: "+ bestMatchingArticle.getTitle()+"\t"+i+"\t"+e.getKey()+"\t"+e.getValue().get(0)+"\n");
+						countWrong++;
+					}
+					
+					//For comparison
+					if (bestMatchingCategory.getTitle().equals("Sport")) {
+						map_result_To_Compare.put(e.getKey(), Arrays.asList(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Sports")));
+					}
+					else {
+						map_result_To_Compare.put(e.getKey(), Arrays.asList(bestMatchingCategory));
+					}
+				}
+			}
+			System.out.println("Test calculation is started...");
+			int matchingSentences =0;
+			for(Entry<String, List<Category>> e : dataset.entrySet()) {
+				if (map_result_To_Compare.get(e.getKey()).contains(e.getValue().get(0))) {
+					matchingSentences++;
+				}
+			}
+			System.out.println("matching sentences between artificial ds and the original"+matchingSentences);
+			System.out.println("countCorrect "+countCorrect+"\nWrongly assigned labels: "+countWrong);
+			System.out.println("Total classified "+(countCorrect+countWrong));
+			System.out.println("Accuracy "+(countCorrect/(dataset.size()*1.0)));
+			Print.printMap(mapResult);
+			
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 	}
 
 	public static void writeGeneratedDataToFile(String folderName, String data, int fileName ){
@@ -117,9 +216,13 @@ public class DatasetGenerationBasedOnVector {
 
 		}
 		Print.printMap(result);
+		calculateAccuracyBasedOnVectorSimilarity(fileName, result);
+	}
+	private static void calculateAccuracyBasedOnVectorSimilarity(String fileName, Map<String, List<String>> result) {
+		File directory;
 		TestBasedonSortTextDatasets test = new TestBasedonSortTextDatasets();
-		Map<String, List<Category>> read_dataset_AG = test.read_dataset_AG(AG_DataType.TITLEANDDESCRIPTION);
-		Map<String, Integer> mapResult = new HashMap<String, Integer>();;
+		Map<String, List<Category>> read_dataset_AG = test.read_dataset_AG(AG_DataType.TITLEANDDESCRIPTION,TRAIN_SET_AG);
+		Map<String, Integer> mapResultWrongAssignedLabel = new HashMap<String, Integer>();;
 		int i =0;
 		for(Entry<String, List<String>> e: result.entrySet() ) {
 			Category strObtainedCat=WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle(e.getKey());
@@ -135,20 +238,20 @@ public class DatasetGenerationBasedOnVector {
 
 				if (gtlist.contains(strObtainedCat)) {
 					countCorrect++;
+					FileUtil.writeDataToFile(Arrays.asList(s), directory+File.separator+ ++i,false);
 				}
 				else if(gtlist.get(0).getTitle().equals("Sports")&&strObtainedCat.getTitle().equals("Sport")) {
 					countCorrect++;
+					FileUtil.writeDataToFile(Arrays.asList(s), directory+File.separator+ ++i,false);
 				}
 				else
 				{
-					int count = mapResult.containsKey(strObtainedCat.getTitle()) ? mapResult.get(strObtainedCat.getTitle()) : 0;
-					mapResult.put(strObtainedCat.getTitle(), count + 1);
-
+					int count = mapResultWrongAssignedLabel.containsKey(strObtainedCat.getTitle()) ? mapResultWrongAssignedLabel.get(strObtainedCat.getTitle()) : 0;
+					mapResultWrongAssignedLabel.put(strObtainedCat.getTitle(), count + 1);
 				}
-				FileUtil.writeDataToFile(Arrays.asList(s), directory+File.separator+ ++i,false);
 			}
 		}
-		System.out.println("countCorrect "+countCorrect);
-		Print.printMap(mapResult);
+		System.out.println("countCorrect "+countCorrect+"\nWrongly assigned labels");
+		Print.printMap(mapResultWrongAssignedLabel);
 	}
 }

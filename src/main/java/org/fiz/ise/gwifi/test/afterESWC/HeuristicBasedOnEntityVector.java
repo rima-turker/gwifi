@@ -30,6 +30,8 @@ import edu.kit.aifb.gwifi.model.Article;
 import edu.kit.aifb.gwifi.model.Category;
 import edu.kit.aifb.gwifi.service.NLPAnnotationService;
 
+@Deprecated
+
 public class HeuristicBasedOnEntityVector {
 	private final static TestDatasetType_Enum TEST_DATASET_TYPE = Config.getEnum("TEST_DATASET_TYPE");
 	private static boolean LOAD_MODEL = Config.getBoolean("LOAD_MODEL", false);

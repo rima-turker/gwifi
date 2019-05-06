@@ -27,3 +27,8 @@
 /Results*/*
 /AG_DatasetAnalysis/*
 parsed_title*
+*log*
+/TrainTFID_AG_50/*
+/TrainTFID_AG_100/*
+/TrainTFID_AG_10/*
+AG_Title*

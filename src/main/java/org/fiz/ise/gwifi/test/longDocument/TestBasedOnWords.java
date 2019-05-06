@@ -80,11 +80,11 @@ public class TestBasedOnWords {
 	Map<String,List<Category>> dataset = null;
 	if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
 		System.out.println("Start reading AG News data");
-		dataset = new HashMap<>(test.read_dataset_AG(AG_DataType.TITLEANDDESCRIPTION));
+		dataset = new HashMap<>(test.read_dataset_AG(AG_DataType.TITLEANDDESCRIPTION,Config.getString("DATASET_TEST_AG","")));
 	}
 	else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.WEB_SNIPPETS)) {
 		System.out.println("Start reading WEB data");
-		dataset = new HashMap<>(test.read_dataset_WEB());
+		dataset = new HashMap<>(test.read_dataset_WEB(null));
 	}
 
 	TestBasedonLongTextDatasets test2 = new TestBasedonLongTextDatasets();
