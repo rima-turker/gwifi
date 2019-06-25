@@ -4,20 +4,30 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections15.map.HashedMap;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
 import org.fiz.ise.gwifi.Singleton.CategorySingleton;
+import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
+import org.fiz.ise.gwifi.dataset.test.LabelsOfTheTexts;
 import org.fiz.ise.gwifi.dataset.test.ReadDataset;
 import org.fiz.ise.gwifi.model.AG_DataType;
 import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
@@ -26,6 +36,7 @@ import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.FileUtil;
 import org.fiz.ise.gwifi.util.MapUtil;
 import org.fiz.ise.gwifi.util.Print;
+import org.fiz.ise.gwifi.util.SynchronizedCounter;
 
 import com.mongodb.util.Hash;
 
@@ -37,117 +48,142 @@ public class DatasetGenerationBasedOnVector {
 
 	private final static TestDatasetType_Enum TEST_DATASET_TYPE = Config.getEnum("TEST_DATASET_TYPE");
 	private final static String TRAIN_SET_AG = Config.getString("DATASET_TRAIN_AG","");
+	private final static Double THRESHOLD = Config.getDouble("THRESHOLD",1.0);
 	private final static String TRAIN_SET_WEB = Config.getString("DATASET_TRAIN_WEB","");
+	private final static Integer NUMBER_OF_THREADS= Config.getInt("NUMBER_OF_THREADS",-1);
+	
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 	static final Logger resultLog = Logger.getLogger("reportsLogger");
+	
 	static int numberOfSamples=50;
-	static int countCorrect=0;
-	static int countWrong=0;
+	private static int countCorrect;
+	private static int countWrong;
+	
+	private static SynchronizedCounter countCorrectSyn;
+	private static SynchronizedCounter countWrongSyn;
+	private static SynchronizedCounter countNullSyn;
+	
+	private ExecutorService executor;
 
 	public static void main(String[] args) {
-		datasetGenerateFromTrainSet();
+		AnnotationSingleton.getInstance();
+		System.out.println("Start loading model..");
+		LINE_modelSingleton.getInstance();
+
+		countCorrect=0;
+		countWrong=0;
+
+		countCorrectSyn=new SynchronizedCounter();
+		countWrongSyn=new SynchronizedCounter();
+		countNullSyn=new SynchronizedCounter();
+		
+		//datasetGenerateFromList(sample);
+		//datasetGenerateFromTrainSet();
+		DatasetGenerationBasedOnVector generate = new DatasetGenerationBasedOnVector();
+		//generate.datasetGenerateFromTrainSetConsideringN(2);
+
+		generate.datasetGenerateFromTrainSetWithThreshold();
+		System.out.println("Thershold: "+THRESHOLD);
+
 	}
-	private static void datasetGenerateFromTrainSet() {
-		Map<String, Integer> mapResult = new HashMap<String, Integer>();
+
+	private static void datasetGenerateFromList(List<String> lst) {
+		if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
+			for(String str: lst) {
+				System.out.println(HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingCategory(str)+"\t"+str);
+				//secondLOG.info(HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingCategory(str)+"\t"+str);
+			}
+		}
+	}
+
+	private void datasetGenerateFromTrainSetConsideringN(int n) {
 		try {
-			Set<Category> setMainCategories = new HashSet<>(
-					CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories);	
-//			for(Category c : setMainCategories) {
-//				File directory = new File(c.getTitle());
+			Map<String, List<Article>> dataset = ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION);
+			int count =0;
+			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
+			for(Entry<String, List<Article>> e: dataset.entrySet()) {
+				executor.execute(handle(e.getKey(),e.getValue(),++count, n));
+			}
+			executor.shutdown();
+			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+			System.out.println("Accuracy "+(countCorrectSyn.value()/(dataset.size()*1.0)));
+
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+
+	private Runnable handle(String description, List<Article> gtList,int i, int n ) {
+		return () -> {
+			List<Article> bestMatchingCategory = new ArrayList<Article>(HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingNArticles(description,n));
+			bestMatchingCategory.retainAll(gtList);
+			if (bestMatchingCategory.size()>0) {
+				countCorrectSyn.increment();
+			}
+			else {
+				countWrongSyn.increment();
+				resultLog.info(description+"\t"+gtList+"\t"+bestMatchingCategory);
+			}
+			System.out.println("Number of precessed: "+i +" correctly classified: "+countCorrectSyn.value());
+			System.out.println("countCorrect "+countCorrectSyn.value()+"\nWrongly assigned labels: "+countWrongSyn.value());
+			System.out.println("Total classified "+(countCorrectSyn.value()+countWrongSyn.value()));
+
+		};
+	}
+
+	public void datasetGenerateFromTrainSetWithThreshold() {
+		try {
+
+//			Collection<Article> values = LabelsOfTheTexts.getLablesAsArticle_AG().values();
+//			Iterator<Article> iterator = values.iterator();
+//			while (iterator.hasNext()) {
+//				File directory = new File(iterator.next().getTitle());
 //				if (! directory.exists()){
 //					directory.mkdir();
 //				}
 //			}
-			TestBasedonSortTextDatasets datasetRead =  new TestBasedonSortTextDatasets();
-			Map<String, List<Category>> dataset = null;
-			Map<String, List<Category>> map_result_To_Compare = new HashedMap<String, List<Category>>();
-			Category bestMatchingCategory=null;
-			if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
-				dataset = datasetRead.read_dataset_AG(AG_DataType.TITLEANDDESCRIPTION, TRAIN_SET_AG);
-				int i =0;
-				for(Entry<String, List<Category>> e: dataset.entrySet()) {
-					bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingCategory(e.getKey(),e.getValue());
-					i++;
-					//FileUtil.writeDataToFile(Arrays.asList(e.getKey()), bestMatchingCategory.getTitle()+File.separator+ i,false);
-					
-					if (e.getValue().contains(bestMatchingCategory)) {
-						countCorrect++;
-					}
-					else if(e.getValue().get(0).getTitle().equals("Sports")&&bestMatchingCategory.getTitle().equals("Sport")) {
-						countCorrect++;
-					}
-					else
-					{
-//						String key = bestMatchingCategory.getTitle();
-						String key = bestMatchingCategory.getTitle()+"-"+e.getValue().get(0).getTitle();
-						int count = mapResult.containsKey(key) ? mapResult.get(key) : 0;
-						mapResult.put(key, count + 1);
-						resultLog.info("wrong classified: "+ bestMatchingCategory.getTitle()+"\t"+i+"\t"+e.getKey()+"\n");
-//						System.out.println("wrong classified: "+ bestMatchingCategory.getTitle()+"\t"+i+"\t"+e.getKey());
-						countWrong++;
-					}
-					//System.out.println(i+" files are processed. Correctly: "+countCorrect+" Wrongly: "+countWrong);
-					if (bestMatchingCategory.getTitle().equals("Sport")) {
-						map_result_To_Compare.put(e.getKey(), Arrays.asList(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Sports")));
-					}
-					else {
-						map_result_To_Compare.put(e.getKey(), Arrays.asList(bestMatchingCategory));
-					}
-				}
+			Map<String, List<Article>> dataset = ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION);
+			int count =0;
+			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
+			for(Entry<String, List<Article>> e: dataset.entrySet()) {
+				executor.execute(handle_findBestMachingArticleWithThreshold(e.getKey(),e.getValue(),++count));
 			}
-			else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.WEB_SNIPPETS)) {
-				dataset = datasetRead.read_dataset_WEB_for_DatasetGeneration(TRAIN_SET_WEB);
-				System.out.println("Dataset size: "+dataset.size());
-				int i =0;
-				for(Entry<String, List<Category>> e: dataset.entrySet()) {
-					Article bestMatchingArticle = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticle(e.getKey(),e.getValue());
-					bestMatchingCategory= WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle(bestMatchingArticle.getTitle());
-					i++;
-					//FileUtil.writeDataToFile(Arrays.asList(e.getKey()), bestMatchingCategory.getTitle()+File.separator+ i,false);
-					
-					if (e.getValue().get(0).equals(bestMatchingCategory)) {
-						secondLOG.info("classified: "+ bestMatchingArticle.getTitle()+"\t"+i+"\t"+e.getKey()+"\n");
-						countCorrect++;
-					}
-					else if(e.getValue().get(0).getTitle().equals("Sports")&&bestMatchingCategory.getTitle().equals("Sport")) {
-						countCorrect++;
-					}
-					else//wrong classified
-					{
-						String key = bestMatchingCategory.getTitle()+"-"+e.getValue().get(0).getTitle();
-						int count = mapResult.containsKey(key) ? mapResult.get(key) : 0;
-						mapResult.put(key, count + 1);
-						resultLog.info("wrong classified: "+ bestMatchingArticle.getTitle()+"\t"+i+"\t"+e.getKey()+"\t"+e.getValue().get(0)+"\n");
-						countWrong++;
-					}
-					
-					//For comparison
-					if (bestMatchingCategory.getTitle().equals("Sport")) {
-						map_result_To_Compare.put(e.getKey(), Arrays.asList(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Sports")));
-					}
-					else {
-						map_result_To_Compare.put(e.getKey(), Arrays.asList(bestMatchingCategory));
-					}
-				}
-			}
-			System.out.println("Test calculation is started...");
-			int matchingSentences =0;
-			for(Entry<String, List<Category>> e : dataset.entrySet()) {
-				if (map_result_To_Compare.get(e.getKey()).contains(e.getValue().get(0))) {
-					matchingSentences++;
-				}
-			}
-			System.out.println("matching sentences between artificial ds and the original"+matchingSentences);
-			System.out.println("countCorrect "+countCorrect+"\nWrongly assigned labels: "+countWrong);
-			System.out.println("Total classified "+(countCorrect+countWrong));
-			System.out.println("Accuracy "+(countCorrect/(dataset.size()*1.0)));
-			Print.printMap(mapResult);
+			executor.shutdown();
+			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+
+			System.out.println("countCorrect "+countCorrectSyn.value()+"\nWrongly assigned labels: "+countWrongSyn.value()+"\nNull assigned labels: "+countNullSyn.value());
+			System.out.println("Total classified "+(countCorrectSyn.value()+countWrongSyn.value()));
+			System.out.println("Accuracy "+(countCorrectSyn.value()/(dataset.size()*1.0)));
+			System.out.println("Threshold "+THRESHOLD);
 			
 		} catch (Exception e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 	}
+
+	private Runnable handle_findBestMachingArticleWithThreshold(String description, List<Article> gtList, int i ) {
+		return () -> {
+			Article bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticlewithThreshold(description,THRESHOLD);
+			if (gtList.contains(bestMatchingCategory)) {
+				countCorrectSyn.increment();
+				//FileUtil.writeDataToFile(Arrays.asList(description), bestMatchingCategory.getTitle()+File.separator+ i,false);
+			}
+			else if(bestMatchingCategory==null) {
+				countNullSyn.increment();
+			}
+			else 
+			{
+				//System.out.println("Wrong: predicted "+ bestMatchingCategory +" gt:"+ gtList  );
+				countWrongSyn.increment();
+			}
+			System.out.println(i+" files are processed. Correctly: "+countCorrectSyn.value()+" Wrongly: "+countWrongSyn.value()+" Null: "+countNullSyn.value());
+
+		};
+	}
+
+	
 
 	public static void writeGeneratedDataToFile(String folderName, String data, int fileName ){
 		String mainFolderName="TrainTFID_AG_"+numberOfSamples;
@@ -213,7 +249,6 @@ public class DatasetGenerationBasedOnVector {
 				System.out.println((entityCat+"\t"+text+"\t"+val));
 				//if(entityCat.equals(anObject))
 			}
-
 		}
 		Print.printMap(result);
 		calculateAccuracyBasedOnVectorSimilarity(fileName, result);

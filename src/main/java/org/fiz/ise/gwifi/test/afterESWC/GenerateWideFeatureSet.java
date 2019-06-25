@@ -25,12 +25,17 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.deeplearning4j.parallelism.ConcurrentHashSet;
 import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
+import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.test.ReadDataset;
 import org.fiz.ise.gwifi.model.AG_DataType;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.FileUtil;
+import org.fiz.ise.gwifi.util.MapUtil;
+import org.fiz.ise.gwifi.util.SynchronizedCounter;
 import org.fiz.ise.gwifi.util.TimeUtil;
+
+import com.hp.hpl.jena.sparql.pfunction.library.listIndex;
 
 import edu.kit.aifb.gwifi.annotation.Annotation;
 import edu.kit.aifb.gwifi.model.Category;
@@ -41,12 +46,15 @@ public class GenerateWideFeatureSet {
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 	static final Logger resultLog = Logger.getLogger("reportsLogger");
 	private static ExecutorService executor;
-	private final static Integer NUMBER_OF_THREADS= 55; //Config.getInt("NUMBER_OF_THREADS",-1);
+	private final static Integer NUMBER_OF_THREADS= Config.getInt("NUMBER_OF_THREADS",-1);
 	static Map<String, Integer> mapAllThePairs = new ConcurrentHashMap<String, Integer>();
 	static Map<Integer, Integer> mapAllEntities = new ConcurrentHashMap<Integer, Integer>();
 	static Set<Integer> setAllEntities = new ConcurrentHashSet<Integer>();
+	private static SynchronizedCounter synCountNumberOfEntityPairs;
 
 	public static void main(String[] args) throws Exception {
+
+		synCountNumberOfEntityPairs= new SynchronizedCounter();
 		AnnotationSingleton.getInstance();
 		List<String> lstTrainDataset = new ArrayList<String>(ReadDataset.read_AG_BasedOnType(DATASET_TRAIN_AG, AG_DataType.TITLEANDDESCRIPTION));
 		List<String> lstTestDataset = new ArrayList<String>(ReadDataset.read_AG_BasedOnType(DATASET_TEST_AG, AG_DataType.TITLEANDDESCRIPTION));
@@ -64,27 +72,35 @@ public class GenerateWideFeatureSet {
 		//		System.out.println("Size of the set" + set.size());
 		//		secondLOG.info("Size of the set" + set.size());
 		//Map<String, Integer> mapAllThePairs = findAllPossibleEntityPairs(lstCombined);
-		
+
 		System.out.println("Combined size data "+lstCombined.size());
 		Long start =TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis()) ;
 		GenerateWideFeatureSet feature = new GenerateWideFeatureSet();
 
-//		feature.findAllPossibleEntityOccurance(lstCombined);
-//		FileUtil.writeDataToFile(setAllEntities, "AllEntities.txt");
-		
-		//		feature.findAllPossibleEntityPairs(lstCombined);
-		//		FileUtil.writeDataToFile(mapAllThePairs, "AllPairs.txt");
-		//mapAllThePairs=readDataToFile("AllPairs.txt");
-		mapAllEntities=readDataFromFileForIndexingMapSingleEntity("AllEntities.txt");
-		
-		//System.out.println("Size of the map-all the possible pairs: "+mapAllThePairs.size());
+		//		feature.findAllPossibleEntityOccurance(lstCombined);
+		//		FileUtil.writeDataToFile(setAllEntities, "AllEntities.txt");
+
+		//feature.findAllPossibleEntityPairs(lstCombined);
+
+		//		System.out.println("Total number of pairs: "+synCountNumberOfEntityPairs.value());
+		//		System.out.println("Writing to a file...");
+		//FileUtil.writeDataToFile(MapUtil.sortByValueAscending2(mapAllThePairs), "AllPairsWithFrequency.txt");
+
+
+		mapAllThePairs=readDataFromFileForIndexingMap("WideFeatures/AllPairsWithFrequency_filteredNoise_sorted.txt");
+		System.out.println("Size of the map-all the possible pairs: "+mapAllThePairs.size());
 		System.out.println("Seconds time : "+TimeUtil.getEnd(TimeUnit.MINUTES, start));
 		System.out.println("Call find features...");
-//		feature.findFeaturesForEntityPairs_paralel(lstTrainDataset);
-//		feature.findFeaturesForPossibleEntityOccurance_paralel(lstTrainDataset);
-		feature.findFeaturesForPossibleEntityOccurance_paralel(lstTestDataset);
+		feature.findFeaturesForEntityPairs_paralel(lstTestDataset);
+
+
+
+		//***************+Features for single entities**********************
+		//mapAllEntities=readDataFromFileForIndexingMapSingleEntity("AllEntities.txt");
+		//		feature.findFeaturesForPossibleEntityOccurance_paralel(lstTrainDataset);
+		//feature.findFeaturesForPossibleEntityOccurance_paralel(lstTestDataset);
 	}
-		
+
 
 	private void findFeaturesForPossibleEntityOccurance_paralel(List<String> lstTrainDataset) throws InterruptedException {
 		executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);		
@@ -93,7 +109,7 @@ public class GenerateWideFeatureSet {
 		}
 		executor.shutdown();
 		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-		
+
 	}
 	private Runnable handleFeatureExtractionForEntity(String str,int count)  {
 		return () -> {
@@ -121,7 +137,7 @@ public class GenerateWideFeatureSet {
 				e.printStackTrace();
 			}//annotate the given text
 
-			
+
 		};
 	}
 
@@ -140,10 +156,12 @@ public class GenerateWideFeatureSet {
 			Set<String> setPairs = new HashSet<String>();
 			try {
 				AnnotationSingleton.getInstance().service.annotate(str, lstAnnotations);
-				
+
 				List<Integer> lstId = new ArrayList<Integer>();
 				for(Annotation a : lstAnnotations) {
-					lstId.add(a.getId());
+					if (!AnnonatationUtil.getEntityBlackList_AGNews().contains(a.getId())&&WikipediaSingleton.getInstance().getArticle(a.getTitle())!=null) {
+						lstId.add(a.getId());
+					}
 				}
 				Collections.sort(lstId); 
 
@@ -155,31 +173,56 @@ public class GenerateWideFeatureSet {
 
 				Set<Integer> setPairsIndex = new HashSet<Integer>();
 				for(String s : setPairs) {
-					setPairsIndex.add(mapAllThePairs.get(s));
+					if (mapAllThePairs.containsKey(s)) {
+						setPairsIndex.add(mapAllThePairs.get(s));
+					}
+				}
+				if (setPairsIndex.contains(null)) {
+					System.out.println("setPairsIndex contains null: "+ count);
+					System.exit(0);
 				}
 
 				StringBuilder result = new StringBuilder(str+"\t");
-				for (int i = 0; i < mapAllThePairs.size(); i++) {
-					if (setPairsIndex.contains(i)) {
-						result.append(1+",");
-					}
-					else {
-						result.append(0+",");
 
-					}
+				for (int i: setPairsIndex) {
+					result.append(i+",");
 				}
-				resultLog.info(result.toString().subSequence(0, result.toString().length()-1));
+				//				for (int i = 0; i < mapAllThePairs.size(); i++) {
+				//					if (setPairsIndex.contains(i)) {
+				//						result.append(1+",");
+				//					}
+				//					else {
+				//						result.append(0+",");
+				//
+				//					}
+				//				}
+				//				if (result.toString().contains("null")) {
+				//					
+				//					System.out.println("str: "+ str+ ": "+str.length());
+				//					System.out.println("contains null: "+ count);
+				//					System.out.println("result: "+ result.toString().indexOf("null"));
+				//					System.exit(0);
+				//
+				//				}
+				if (setPairsIndex.isEmpty()) {
+					resultLog.info(result.toString());
+				}
+				else {
+					resultLog.info(result.toString().subSequence(0, result.toString().length()-1));
+				}
 				System.out.println("Number of Sentences processed: "+ count);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
+
+				System.out.println("handleFeatureExtractionForEntityPairs in." + setPairs);
 				e.printStackTrace();
+				System.exit(0);;
 			}//annotate the given text
 
-			
+
 		};
 	}
-	
-	
+
+
 	private static void findFeaturesForEntityPairs(List<String> lstTrainDataset)
 			throws Exception {
 
@@ -289,11 +332,10 @@ public class GenerateWideFeatureSet {
 			}
 		};
 	}
-	
-	
+
+
 	private void findAllPossibleEntityPairs(List<String> lstCombined) throws Exception {
 		executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
-		int count=0;
 		for (int i = 0; i < lstCombined.size(); i++) {
 			executor.execute(handleEntitiyPairs(lstCombined.get(i),i));
 		}
@@ -307,20 +349,27 @@ public class GenerateWideFeatureSet {
 			try {
 				AnnotationSingleton.getInstance().service.annotate(str, lstAnnotations);
 				List<Integer> lstId = new ArrayList<Integer>();
+
 				for(Annotation a : lstAnnotations) {
-					lstId.add(a.getId());
+					if (!AnnonatationUtil.getEntityBlackList_AGNews().contains(a.getId())&&WikipediaSingleton.getInstance().getArticle(a.getTitle())!=null) {
+						lstId.add(a.getId());
+					}
 				}
 				Collections.sort(lstId); 
 				for (int i = 0; i < lstId.size(); i++) {
 					for (int j = i+1; j < lstId.size(); j++) {
-						mapAllThePairs.put(lstId.get(i)+"\t"+lstId.get(j), 0);
+
+						//if (lstId.get(i)!=lstId.get(j)) {
+						String key = lstId.get(i)+"\t"+lstId.get(j);
+						//mapAllThePairs.put(lstId.get(i)+"\t"+lstId.get(j), 0);
+						synCountNumberOfEntityPairs.increment();
+						mapAllThePairs.merge(key, 1, Integer::sum);
+
+						//}
+
 					}	
 				}
 
-
-				//				if (mapAllThePairs.size()%10000==0) {
-				//					System.out.println(count +" processed, Size of the map-intermediate step: "+mapAllThePairs.size());
-				//				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -347,7 +396,10 @@ public class GenerateWideFeatureSet {
 			String line;
 			while ((line = br.readLine()) != null) {
 				String[] split = line.split("\t\t");
-				map.put(split[0],index++);
+				if (Integer.parseInt(split[1])!=1&&Integer.parseInt(split[1])!=2&&Integer.parseInt(split[1])!=3
+						&&Integer.parseInt(split[1])!=4) {
+					map.put(split[0],index++);
+				}
 			}
 
 		} catch (IOException e) {
@@ -356,6 +408,6 @@ public class GenerateWideFeatureSet {
 		System.out.println("Size of the map after reading "+map.size());
 		return map;
 	}
-	
-	
+
+
 }

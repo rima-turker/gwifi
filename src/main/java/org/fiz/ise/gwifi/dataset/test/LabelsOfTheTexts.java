@@ -10,12 +10,22 @@ import java.util.Map.Entry;
 
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 
+import edu.kit.aifb.gwifi.model.Article;
 import edu.kit.aifb.gwifi.model.Category;
 import edu.kit.aifb.gwifi.model.Wikipedia;
 
 public class LabelsOfTheTexts {
 	private static Wikipedia wikipedia = WikipediaSingleton.getInstance().wikipedia;
 	
+	public static Map<Integer, Article> getLablesAsArticle_AG()
+	{
+		Map<Integer, Article> mapLabel = new HashMap<>();
+		mapLabel.put(1, wikipedia.getArticleByTitle("Politics"));
+		mapLabel.put(2, wikipedia.getArticleByTitle("Sports"));
+		mapLabel.put(3, wikipedia.getArticleByTitle("Business"));
+		mapLabel.put(4, wikipedia.getArticleByTitle("Software"));
+		return mapLabel;
+	}
 	public static Map<Integer, Category> getLables_AG()
 	{
 		Map<Integer, Category> mapLabel = new HashMap<>();

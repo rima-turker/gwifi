@@ -7,16 +7,16 @@ public class TimeUtil {
 		return System.currentTimeMillis();
 	}
 	
-	public static long getEnd(TimeUnit u,long now) {
+	public static long getEnd(TimeUnit u,long start) {
 		switch (u) {
 		case MILLISECONDS:
-			return System.currentTimeMillis()-now;
+			return System.currentTimeMillis()-start;
 		case SECONDS:
-			return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()-now);
+			return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()-start);
 		case NANOSECONDS:
-			return TimeUnit.NANOSECONDS.toNanos(System.currentTimeMillis()-now);
+			return TimeUnit.NANOSECONDS.toNanos(System.currentTimeMillis()-start);
 		case MINUTES:
-			return TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis()-now);
+			return TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis()-start);
 		default:
 			return 0;
 		}
