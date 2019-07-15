@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.ToDoubleBiFunction;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -48,9 +49,10 @@ public class GenerateWideFeatureSet {
 	private static ExecutorService executor;
 	private final static Integer NUMBER_OF_THREADS= Config.getInt("NUMBER_OF_THREADS",-1);
 	static Map<String, Integer> mapAllThePairs = new ConcurrentHashMap<String, Integer>();
-	static Map<Integer, Integer> mapAllEntities = new ConcurrentHashMap<Integer, Integer>();
+	static Map<String, Integer> mapAllEntities = new ConcurrentHashMap<String, Integer>();
 	static Set<Integer> setAllEntities = new ConcurrentHashSet<Integer>();
 	private static SynchronizedCounter synCountNumberOfEntityPairs;
+	static final Integer i_filter = 100;
 
 	public static void main(String[] args) throws Exception {
 
@@ -87,7 +89,7 @@ public class GenerateWideFeatureSet {
 		//FileUtil.writeDataToFile(MapUtil.sortByValueAscending2(mapAllThePairs), "AllPairsWithFrequency.txt");
 
 
-		mapAllThePairs=readDataFromFileForIndexingMap("WideFeatures/AllPairsWithFrequency_filteredNoise_sorted.txt");
+		mapAllThePairs=readDataFromFileForIndexingMap("WideFeatures/AllPairsWithFrequency_filteredNoise_sorted.txt","\t\t");
 		System.out.println("Size of the map-all the possible pairs: "+mapAllThePairs.size());
 		System.out.println("Seconds time : "+TimeUtil.getEnd(TimeUnit.MINUTES, start));
 		System.out.println("Call find features...");
@@ -362,6 +364,7 @@ public class GenerateWideFeatureSet {
 						//if (lstId.get(i)!=lstId.get(j)) {
 						String key = lstId.get(i)+"\t"+lstId.get(j);
 						//mapAllThePairs.put(lstId.get(i)+"\t"+lstId.get(j), 0);
+						
 						synCountNumberOfEntityPairs.increment();
 						mapAllThePairs.merge(key, 1, Integer::sum);
 
@@ -389,19 +392,22 @@ public class GenerateWideFeatureSet {
 		System.out.println("Size of the map after reading "+map.size());
 		return map;
 	}
-	public static Map<String, Integer> readDataFromFileForIndexingMap(final String fileName) {
+	public static Map<String, Integer> readDataFromFileForIndexingMap(final String fileName, String separator) {
 		Map<String, Integer> map = new LinkedHashMap<>();
 		int index=0;
+		List<Integer> filter = new ArrayList<Integer>();
+		for (int i = 1; i<=i_filter; i++) {
+			filter.add(i);
+		}
 		try (BufferedReader br = Files.newBufferedReader(Paths.get(fileName))) {
 			String line;
 			while ((line = br.readLine()) != null) {
-				String[] split = line.split("\t\t");
-				if (Integer.parseInt(split[1])!=1&&Integer.parseInt(split[1])!=2&&Integer.parseInt(split[1])!=3
-						&&Integer.parseInt(split[1])!=4) {
-					map.put(split[0],index++);
+				String[] split = line.split(separator);
+				if (!filter.contains(Integer.parseInt(split[1]))) {
+					map.put(split[0],index);
+					index=index+1;
 				}
 			}
-
 		} catch (IOException e) {
 			System.err.format("IOException: %s%n", e);
 		}

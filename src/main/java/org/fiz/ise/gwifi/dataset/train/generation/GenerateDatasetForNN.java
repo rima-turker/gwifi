@@ -19,7 +19,10 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.collections15.map.HashedMap;
 import org.apache.log4j.Logger;
+import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
 import org.fiz.ise.gwifi.Singleton.CategorySingleton;
+import org.fiz.ise.gwifi.Singleton.GoogleModelSingleton;
+import org.fiz.ise.gwifi.Singleton.LINE_2modelSingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
@@ -34,6 +37,7 @@ import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.MapUtil;
 import org.fiz.ise.gwifi.util.Print;
 import org.fiz.ise.gwifi.util.SynchronizedCounter;
+import org.fiz.ise.gwifi.util.TimeUtil;
 
 import edu.kit.aifb.gwifi.model.Article;
 import edu.kit.aifb.gwifi.model.Category;
@@ -69,18 +73,22 @@ public class GenerateDatasetForNN {
 	private static List<String> listEstimated = Collections.synchronizedList(new ArrayList<String>());
 
 	public static void main(String[] args) {
-
+		long now = TimeUtil.getStart();
 
 		countCorrectSyn=new SynchronizedCounter();
 		countWrongSyn=new SynchronizedCounter();
 		countNullSyn=new SynchronizedCounter();
 
+		CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE));
+		AnnotationSingleton.getInstance();
+		
 		LINE_modelSingleton.getInstance();
+		GoogleModelSingleton.getInstance();
 
-		HeuristicBasedOnEntitiyVectorSimilarity.initializeMostSimilarCache();
+		//HeuristicBasedOnEntitiyVectorSimilarity.initializeMostSimilarCache();
 		GenerateDatasetForNN generate = new GenerateDatasetForNN();
 		generate.datasetGenerateFromTrainSetParalel();
-
+		System.out.println("Total time minutes :"+ TimeUnit.SECONDS.toMinutes(TimeUtil.getEnd(TimeUnit.SECONDS, now)));
 
 		/*
 		List<String> lstCat = new ArrayList<>(Categories.getCategoryList(TEST_DATASET_TYPE));
@@ -113,15 +121,6 @@ public class GenerateDatasetForNN {
 	}
 	public void datasetGenerateFromTrainSetParalel() {
 		try {
-
-			//			Collection<Article> values = LabelsOfTheTexts.getLablesAsArticle_AG().values();
-			//			Iterator<Article> iterator = values.iterator();
-			//			while (iterator.hasNext()) {
-			//				File directory = new File(iterator.next().getTitle());
-			//				if (! directory.exists()){
-			//					directory.mkdir();
-			//				}
-			//			}
 			Map<String, List<Article>> dataset = ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION);
 			int count =0;
 			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
@@ -131,22 +130,22 @@ public class GenerateDatasetForNN {
 			executor.shutdown();
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
-			filterEntitiesWritecsv(dataset);
 
 			System.out.println("countCorrect "+countCorrectSyn.value()+"\nWrongly assigned labels: "+countWrongSyn.value()+"\nNull assigned labels: "+countNullSyn.value());
 			System.out.println("Total classified "+(countCorrectSyn.value()+countWrongSyn.value()));
-			System.out.println("Accuracy "+(countCorrectSyn.value()/(dataset.size()*1.0)));
+//			System.out.println("Accuracy "+(countCorrectSyn.value()/(dataset.size()*1.0)));
+			System.out.println("Accuracy "+(countCorrectSyn.value()/((countCorrectSyn.value()+countWrongSyn.value())*1.0)));
 
 			System.out.println("True Positives");
 			Print.printMap(truePositive);
-			System.out.println("\n False Positives");
+			System.out.println("\nFalse Positives");
 			Print.printMap(falsePositive);
-			System.out.println("\n+MissClassified");
+			System.out.println("\nMissClassified");
 			Print.printMap(mapMissClassified);
-			System.out.println("\n+Predicted Count");
+			System.out.println("\nPredicted Count");
 			Print.printMap(mapCount);
-
-
+			
+			//filterEntitiesWritecsv(dataset);
 
 		} catch (Exception e1) {
 			// TODO Auto-generated catch block
@@ -156,44 +155,46 @@ public class GenerateDatasetForNN {
 
 	private Runnable runFindBestMachingArticle(String description, List<Article> gtList, int i ) {
 		return () -> {
-			Article bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticle(description, gtList);
-			if (bestMatchingCategory.getTitle().equals("Sport")) {
-				resultLog.info("\""+LabelsOfTheTexts.getCatValue_AG().get(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Sports"))+
-						"\",\""+description+"\"");
-			}
-			else {
-				resultLog.info("\""+LabelsOfTheTexts.getCatValue_AG().get(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle(bestMatchingCategory.getTitle()))+
-						"\",\""+description+"\"");
-
-			}
-			mapCount.put(bestMatchingCategory.getTitle(), mapCount.getOrDefault(bestMatchingCategory.getTitle(), 0) + 1); 
-			listEstimated.add(bestMatchingCategory.getTitle()+"\t"+description);
-
-			//"3","
-			if (gtList.contains(bestMatchingCategory)) {
-				countCorrectSyn.increment();
-				truePositive.put(gtList.get(0).getTitle(), truePositive.getOrDefault(gtList.get(0).getTitle(), 0) + 1);
-
-				//FileUtil.writeDataToFile(Arrays.asList(description), bestMatchingCategory.getTitle()+File.separator+ i,false);
-			}
-			else if(bestMatchingCategory==null) {
+			//Article bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticle(description, gtList);
+			//			Article bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticlewithEuclineDistance(description, gtList);
+			//			Article bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticlewithManhattenDistance(description, gtList);
+			
+			//Article bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticleFromWordVectorModel(description, gtList);
+			
+			
+//			Article bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticlewithTwoDifferentApproachAgreement(description, gtList);
+			//Article bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticlewithTwoDifferentSimilarityMetricAgreement(description, gtList);
+			Article bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticlewith_3_DifferentApproachAgreement(description, gtList);
+			
+			if(bestMatchingCategory==null) {
 				countNullSyn.increment();
 			}
-			else 
-			{
-				//System.out.println("Wrong: predicted "+ bestMatchingCategory +" gt:"+ gtList  );
-				countWrongSyn.increment();
-				falsePositive.put(gtList.get(0).getTitle(), falsePositive.getOrDefault(gtList.get(0).getTitle(), 0) + 1);
-				String key=gtList.get(0).getTitle()+"-->"+bestMatchingCategory.getTitle();
-				mapMissClassified.put(key, mapMissClassified.getOrDefault(key, 0) + 1);
-
+			else {
+				mapCount.put(bestMatchingCategory.getTitle(), mapCount.getOrDefault(bestMatchingCategory.getTitle(), 0) + 1); 
+				listEstimated.add(bestMatchingCategory.getTitle()+"\t"+description);
+				
+				if (gtList.contains(bestMatchingCategory)) {
+					countCorrectSyn.increment();
+					truePositive.put(gtList.get(0).getTitle(), truePositive.getOrDefault(gtList.get(0).getTitle(), 0) + 1);
+				}
+				else 
+				{
+					countWrongSyn.increment();
+					falsePositive.put(gtList.get(0).getTitle(), falsePositive.getOrDefault(gtList.get(0).getTitle(), 0) + 1);
+					String key=gtList.get(0).getTitle()+"-->"+bestMatchingCategory.getTitle();
+					mapMissClassified.put(key, mapMissClassified.getOrDefault(key, 0) + 1);
+				}
 			}
-			System.out.println(i+" files are processed. Correctly: "+countCorrectSyn.value()+" Wrongly: "+countWrongSyn.value()+" Null: "+countNullSyn.value());
+			//System.out.println(i+" files are processed. Correctly: "+countCorrectSyn.value()+" Wrongly: "+countWrongSyn.value()+" Null: "+countNullSyn.value());
 
 		};
 	}
 	private static void filterEntitiesWritecsv(Map<String, List<Article>> groundTruth){
 		Integer min = Collections.min(mapCount.values());
+		System.out.println("The size of the samples for each label: "+min);
+		System.out.println("Size of the list off all the classified samples: "+listEstimated.size());
+		
+		
 		Map<Article , List<String>> mapResult = new HashedMap<Article , List<String>>();
 
 		for(String s : listEstimated) {
@@ -215,30 +216,46 @@ public class GenerateDatasetForNN {
 				mapResult.put(a, temp);
 			}
 		}
-		int countCorrect=0;
-		int size=0;
-		int wrong=0;
 
-		System.out.println("Start Calculating the accuracy from filtered list");
-		for(Entry<Article, List<String>> e : mapResult.entrySet()) {
-			Article estimatedLabel = e.getKey();
-			size+=e.getValue().size();
-			for(String s : e.getValue()) {
+		for(Entry <Article , List<String>> entry : mapResult.entrySet()) {
+			List<String> lst = new ArrayList<String>(entry.getValue());
 
-				Article gtLabel = groundTruth.get(s).get(0);
-				if (estimatedLabel.equals(gtLabel)) {
-					countCorrect++;
+			for(String s : lst) {
+				if (entry.getKey().getTitle().equals("Sport")) {
+					resultLog.info("\""+LabelsOfTheTexts.getCatValue_AG().get(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Sports"))+
+							"\",\""+s+"\"");
 				}
 				else {
-					wrong++;
+					resultLog.info("\""+LabelsOfTheTexts.getCatValue_AG().get(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle(entry.getKey().getTitle()))+
+							"\",\""+s+"\"");
+
 				}
-				System.out.println("Size "+ size+" correct: "+countCorrect+" wrong:"+wrong);
 			}
+
+			int countCorrect=0;
+			int size=0;
+			int wrong=0;
+
+			System.out.println("Start Calculating the accuracy from filtered list");
+			for(Entry<Article, List<String>> e : mapResult.entrySet()) {
+				Article estimatedLabel = e.getKey();
+				size+=e.getValue().size();
+				for(String s : e.getValue()) {
+
+					Article gtLabel = groundTruth.get(s).get(0);
+					if (estimatedLabel.equals(gtLabel)) {
+						countCorrect++;
+					}
+					else {
+						wrong++;
+					}
+					//System.out.println("Size "+ size+" correct: "+countCorrect+" wrong:"+wrong);
+				}
+			}
+
+			System.out.println("\n");
+			System.out.println("Size "+ size+" correct: "+countCorrect+" wrong:"+wrong);
 		}
-
-		System.out.println("\n");
-		System.out.println("Size "+ size+" correct: "+countCorrect+" wrong:"+wrong);
-
 
 
 		//		for(Entry<String, Integer> e : sortByValueAscendingGeneric.entrySet()) {
