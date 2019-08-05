@@ -20,13 +20,16 @@ applicationDefaultJvmArgs = ["-Xmx50g", "-d64", "-XX:+UseParallelGC", "-server"]
 
 description = """Graph-based Wikifier"""
 
-//mainClassName="org.fiz.ise.gwifi.dataset.shorttext.test.TestBasedonSortTextDatasets"
+
 //mainClassName="org.fiz.ise.gwifi.test.afterESWC.DatasetGenerationBasedOnVector"
+mainClassName="org.fiz.ise.gwifi.dataset.train.generation.GenerateDatasetForNN"
+//mainClassName="org.fiz.ise.gwifi.dataset.train.generation.RedirectPageAnalysis"
+//mainClassName="org.fiz.ise.gwifi.dataset.train.generation.PrepareDateForPython"
 //mainClassName="org.fiz.ise.gwifi.test.afterESWC.TestBasedonSortTextDatasets"
-//mainClassName="org.fiz.ise.gwifi.test.afterESWC.Test"
-mainClassName="org.fiz.ise.gwifi.test.afterESWC.GenerateWideFeatureSet"
+//mainClassName="org.fiz.ise.gwifi.test.afterESWC.GenerateWideFeatureSet"
+//mainClassName="org.fiz.ise.gwifi.test.afterESWC.GenerateWideFeatureSetWithKB"
 //mainClassName="org.fiz.ise.gwifi.dataset.LINE.Category.CategoryHieararcyAnalysis"
-//mainClassName="org.fiz.ise.gwifi.dataset.test.AnalyseDataset"
+
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -127,20 +130,20 @@ task copyConfiguration {
     }
 }
 
-task deployZip(dependsOn: distTar) {
-    doLast {
-    	ssh.run {
-	        session(remotes.server) {        
-	         	execute 'rm -rf /home/rima/playground/JavaProjectsRun/gwifi' 
-	         	execute 'rm -rf /home/rima/playground/JavaProjectsRun/gwifi.tar'         	
-	            put from: './build/distributions/gwifi.tar', into: '/home/rima/playground/JavaProjectsRun/'	            	           
-	            execute 'cd /home/rima/playground//JavaProjectsRun/ && tar -xvf gwifi.tar'            
-	            execute 'cd /home/rima/playground/JavaProjectsRun/ && chmod +x gwifi/bin/gwifi'
-	        	execute 'cp -r /home/rima/playground/GeneralFiles/gwifi/configs /home/rima/playground/JavaProjectsRun/gwifi/bin/.'
-	        	execute 'rm -rf /home/rima/playground/JavaProjectsRun/gwifi.tar'  
-	        }
-    	}
-    }
+//task deployZip(dependsOn: distTar) {
+//    doLast {
+//    	ssh.run {
+//	        session(remotes.server) {        
+//	         	execute 'rm -rf /home/rima/playground/JavaProjectsRun/gwifi' 
+//	         	execute 'rm -rf /home/rima/playground/JavaProjectsRun/gwifi.tar'         	
+//	            put from: './build/distributions/gwifi.tar', into: '/home/rima/playground/JavaProjectsRun/'	            	           
+//	            execute 'cd /home/rima/playground//JavaProjectsRun/ && tar -xvf gwifi.tar'            
+//	            execute 'cd /home/rima/playground/JavaProjectsRun/ && chmod +x gwifi/bin/gwifi'
+//	        	execute 'cp -r /home/rima/playground/GeneralFiles/gwifi/configs /home/rima/playground/JavaProjectsRun/gwifi/bin/.'
+//	        	execute 'rm -rf /home/rima/playground/JavaProjectsRun/gwifi.tar'  
+//	        }
+//    	}
+//    }
 task deployOnlyJar(dependsOn: installDist)  {
     doLast {
     ssh.run {
@@ -205,4 +208,4 @@ doLast {
     }
     }
 }
-}
+//}
