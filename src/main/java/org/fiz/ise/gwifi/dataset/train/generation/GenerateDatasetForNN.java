@@ -1,5 +1,6 @@
 package org.fiz.ise.gwifi.dataset.train.generation;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
@@ -34,11 +35,13 @@ import org.fiz.ise.gwifi.test.afterESWC.HeuristicBasedOnEntitiyVectorSimilarity;
 import org.fiz.ise.gwifi.test.afterESWC.TestBasedonSortTextDatasets;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
 import org.fiz.ise.gwifi.util.Config;
+import org.fiz.ise.gwifi.util.FileUtil;
 import org.fiz.ise.gwifi.util.MapUtil;
 import org.fiz.ise.gwifi.util.Print;
 import org.fiz.ise.gwifi.util.SynchronizedCounter;
 import org.fiz.ise.gwifi.util.TimeUtil;
-
+import org.fiz.ise.gwifi.util.WriteToAFile;
+import org.apache.commons.io.FileUtils;
 import edu.kit.aifb.gwifi.model.Article;
 import edu.kit.aifb.gwifi.model.Category;
 import edu.stanford.nlp.ling.CoreLabel;
@@ -52,6 +55,7 @@ public class GenerateDatasetForNN {
 	private final static Double THRESHOLD = Config.getDouble("THRESHOLD",1.0);
 	private final static String TRAIN_SET_WEB = Config.getString("DATASET_TRAIN_WEB","");
 	private final static Integer NUMBER_OF_THREADS= Config.getInt("NUMBER_OF_THREADS",-1);
+	public static Map<String, String> mapRedirectPages;  //new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);//
 
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 	static final Logger resultLog = Logger.getLogger("reportsLogger");
@@ -71,24 +75,54 @@ public class GenerateDatasetForNN {
 
 	private static Map<Article , List<String>> mapEstimated = new ConcurrentHashMap<>();
 	private static List<String> listEstimated = Collections.synchronizedList(new ArrayList<String>());
-
-	public static void main(String[] args) {
+	final public static Map<String, Article> map_results_doc2vec= new HashMap<String, Article>();
+	public static void main(String[] args) throws IOException {
 		long now = TimeUtil.getStart();
-
-		countCorrectSyn=new SynchronizedCounter();
-		countWrongSyn=new SynchronizedCounter();
-		countNullSyn=new SynchronizedCounter();
-
 		CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE));
 		AnnotationSingleton.getInstance();
-		
-		LINE_modelSingleton.getInstance();
-		GoogleModelSingleton.getInstance();
+		mapRedirectPages= new HashMap<>(RedirectPageAnalysis.loadRedirectPages());
 
-		//HeuristicBasedOnEntitiyVectorSimilarity.initializeMostSimilarCache();
+//		LINE_modelSingleton.getInstance();
+//		GoogleModelSingleton.getInstance();
+
+
 		GenerateDatasetForNN generate = new GenerateDatasetForNN();
-		generate.datasetGenerateFromTrainSetParalel();
-		System.out.println("Total time minutes :"+ TimeUnit.SECONDS.toMinutes(TimeUtil.getEnd(TimeUnit.SECONDS, now)));
+
+		ArrayList<String> lst_file_names = new ArrayList<String>();
+
+		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_rsv_dbow_afterCorrecting.txt");
+		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_rsv_dbow_afterCorrecting_2018_redirectionResolved.txt");
+		
+		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_rsv_dm_afterCorrecting.txt");
+		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_rsv_dm_afterCorrecting_2018_redirectionResolved.txt");
+		
+		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_dbow_afterCorrecting.txt");
+		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_dbow_afterCorrecting_2018_redirectionResolved.txt");
+		
+		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_dm_afterCorrecting.txt");
+		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_dm_afterCorrecting_2018_redirectionResolved.txt");
+		for (String file_name : lst_file_names) {
+//			
+			List<String> lines = FileUtils.readLines(new File(file_name), "utf-8");
+			for(String line : lines) {
+				String[] split = line.split("\t");
+				map_results_doc2vec.put(split[0], WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(split[1]));
+			}
+			countCorrectSyn=new SynchronizedCounter();
+			countWrongSyn=new SynchronizedCounter();
+			countNullSyn=new SynchronizedCounter();
+
+			generate.datasetGenerateFromTrainSetParalel();
+			//generate.calculate_accuracy_for_doc2Vec(file_name);
+			System.out.println("Total time minutes :"+ TimeUnit.SECONDS.toMinutes(TimeUtil.getEnd(TimeUnit.SECONDS, now)));
+//			resultLog.info(file_name+":True Positives: "+countCorrectSyn.value());
+//			resultLog.info(file_name+":False Positives: "+countWrongSyn.value());
+//			resultLog.info(file_name+":Null: "+countNullSyn.value());
+//			System.out.println(file_name+":True Positives: "+countCorrectSyn.value());
+//			System.out.println(file_name+":False Positives: "+countWrongSyn.value());
+//			System.out.println(file_name+":Null: "+countNullSyn.value());
+			
+		}
 
 		/*
 		List<String> lstCat = new ArrayList<>(Categories.getCategoryList(TEST_DATASET_TYPE));
@@ -103,7 +137,38 @@ public class GenerateDatasetForNN {
 		}
 		 */
 	}
-
+	public void calculate_accuracy_for_doc2Vec(String fileName) {
+		List<String> lines;
+		try {
+			lines = FileUtils.readLines(new File(fileName), "utf-8");
+			Map<String, List<Article>> dataset = ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION);
+			int correct =0;
+			int wrong=0;
+			for(String line : lines) {
+				String[] split = line.split("\t");
+				String sentence=split[0];
+				String cArticle=split[1];
+				if (dataset.get(sentence).get(0).getTitle().equals(cArticle)) {
+					correct++;
+				}
+				else {
+					wrong++;
+				}
+				
+			}
+			System.out.println(fileName);
+			System.out.println("correct: "+correct);
+			System.out.println("wrong: "+wrong);
+			int total=(correct+wrong);
+			System.out.println("total: "+total);
+			System.out.println("accuracy: "+(double)correct/(correct+wrong)+"\n\n");
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
 	private static void findFreqOfWords(List<String> dataset,String fileName) {
 		final List<CoreLabel> tokens = new ArrayList<CoreLabel>();
 		final List<String> tokensStr = new ArrayList<String>();
@@ -131,9 +196,10 @@ public class GenerateDatasetForNN {
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
 
+
 			System.out.println("countCorrect "+countCorrectSyn.value()+"\nWrongly assigned labels: "+countWrongSyn.value()+"\nNull assigned labels: "+countNullSyn.value());
 			System.out.println("Total classified "+(countCorrectSyn.value()+countWrongSyn.value()));
-//			System.out.println("Accuracy "+(countCorrectSyn.value()/(dataset.size()*1.0)));
+			//			System.out.println("Accuracy "+(countCorrectSyn.value()/(dataset.size()*1.0)));
 			System.out.println("Accuracy "+(countCorrectSyn.value()/((countCorrectSyn.value()+countWrongSyn.value())*1.0)));
 
 			System.out.println("True Positives");
@@ -144,6 +210,7 @@ public class GenerateDatasetForNN {
 			Print.printMap(mapMissClassified);
 			System.out.println("\nPredicted Count");
 			Print.printMap(mapCount);
+			System.out.println("\nList Count:"+listEstimated.size());
 			
 			//filterEntitiesWritecsv(dataset);
 
@@ -155,24 +222,26 @@ public class GenerateDatasetForNN {
 
 	private Runnable runFindBestMachingArticle(String description, List<Article> gtList, int i ) {
 		return () -> {
-			//Article bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticle(description, gtList);
+//			Article bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticle_resolve_redirect(description, gtList);
+//			Article bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticle(description, gtList);
 			//			Article bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticlewithEuclineDistance(description, gtList);
 			//			Article bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticlewithManhattenDistance(description, gtList);
-			
+
 			//Article bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticleFromWordVectorModel(description, gtList);
-			
-			
-//			Article bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticlewithTwoDifferentApproachAgreement(description, gtList);
+
+
+			//			Article bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticlewithTwoDifferentApproachAgreement(description, gtList);
 			//Article bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticlewithTwoDifferentSimilarityMetricAgreement(description, gtList);
 			Article bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticlewith_3_DifferentApproachAgreement(description, gtList);
-			
+//			Article bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticlewith_3_DifferentApproachAgreement_categorize_all_dataset_write(description, gtList);
+
 			if(bestMatchingCategory==null) {
 				countNullSyn.increment();
 			}
 			else {
 				mapCount.put(bestMatchingCategory.getTitle(), mapCount.getOrDefault(bestMatchingCategory.getTitle(), 0) + 1); 
 				listEstimated.add(bestMatchingCategory.getTitle()+"\t"+description);
-				
+
 				if (gtList.contains(bestMatchingCategory)) {
 					countCorrectSyn.increment();
 					truePositive.put(gtList.get(0).getTitle(), truePositive.getOrDefault(gtList.get(0).getTitle(), 0) + 1);
@@ -190,11 +259,14 @@ public class GenerateDatasetForNN {
 		};
 	}
 	private static void filterEntitiesWritecsv(Map<String, List<Article>> groundTruth){
-		Integer min = Collections.min(mapCount.values());
-		System.out.println("The size of the samples for each label: "+min);
+		List<String> lst_result_to_write_file = new ArrayList<String>();
+		String file_name="data_generated_3_models_agreement_dbow_doc2vec_2018_redirect.txt";
+		
+//		Integer min = Collections.min(mapCount.values());
+//		System.out.println("The size of the samples for each label: "+min);
 		System.out.println("Size of the list off all the classified samples: "+listEstimated.size());
-		
-		
+
+
 		Map<Article , List<String>> mapResult = new HashedMap<Article , List<String>>();
 
 		for(String s : listEstimated) {
@@ -204,11 +276,11 @@ public class GenerateDatasetForNN {
 
 			if (mapResult.containsKey(a)) {
 
-				if (mapResult.get(a).size()<min) {
+				//if (mapResult.get(a).size()<min) { //enable this part when you want an evenly distributed dataset
 					List<String> temp = new ArrayList<String>(mapResult.get(a));
 					temp.add(description);
 					mapResult.put(a, temp);
-				}
+				//}
 			}
 			else {
 				List<String> temp = new ArrayList<String>();
@@ -222,16 +294,22 @@ public class GenerateDatasetForNN {
 
 			for(String s : lst) {
 				if (entry.getKey().getTitle().equals("Sport")) {
-					resultLog.info("\""+LabelsOfTheTexts.getCatValue_AG().get(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Sports"))+
+//					resultLog.info("\""+LabelsOfTheTexts.getCatValue_AG().get(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Sports"))+
+//							"\",\""+s+"\"");
+					lst_result_to_write_file.add("\""+LabelsOfTheTexts.getCatValue_AG().get(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Sports"))+
 							"\",\""+s+"\"");
 				}
 				else {
-					resultLog.info("\""+LabelsOfTheTexts.getCatValue_AG().get(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle(entry.getKey().getTitle()))+
+//					resultLog.info("\""+LabelsOfTheTexts.getCatValue_AG().get(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle(entry.getKey().getTitle()))+
+//							"\",\""+s+"\"");
+					lst_result_to_write_file.add("\""+LabelsOfTheTexts.getCatValue_AG().get(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle(entry.getKey().getTitle()))+
 							"\",\""+s+"\"");
 
 				}
 			}
-
+			System.out.println("Start writing to a file, size of the list: "+lst_result_to_write_file.size());
+			
+			FileUtil.writeDataToFile(lst_result_to_write_file, file_name,false);
 			int countCorrect=0;
 			int size=0;
 			int wrong=0;
@@ -254,7 +332,7 @@ public class GenerateDatasetForNN {
 			}
 
 			System.out.println("\n");
-			System.out.println("Size "+ size+" correct: "+countCorrect+" wrong:"+wrong);
+			System.out.println("Size "+ size+" correct: "+countCorrect+" wrong:"+wrong+" total:"+mapResult.size());
 		}
 
 

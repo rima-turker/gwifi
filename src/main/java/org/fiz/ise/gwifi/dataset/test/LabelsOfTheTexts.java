@@ -26,6 +26,15 @@ public class LabelsOfTheTexts {
 		mapLabel.put(4, wikipedia.getArticleByTitle("Software"));
 		return mapLabel;
 	}
+	public static Map<Integer, Article> getLables_AG_article()
+	{
+		Map<Integer, Article> mapLabel = new HashMap<>();
+		mapLabel.put(1, wikipedia.getArticleByTitle("Politics"));
+		mapLabel.put(2, wikipedia.getArticleByTitle("Sport"));
+		mapLabel.put(3, wikipedia.getArticleByTitle("Business"));
+		mapLabel.put(4, wikipedia.getArticleByTitle("Software"));
+		return mapLabel;
+	}
 	public static Map<Integer, Category> getLables_AG()
 	{
 		Map<Integer, Category> mapLabel = new HashMap<>();
@@ -43,6 +52,16 @@ public class LabelsOfTheTexts {
 //		mapLabel.put(4, wikipedia.getCategoryByTitle("Electronic games"));
 //		mapLabel.put(4, wikipedia.getCategoryByTitle("Technology"));
 		return mapLabel;
+	}
+	
+	public static Map<Article,Integer> getArticleValue_AG()
+	{
+		Map<Integer, Article>  mapLabel = new HashMap<>(getLablesAsArticle_AG());
+		Map<Article,Integer> resultLabel = new HashMap<>();
+		for(Entry <Integer, Article> e : mapLabel.entrySet()) {
+			resultLabel.put(e.getValue(),e.getKey());
+		}
+		return resultLabel;
 	}
 	public static Map<Category,Integer> getCatValue_AG()
 	{

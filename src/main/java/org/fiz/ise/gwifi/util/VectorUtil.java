@@ -2,10 +2,26 @@ package org.fiz.ise.gwifi.util;
 
 import java.util.List;
 
+import org.apache.commons.math3.ml.distance.ManhattanDistance;
 import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.nd4j.linalg.api.ndarray.INDArray;
 
 public class VectorUtil {
+	
+	
+	public static double distanceManhatten(double x[], double y[]) 
+    { 
+		ManhattanDistance a = new ManhattanDistance();
+		return a.compute(x, y);
+ 
+    } 
+	public static double distanceEucline(double[] a, double[] b) {
+		double diff_square_sum = 0.0;
+        for (int i = 0; i < a.length; i++) {
+            diff_square_sum += (a[i] - b[i]) * (a[i] - b[i]);
+        }
+        return Math.sqrt(diff_square_sum);
+    }
 	
 	public static double cosineSimilarity(double[] vectorA, double[] vectorB) {
 	    double dotProduct = 0.0;
@@ -40,8 +56,9 @@ public class VectorUtil {
         try{
             a = model.getWordVectorsMean(words);
         }catch(Exception e) {
-        	System.out.println("I am in getSentenceVector "+ words.size()+" "+a);
+        	System.out.println("I am in getSentenceVector exception "+words +" "+words.size()+" "+a);
         	e.printStackTrace();
+        	System.exit(1);
             return null;
         }
         int cols = a.columns();

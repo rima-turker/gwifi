@@ -11,8 +11,9 @@
 	<!-- MANDATORY: A directory containing a complete berkeley database. -->
 	<!-- <databaseDirectory>/Users/leizhang/Data/wpm/wpm-db-en-20100817</databaseDirectory> -->
 	<!-- <databaseDirectory>/data/lzh/wpm/enwiki-20161020/wpm-db-en</databaseDirectory></databaseDirectory> -->
-	<databaseDirectory>/home/rtue/workspace/gwifi/enwiki-20170701/wpm-db-en
+	<databaseDirectory>/home/rtue/Desktop/wpm-db-en-201810 
 	</databaseDirectory>
+	
 
 	<!-- A directory containing csv files extracted from a wikipedia dump. Caching 
 		will be faster if these are available. -->
