@@ -18,8 +18,8 @@ import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.GoogleModelSingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
-import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
-import org.fiz.ise.gwifi.dataset.test.ReadDataset;
+import org.fiz.ise.gwifi.dataset.ReadDataset;
+import org.fiz.ise.gwifi.dataset.category.Categories;
 import org.fiz.ise.gwifi.model.AG_DataType;
 import org.fiz.ise.gwifi.test.afterESWC.GenerateWideFeatureSet;
 import org.fiz.ise.gwifi.test.afterESWC.TestBasedonSortTextDatasets;
@@ -51,9 +51,9 @@ public class PrepareDateForPython {
 		resolvedRedirect=new SynchronizedCounter();
 		couldNotResolved=new SynchronizedCounter();
 
-		mapRedirectPages= new HashMap<>(RedirectPageAnalysis.loadRedirectPages());
+		mapRedirectPages= new HashMap<>(AnalysisEmbeddingandRedirectDataset.loadRedirectPages());
 		AnnotationSingleton.getInstance();
-		Map<String, List<Article>> dataset = ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION);
+		Map<String, List<Article>> dataset = ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION,Config.getString("DATASET_TRAIN_AG",""));
 
 		PrepareDateForPython generate = new PrepareDateForPython();
 		generate.extractEntities(dataset);

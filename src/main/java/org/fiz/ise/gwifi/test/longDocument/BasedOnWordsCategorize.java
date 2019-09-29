@@ -15,8 +15,8 @@ import org.apache.log4j.Logger;
 import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
-import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
-import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.dataset.category.Categories;
+import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.MapUtil;
 import org.nd4j.linalg.api.ndarray.INDArray;
@@ -25,7 +25,7 @@ import edu.kit.aifb.gwifi.annotation.Annotation;
 import edu.kit.aifb.gwifi.model.Category;
 
 public class BasedOnWordsCategorize {
-	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE"); //here you get the name of the dataset
+	private final static Dataset TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE"); //here you get the name of the dataset
 	private static Set<Category> setMainCategories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories);
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 

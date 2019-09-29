@@ -22,11 +22,11 @@ import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_2modelSingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
-import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
+import org.fiz.ise.gwifi.dataset.LabelsOfTheTexts;
+import org.fiz.ise.gwifi.dataset.category.Categories;
 import org.fiz.ise.gwifi.dataset.shorttext.test.HeuristicApproach;
-import org.fiz.ise.gwifi.dataset.test.LabelsOfTheTexts;
 import org.fiz.ise.gwifi.model.NewsgroupsArticle;
-import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.test.longDocument.NewsgroupParser;
 import org.fiz.ise.gwifi.test.longDocument.YovistoParser;
 import org.fiz.ise.gwifi.util.Config;
@@ -48,7 +48,7 @@ import edu.stanford.nlp.process.WordToSentenceProcessor;
 public class TestBasedonLongTextDatasets {
 
 	private final static Integer NUMBER_OF_THREADS=  Config.getInt("NUMBER_OF_THREADS",-1);
-	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE"); 
+	private final static Dataset TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE"); 
 	private static Wikipedia wikipedia = WikipediaSingleton.getInstance().wikipedia;
 	private static CategorySingleton singCategory;
 	private static SynchronizedCounter counterTruePositive;
@@ -112,16 +112,16 @@ public class TestBasedonLongTextDatasets {
 		counterFalsePositive= new SynchronizedCounter();
 		counterTruePositive= new SynchronizedCounter();
 
-		if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.YOVISTO)) {
+		if (TEST_DATASET_TYPE.equals(Dataset.YOVISTO)) {
 			System.out.println("The dataset type is YOVISTO");
 			System.out.println("Numvber of Sentences to be considered "+NUMBER_OF_SENTENCES_YOVISTO);
 			map = new HashMap<>(test.dataset_YOVISTO(NUMBER_OF_SENTENCES_YOVISTO));
 			System.out.println("map size "+map.size());
 		}
-		else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.TWENTYNEWS)) {
+		else if (TEST_DATASET_TYPE.equals(Dataset.TWENTYNEWS)) {
 			test.dataset_20News();
 		}
-		else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.YOVISTO_SENTENCEBYSENTENCE_sentence)) {
+		else if (TEST_DATASET_TYPE.equals(Dataset.YOVISTO_SENTENCEBYSENTENCE_sentence)) {
 			YovistoParser parser = new YovistoParser();
 			parser.initializeVariables();
 			System.out.println("Data Type: YOVISTO_SENTENCEBYSENTENCE_sentence number of Sentences "+ NUMBER_OF_SENTENCES_YOVISTO);

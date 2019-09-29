@@ -26,11 +26,11 @@ import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
 import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
-import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
-import org.fiz.ise.gwifi.dataset.test.LabelsOfTheTexts;
-import org.fiz.ise.gwifi.dataset.test.ReadDataset;
+import org.fiz.ise.gwifi.dataset.LabelsOfTheTexts;
+import org.fiz.ise.gwifi.dataset.ReadDataset;
+import org.fiz.ise.gwifi.dataset.category.Categories;
 import org.fiz.ise.gwifi.model.AG_DataType;
-import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.FileUtil;
@@ -46,7 +46,7 @@ import edu.kit.aifb.gwifi.model.Category;
 
 public class DatasetGenerationBasedOnVector {
 
-	private final static TestDatasetType_Enum TEST_DATASET_TYPE = Config.getEnum("TEST_DATASET_TYPE");
+	private final static Dataset TEST_DATASET_TYPE = Config.getEnum("TEST_DATASET_TYPE");
 	private final static String TRAIN_SET_AG = Config.getString("DATASET_TRAIN_AG","");
 	private final static Double THRESHOLD = Config.getDouble("THRESHOLD",1.0);
 	private final static String TRAIN_SET_WEB = Config.getString("DATASET_TRAIN_WEB","");
@@ -88,9 +88,9 @@ public class DatasetGenerationBasedOnVector {
 	}
 
 	private static void datasetGenerateFromList(List<String> lst) {
-		if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
+		if (TEST_DATASET_TYPE.equals(Dataset.AG)) {
 			for(String str: lst) {
-				System.out.println(HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingCategory(str)+"\t"+str);
+				System.out.println(BestMatchingLabelBasedOnVectorSimilarity.getBestMatchingCategory(str)+"\t"+str);
 				//secondLOG.info(HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingCategory(str)+"\t"+str);
 			}
 		}
@@ -98,7 +98,7 @@ public class DatasetGenerationBasedOnVector {
 
 	private void datasetGenerateFromTrainSetConsideringN(int n) {
 		try {
-			Map<String, List<Article>> dataset = ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION);
+			Map<String, List<Article>> dataset = ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION,Config.getString("DATASET_TRAIN_AG",""));
 			int count =0;
 			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
 			for(Entry<String, List<Article>> e: dataset.entrySet()) {
@@ -116,7 +116,7 @@ public class DatasetGenerationBasedOnVector {
 
 	private Runnable handle(String description, List<Article> gtList,int i, int n ) {
 		return () -> {
-			List<Article> bestMatchingCategory = new ArrayList<Article>(HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingNArticles(description,n));
+			List<Article> bestMatchingCategory = new ArrayList<Article>(BestMatchingLabelBasedOnVectorSimilarity.getBestMatchingNArticles(description,n));
 			bestMatchingCategory.retainAll(gtList);
 			if (bestMatchingCategory.size()>0) {
 				countCorrectSyn.increment();
@@ -143,7 +143,7 @@ public class DatasetGenerationBasedOnVector {
 //					directory.mkdir();
 //				}
 //			}
-			Map<String, List<Article>> dataset = ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION);
+			Map<String, List<Article>> dataset = ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION,Config.getString("DATASET_TRAIN_AG",""));
 			int count =0;
 			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
 			for(Entry<String, List<Article>> e: dataset.entrySet()) {
@@ -165,7 +165,7 @@ public class DatasetGenerationBasedOnVector {
 
 	private Runnable handle_findBestMachingArticleWithThreshold(String description, List<Article> gtList, int i ) {
 		return () -> {
-			Article bestMatchingCategory = HeuristicBasedOnEntitiyVectorSimilarity.getBestMatchingArticlewithThreshold(description,THRESHOLD);
+			Article bestMatchingCategory = BestMatchingLabelBasedOnVectorSimilarity.getBestMatchingArticlewithThreshold(description,THRESHOLD);
 			if (gtList.contains(bestMatchingCategory)) {
 				countCorrectSyn.increment();
 				//FileUtil.writeDataToFile(Arrays.asList(description), bestMatchingCategory.getTitle()+File.separator+ i,false);

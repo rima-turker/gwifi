@@ -23,14 +23,15 @@ import org.fiz.ise.gwifi.Singleton.GoogleModelSingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_2modelSingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
-import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
-import org.fiz.ise.gwifi.dataset.test.LabelsOfTheTexts;
+import org.fiz.ise.gwifi.dataset.LabelsOfTheTexts;
+import org.fiz.ise.gwifi.dataset.category.Categories;
 import org.fiz.ise.gwifi.dataset.train.generation.GenerateDatasetForNN;
-import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.MapUtil;
 import org.fiz.ise.gwifi.util.Print;
+import org.fiz.ise.gwifi.util.StringUtil;
 import org.fiz.ise.gwifi.util.VectorUtil;
 import org.nd4j.linalg.api.ops.impl.accum.AMin;
 import org.openjena.atlas.test.Gen;
@@ -46,8 +47,8 @@ import edu.stanford.nlp.process.CoreLabelTokenFactory;
 import edu.stanford.nlp.process.LexedTokenFactory;
 import edu.stanford.nlp.process.PTBTokenizer;
 
-public class HeuristicBasedOnEntitiyVectorSimilarity {
-	private final static TestDatasetType_Enum TEST_DATASET_TYPE = Config.getEnum("TEST_DATASET_TYPE");
+public class BestMatchingLabelBasedOnVectorSimilarity {
+	private final static Dataset TEST_DATASET_TYPE = Config.getEnum("TEST_DATASET_TYPE");
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 	static final Logger resultLog = Logger.getLogger("reportsLogger");
 	private final static Integer NUMBER_OF_MOST_SIMILAR_ARTICLES= Config.getInt("NUMBER_OF_MOST_SIMILAR_ARTICLES",-1);
@@ -68,18 +69,21 @@ public class HeuristicBasedOnEntitiyVectorSimilarity {
 		System.out.println("Finished initializing the cache");
 		Print.printMap(CACHE_mostSimilarNArticles);
 	}	
-	public static Article getBestMatchingArticleFromWordVectorModel(String shortText, List<Article> gtList) {
-		Set<Category> setMainCategories = new HashSet<>(
-				CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories); //get predefined cats
+	
+	public static Article getBestMatchingArticleFromWordVectorModel(Dataset dname, String shortText, List<Article> gtList) {
+		List<Article> labels = null;
+		
+		if (dname.equals(Dataset.AG)) {
+			 labels = new ArrayList<Article>(LabelsOfTheTexts.getLables_AG_article().values());
+		}
 		try {
 			Map<Article, Double> mapScore = new HashMap<>();
-			List<String> tokensStr = new ArrayList<String>(tokinizeString(shortText));
+			List<String> tokensStr = new ArrayList<String>(StringUtil.tokinizeString(shortText));
 			double[] sentenceVector = VectorUtil.getSentenceVector(tokensStr, GoogleModelSingleton.getInstance().google_model);
 
-			for (Category mainCat : setMainCategories) { //iterate over categories and calculate a score for each of them
-				Article amainCat = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(mainCat.getTitle());
+			for (Article amainCat : labels) { //iterate over categories and calculate a score for each of them
 				String amainCatAbstract = amainCat.getFirstParagraphMarkup().replaceAll("[^\\w\\s]",""); 
-				tokensStr = new ArrayList<String>(tokinizeString(amainCatAbstract));
+				tokensStr = new ArrayList<String>(StringUtil.tokinizeString(amainCatAbstract));
 
 				double[] labelVector = VectorUtil.getSentenceVector(tokensStr, GoogleModelSingleton.getInstance().google_model);
 				double score = VectorUtil.cosineSimilarity(labelVector, sentenceVector);
@@ -96,20 +100,9 @@ public class HeuristicBasedOnEntitiyVectorSimilarity {
 		}
 		return null;
 	}
-	public static List<String> tokinizeString(String shortText) {
-		List<String> tokensStr = new ArrayList<String>();
-		final LexedTokenFactory<CoreLabel> tokenFactory = new CoreLabelTokenFactory();
-
-		final PTBTokenizer<CoreLabel> tokenizer = new PTBTokenizer<CoreLabel>(new StringReader(shortText), tokenFactory,
-				"untokenizable=noneDelete");
-		while (tokenizer.hasNext()) {
-			tokensStr.add(tokenizer.next().toString());
-		}
-		return tokensStr;
-	}
 	public static Article getBestMatchingArticlewith_3_DifferentApproachAgreement(String shortText,List<Article> gtList) {
 		Article bestMatching1 = getBestMatchingArticle(shortText, gtList);
-		Article bestMatching2 = getBestMatchingArticleFromWordVectorModel(shortText, gtList);
+		Article bestMatching2 = getBestMatchingArticleFromWordVectorModel(TEST_DATASET_TYPE,shortText, gtList);
 		Article bestMatching3 = GenerateDatasetForNN.map_results_doc2vec.get(shortText);
 		if (bestMatching1==null || bestMatching2==null || bestMatching3==null) {
 			return null;
@@ -119,9 +112,9 @@ public class HeuristicBasedOnEntitiyVectorSimilarity {
 		}
 		return null;
 	}
-	public static Article getBestMatchingArticlewith_3_DifferentApproachAgreement_categorize_all_dataset_write(String shortText,List<Article> gtList) {
-		Article best_LINE = getBestMatchingArticle_resolve_redirect(shortText, gtList);
-		Article best_google = getBestMatchingArticleFromWordVectorModel(shortText, gtList);
+	public static Article getBestMatchingArticlewith_3_DifferentApproachAgreement_categorize_all_dataset_write(Dataset dname,String shortText,List<Article> gtList) {
+		Article best_LINE = getBestMatchingArticle_resolve_redirect(dname, shortText, gtList);
+		Article best_google = getBestMatchingArticleFromWordVectorModel(TEST_DATASET_TYPE,shortText, gtList);
 		Article best_doc2vec = GenerateDatasetForNN.map_results_doc2vec.get(shortText);
 		Map<Article, Integer> map = new HashMap<Article, Integer>();
 		
@@ -179,9 +172,9 @@ public class HeuristicBasedOnEntitiyVectorSimilarity {
 			return best_LINE;
 		}
 	}
-	public static Article getBestMatchingArticlewith_3_DifferentApproachAgreement_categorize_all_dataset(String shortText,List<Article> gtList) {
-		Article best_LINE = getBestMatchingArticle_resolve_redirect(shortText, gtList);
-		Article best_google = getBestMatchingArticleFromWordVectorModel(shortText, gtList);
+	public static Article getBestMatchingArticlewith_3_DifferentApproachAgreement_categorize_all_dataset(Dataset dname,String shortText,List<Article> gtList) {
+		Article best_LINE = getBestMatchingArticle_resolve_redirect(dname, shortText, gtList);
+		Article best_google = getBestMatchingArticleFromWordVectorModel(TEST_DATASET_TYPE,shortText, gtList);
 		Article best_doc2vec = GenerateDatasetForNN.map_results_doc2vec.get(shortText);
 		Map<Article, Integer> map = new HashMap<Article, Integer>();
 		
@@ -231,7 +224,7 @@ public class HeuristicBasedOnEntitiyVectorSimilarity {
 
 	public static Article getBestMatchingArticlewithTwoDifferentApproachAgreement(String shortText, List<Article> gtList) {
 		Article bestMatching1 = getBestMatchingArticle(shortText, gtList);
-		Article bestMatching2 = getBestMatchingArticleFromWordVectorModel(shortText, gtList);
+		Article bestMatching2 = getBestMatchingArticleFromWordVectorModel(TEST_DATASET_TYPE,shortText, gtList);
 		if (bestMatching1==null || bestMatching2==null) {
 			return null;
 		}
@@ -263,7 +256,7 @@ public class HeuristicBasedOnEntitiyVectorSimilarity {
 		Set<Category> setMainCategories = new HashSet<>(
 				CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories); //get predefined cats
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-		HeuristicBasedOnEntitiyVectorSimilarity heuristic = new HeuristicBasedOnEntitiyVectorSimilarity();
+		BestMatchingLabelBasedOnVectorSimilarity heuristic = new BestMatchingLabelBasedOnVectorSimilarity();
 		StringBuilder mainBuilder = new StringBuilder();
 		try {
 			Map<Article, Double> mapScore = new HashMap<>();
@@ -278,10 +271,10 @@ public class HeuristicBasedOnEntitiyVectorSimilarity {
 				for (Annotation a : filteredAnnotations) {
 					if (!AnnonatationUtil.getEntityBlackList_AGNews().contains(a.getId())&&WikipediaSingleton.getInstance().getArticle(a.getTitle())!=null) { //we had so many noisy entities therefore filtering required
 						double tempScore=0;
-						if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
+						if (TEST_DATASET_TYPE.equals(Dataset.AG)) {
 							tempScore+= heuristic.calculateScore_AG(a, amainCat);
 						}
-						else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.WEB_SNIPPETS)) {
+						else if (TEST_DATASET_TYPE.equals(Dataset.WEB_SNIPPETS)) {
 							tempScore+= heuristic.calculateScore_WEB(a, amainCat);
 						}
 						score +=tempScore ;
@@ -314,7 +307,7 @@ public class HeuristicBasedOnEntitiyVectorSimilarity {
 		Set<Category> setMainCategories = new HashSet<>(
 				CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories); //get predefined cats
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-		HeuristicBasedOnEntitiyVectorSimilarity heuristic = new HeuristicBasedOnEntitiyVectorSimilarity();
+		BestMatchingLabelBasedOnVectorSimilarity heuristic = new BestMatchingLabelBasedOnVectorSimilarity();
 		StringBuilder mainBuilder = new StringBuilder();
 		try {
 			Map<Article, Double> mapScore = new HashMap<>();
@@ -359,7 +352,7 @@ public class HeuristicBasedOnEntitiyVectorSimilarity {
 		Set<Category> setMainCategories = new HashSet<>(
 				CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories); //get predefined cats
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-		HeuristicBasedOnEntitiyVectorSimilarity heuristic = new HeuristicBasedOnEntitiyVectorSimilarity();
+		BestMatchingLabelBasedOnVectorSimilarity heuristic = new BestMatchingLabelBasedOnVectorSimilarity();
 		StringBuilder mainBuilder = new StringBuilder();
 		try {
 			Map<Article, Double> mapScore = new HashMap<>();
@@ -380,12 +373,12 @@ public class HeuristicBasedOnEntitiyVectorSimilarity {
 				for (Annotation a : filteredAnnotations) {
 					if (!AnnonatationUtil.getEntityBlackList_AGNews().contains(a.getId())&&WikipediaSingleton.getInstance().getArticle(a.getTitle())!=null) { //we had so many noisy entities therefore filtering required
 						double tempScore=0;
-						if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
+						if (TEST_DATASET_TYPE.equals(Dataset.AG)) {
 							double ttempScore = heuristic.calculateScore_AG_withExtention(a, amainCat, NUMBER_OF_MOST_SIMILAR_ARTICLES);
 							tempScore+=ttempScore;
 							mainBuilder.append(a.getMention()+" "+a.getTitle()+":"+mainCat.getTitle()+":"+ttempScore+"\n" );
 						}
-						else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.WEB_SNIPPETS)) {
+						else if (TEST_DATASET_TYPE.equals(Dataset.WEB_SNIPPETS)) {
 							tempScore+= heuristic.calculateScore_WEB(a, amainCat);
 						}
 						score +=tempScore ;
@@ -501,11 +494,17 @@ public class HeuristicBasedOnEntitiyVectorSimilarity {
 		}
 		return null;
 	}
-	public static Article getBestMatchingArticle_resolve_redirect(String shortText, List<Article> gtList) {
-		Set<Category> setMainCategories = new HashSet<>(
-				CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories); //get predefined cats
+	
+	public static Article getBestMatchingArticle_resolve_redirect(Dataset dname, String shortText, List<Article> gtList) {
+		List<Article> labels = null;
+		if (dname.equals(Dataset.AG)) {
+			 labels = new ArrayList<Article>(LabelsOfTheTexts.getLables_AG_article().values());
+		}
+		else if (dname.equals(Dataset.TREC)) {
+			 labels = new ArrayList<Article>(LabelsOfTheTexts.getLables_TREC_article().values());
+		}
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-		HeuristicBasedOnEntitiyVectorSimilarity heuristic = new HeuristicBasedOnEntitiyVectorSimilarity();
+		//BestMatchingLabelBasedOnVectorSimilarity heuristic = new BestMatchingLabelBasedOnVectorSimilarity();
 		StringBuilder mainBuilder = new StringBuilder();
 		try {
 			Map<Article, Double> mapScore = new HashMap<>();
@@ -516,12 +515,10 @@ public class HeuristicBasedOnEntitiyVectorSimilarity {
 			}
 			List<Annotation> lstAnnotations = new ArrayList<>();
 			service.annotate(shortText, lstAnnotations);//annotate the given text
+			
 			List<Annotation> filteredAnnotations = new ArrayList<>(filterEntitiesNotInVectorSpace(lstAnnotations));
-
 			mainBuilder.append(strBuild.toString() + "\n" + "\n");
-
-			for (Category mainCat : setMainCategories) { //iterate over categories and calculate a score for each of them
-				Article amainCat = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(mainCat.getTitle());
+			for (Article amainCat : labels) { //iterate over categories and calculate a score for each of them
 				double score = 0.0; 
 				for (Annotation a : filteredAnnotations) {
 					if (!AnnonatationUtil.getEntityBlackList_AGNews().contains(a.getId())) { //we had so many noisy entities therefore filtering required
@@ -599,10 +596,9 @@ public class HeuristicBasedOnEntitiyVectorSimilarity {
 	}
 
 	public static Article getBestMatchingArticle(String shortText, List<Article> gtList) {
-		Set<Category> setMainCategories = new HashSet<>(
-				CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories); //get predefined cats
+		List<Article> labels = new ArrayList<Article>(LabelsOfTheTexts.getLables_AG_article().values());
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-		HeuristicBasedOnEntitiyVectorSimilarity heuristic = new HeuristicBasedOnEntitiyVectorSimilarity();
+		BestMatchingLabelBasedOnVectorSimilarity heuristic = new BestMatchingLabelBasedOnVectorSimilarity();
 		StringBuilder mainBuilder = new StringBuilder();
 		try {
 			Map<Article, Double> mapScore = new HashMap<>();
@@ -617,18 +613,17 @@ public class HeuristicBasedOnEntitiyVectorSimilarity {
 
 			mainBuilder.append(strBuild.toString() + "\n" + "\n");
 
-			for (Category mainCat : setMainCategories) { //iterate over categories and calculate a score for each of them
-				Article amainCat = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(mainCat.getTitle());
+			for (Article amainCat : labels) { //iterate over categories and calculate a score for each of them
 				double score = 0.0; 
 				for (Annotation a : filteredAnnotations) {
 					if (!AnnonatationUtil.getEntityBlackList_AGNews().contains(a.getId())&&WikipediaSingleton.getInstance().getArticle(a.getTitle())!=null) { //we had so many noisy entities therefore filtering required
 						double tempScore=0;
-						if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
+						if (TEST_DATASET_TYPE.equals(Dataset.AG)) {
 							double ttempScore = heuristic.calculateScore_AG(a, amainCat);
 							tempScore+=ttempScore;
-							mainBuilder.append(a.getMention()+" "+a.getTitle()+":"+mainCat.getTitle()+":"+ttempScore+"\n" );
+							mainBuilder.append(a.getMention()+" "+a.getTitle()+":"+amainCat.getTitle()+":"+ttempScore+"\n" );
 						}
-						else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.WEB_SNIPPETS)) {
+						else if (TEST_DATASET_TYPE.equals(Dataset.WEB_SNIPPETS)) {
 							tempScore+= heuristic.calculateScore_WEB(a, amainCat);
 						}
 						score +=tempScore ;
@@ -661,7 +656,7 @@ public class HeuristicBasedOnEntitiyVectorSimilarity {
 		Set<Category> setMainCategories = new HashSet<>(
 				CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories); //get predefined cats
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-		HeuristicBasedOnEntitiyVectorSimilarity heuristic = new HeuristicBasedOnEntitiyVectorSimilarity();
+		BestMatchingLabelBasedOnVectorSimilarity heuristic = new BestMatchingLabelBasedOnVectorSimilarity();
 		try {
 			Map<Category, Double> mapScore = new HashMap<>();
 			StringBuilder strBuild = new StringBuilder();
@@ -676,7 +671,7 @@ public class HeuristicBasedOnEntitiyVectorSimilarity {
 				for (Annotation a : filteredAnnotations) {
 					if (!AnnonatationUtil.getEntityBlackList_AGNews().contains(a.getId())&&WikipediaSingleton.getInstance().getArticle(a.getTitle())!=null) { //we had so many noisy entities therefore filtering required
 						double tempScore=0;
-						if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
+						if (TEST_DATASET_TYPE.equals(Dataset.AG)) {
 							tempScore+= heuristic.calculateScore_AG(a, WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(mainCat.getTitle()));
 						}
 						score +=tempScore ;
@@ -706,7 +701,7 @@ public class HeuristicBasedOnEntitiyVectorSimilarity {
 		Set<Category> setMainCategories = new HashSet<>(
 				CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories); //get predefined cats
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-		HeuristicBasedOnEntitiyVectorSimilarity heuristic = new HeuristicBasedOnEntitiyVectorSimilarity();
+		BestMatchingLabelBasedOnVectorSimilarity heuristic = new BestMatchingLabelBasedOnVectorSimilarity();
 		StringBuilder mainBuilder = new StringBuilder();
 		try {
 			Map<Category, Double> mapScore = new HashMap<>();
@@ -726,7 +721,7 @@ public class HeuristicBasedOnEntitiyVectorSimilarity {
 				for (Annotation a : filteredAnnotations) {
 					if (!AnnonatationUtil.getEntityBlackList_AGNews().contains(a.getId())&&WikipediaSingleton.getInstance().getArticle(a.getTitle())!=null) { //we had so many noisy entities therefore filtering required
 						double tempScore=0;
-						if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
+						if (TEST_DATASET_TYPE.equals(Dataset.AG)) {
 							tempScore+= heuristic.calculateScore_AG(a, WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(mainCat.getTitle()));
 						}
 						score +=tempScore ;

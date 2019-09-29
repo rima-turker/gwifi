@@ -16,10 +16,10 @@ import java.util.concurrent.TimeUnit;
 import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
-import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
+import org.fiz.ise.gwifi.dataset.category.Categories;
 import org.fiz.ise.gwifi.longText.TestBasedonLongTextDatasets;
 import org.fiz.ise.gwifi.model.AG_DataType;
-import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.test.afterESWC.TestBasedonSortTextDatasets;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.FileUtil;
@@ -36,7 +36,7 @@ public class TestBasedOnWords {
 	 *  cosine similarity between a document vector and all the other category/word vectors  
 	 */
 	private final static Integer NUMBER_OF_THREADS=  Config.getInt("NUMBER_OF_THREADS",-1);
-	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
+	private final static Dataset TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
 	private static SynchronizedCounter counterTruePositive;
 	private static SynchronizedCounter counterFalsePositive;
 	private static SynchronizedCounter counterProcessed;
@@ -78,11 +78,11 @@ public class TestBasedOnWords {
 		
 	TestBasedonSortTextDatasets test = new TestBasedonSortTextDatasets();
 	Map<String,List<Category>> dataset = null;
-	if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
+	if (TEST_DATASET_TYPE.equals(Dataset.AG)) {
 		System.out.println("Start reading AG News data");
 		dataset = new HashMap<>(test.read_dataset_AG(AG_DataType.TITLEANDDESCRIPTION,Config.getString("DATASET_TEST_AG","")));
 	}
-	else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.WEB_SNIPPETS)) {
+	else if (TEST_DATASET_TYPE.equals(Dataset.WEB_SNIPPETS)) {
 		System.out.println("Start reading WEB data");
 		dataset = new HashMap<>(test.read_dataset_WEB(null));
 	}

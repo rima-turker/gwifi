@@ -3,8 +3,8 @@ package org.fiz.ise.gwifi.Singleton;
 import java.util.concurrent.TimeUnit;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.word2vec.Word2Vec;
-import org.fiz.ise.gwifi.model.Model_LINE;
-import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.model.EmbeddingModel;
+import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.TimeUtil;
 

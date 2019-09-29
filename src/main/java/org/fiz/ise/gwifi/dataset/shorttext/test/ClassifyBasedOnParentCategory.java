@@ -14,9 +14,9 @@ import org.apache.log4j.Logger;
 import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
 import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
-import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
-import org.fiz.ise.gwifi.dataset.LINE.Category.KBCorrespondingCategory;
-import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.dataset.category.Categories;
+import org.fiz.ise.gwifi.dataset.category.KBCorrespondingCategory;
+import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.MapUtil;
 
@@ -25,7 +25,7 @@ import edu.kit.aifb.gwifi.model.Category;
 import edu.kit.aifb.gwifi.service.NLPAnnotationService;
 
 public class ClassifyBasedOnParentCategory {
-	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
+	private final static Dataset TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
 	private static Set<Category> setMainCategories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories);
 	static final Logger resultLog = Logger.getLogger("reportsLogger");
 //	public static void main(String[] args) {

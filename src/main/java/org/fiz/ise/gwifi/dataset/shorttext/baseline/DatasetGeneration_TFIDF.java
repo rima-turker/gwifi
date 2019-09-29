@@ -22,12 +22,12 @@ import org.apache.hadoop.hdfs.server.namenode.decommission_jsp;
 import org.bytedeco.javacpp.presets.opencv_core.Str;
 import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
-import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
+import org.fiz.ise.gwifi.dataset.LabelsOfTheTexts;
+import org.fiz.ise.gwifi.dataset.ReadDataset;
+import org.fiz.ise.gwifi.dataset.category.Categories;
 import org.fiz.ise.gwifi.dataset.shorttext.test.TestBasedonSortTextDatasets;
-import org.fiz.ise.gwifi.dataset.test.LabelsOfTheTexts;
-import org.fiz.ise.gwifi.dataset.test.ReadDataset;
 import org.fiz.ise.gwifi.model.AG_DataType;
-import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.test.longDocument.YovistoParser;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.Document;
@@ -48,7 +48,7 @@ import weka.gui.SysErrLog;
 public class DatasetGeneration_TFIDF {
 
 	private final static Integer NUMBER_OF_ARTICLES_RANDOM_PER_LABEL = Config.getInt("NUMBER_OF_ARTICLES_RANDOM_PER_LABEL", 0);
-	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
+	private final static Dataset TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
 	private final static String WIKI_ALL_FILES= Config.getString("WIKI_ALL_FILES","");
 	private final static String DATASET_TEST_AG= Config.getString("DATASET_TEST_AG","");
 	private final static String DATASET_TEST_WEB= Config.getString("DATASET_TEST_WEB","");
@@ -127,7 +127,7 @@ public class DatasetGeneration_TFIDF {
 			if (! directory.exists()){
 				directory.mkdir();
 			}
-			Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG());
+			Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG_category());
 			List<Integer> lstKeys = new ArrayList<>(mapLabel.keySet());
 			Collections.shuffle(lstKeys);
 			Map<Integer, Integer> mapRandomSamplePerLabel=new HashMap<>();
@@ -384,7 +384,7 @@ public class DatasetGeneration_TFIDF {
 			//			List<String> subList = new ArrayList<>(lines.subList(0, numberOfSamples));
 			List<String> subList = new ArrayList<>(randomListGenerator(lines,numberOfSamples));
 			Map<String, List<String>> mapResult = new HashMap<>();
-			Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG());
+			Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG_category());
 			String[] arrLines = new String[subList.size()];
 			arrLines = subList.toArray(arrLines);
 			int i=0;
@@ -452,7 +452,7 @@ public class DatasetGeneration_TFIDF {
 	private static void generateTestSetTFIDF_AG(AG_DataType type) {
 		try {
 			List<String> lines = FileUtils.readLines(new File(DATASET_TEST_AG), "utf-8");
-			Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG());
+			Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG_category());
 			String[] arrLines = new String[lines.size()];
 			arrLines = lines.toArray(arrLines);
 			int i=0;
@@ -487,7 +487,7 @@ public class DatasetGeneration_TFIDF {
 		try {
 			List<String> lines = FileUtils.readLines(new File(DATASET_TRAIN_AG), "utf-8");
 			Map<String, List<String>> mapResult = new HashMap<>();
-			Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG());
+			Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG_category());
 			String[] arrLines = new String[lines.size()];
 			arrLines = lines.toArray(arrLines);
 			int i=0;

@@ -12,8 +12,8 @@ import java.util.Map.Entry;
 
 import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
-import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
-import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.dataset.category.Categories;
+import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.SynchronizedCounter;
 
@@ -28,7 +28,7 @@ public class Demo {
 		if (LOAD_MODEL) {
 			LINE_modelSingleton.getInstance();
 		}
-		CategorySingleton singCategory= CategorySingleton.getInstance(Categories.getCategoryList(TestDatasetType_Enum.AG));
+		CategorySingleton singCategory= CategorySingleton.getInstance(Categories.getCategoryList(Dataset.AG));
 		Map<Category, Set<Category>> mapTemp = new HashMap<>(singCategory.mapMainCatAndSubCats);
 		for(Entry<Category, Set<Category>> e: mapTemp.entrySet())
 		{

@@ -1,6 +1,7 @@
-package org.fiz.ise.gwifi.dataset.test;
+package org.fiz.ise.gwifi.dataset;
 
 import java.io.File;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -15,9 +16,9 @@ import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
 import org.fiz.ise.gwifi.Singleton.FilteredWikipediaPagesSingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
-import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
+import org.fiz.ise.gwifi.dataset.category.Categories;
 import org.fiz.ise.gwifi.model.AG_DataType;
-import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.test.longDocument.BasedOnWordsCategorize;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
 import org.fiz.ise.gwifi.util.Config;
@@ -31,9 +32,13 @@ import edu.kit.aifb.gwifi.annotation.Annotation;
 import edu.kit.aifb.gwifi.model.Article;
 import edu.kit.aifb.gwifi.model.Category;
 import edu.kit.aifb.gwifi.service.NLPAnnotationService;
+import edu.stanford.nlp.ling.CoreLabel;
+import edu.stanford.nlp.process.CoreLabelTokenFactory;
+import edu.stanford.nlp.process.LexedTokenFactory;
+import edu.stanford.nlp.process.PTBTokenizer;
 
 public class AnalyseDataset {
-	private final static TestDatasetType_Enum TEST_DATASET_TYPE= TestDatasetType_Enum.WEB_SNIPPETS;//Config.getEnum("TEST_DATASET_TYPE");
+	private final static Dataset TEST_DATASET_TYPE= Dataset.WEB_SNIPPETS;//Config.getEnum("TEST_DATASET_TYPE");
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 	static final Logger resultLog = Logger.getLogger("reportsLogger");
 	public static final Map<String,List<String>> CACHE = new HashMap<>();
@@ -52,11 +57,11 @@ public class AnalyseDataset {
 	public static void findMostSimilarEntitesForDatasetBasedOnDatasetVector() {
 		System.out.println("Start running: "+"findMostSimilarEntitesForDatasetBasedOnSentenceVector");
 		List<Category> lstDatasetCatList = null;
-		if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
+		if (TEST_DATASET_TYPE.equals(Dataset.AG)) {
 			lstDatasetCatList = new ArrayList<>(LabelsOfTheTexts.getCatValue_AG().keySet());
 		}
-		else if(TEST_DATASET_TYPE.equals(TestDatasetType_Enum.WEB_SNIPPETS)) {
-			List<String> arrTemp = new ArrayList<>(Categories.getCategoryList(TestDatasetType_Enum.WEB_SNIPPETS));
+		else if(TEST_DATASET_TYPE.equals(Dataset.WEB_SNIPPETS)) {
+			List<String> arrTemp = new ArrayList<>(Categories.getCategoryList(Dataset.WEB_SNIPPETS));
 			lstDatasetCatList = new ArrayList<Category>();
 			for(String s :arrTemp) {
 				lstDatasetCatList.add(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle(s));	
@@ -68,11 +73,11 @@ public class AnalyseDataset {
 			System.out.println("category: "+c.getTitle());
 			Map<String,Double> result = new HashMap<>();
 			List<Annotation> lstAllAnnotation=null;
-			if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
+			if (TEST_DATASET_TYPE.equals(Dataset.AG)) {
 				List<String> dataset = new ArrayList<>(ReadDataset.read_AG_BasedOnCategory(c,AG_DataType.TITLEANDDESCRIPTION));
 				lstAllAnnotation = new ArrayList<>(AnnonatationUtil.findAnnotationAll_FilterAG(dataset));
 			}
-			else if(TEST_DATASET_TYPE.equals(TestDatasetType_Enum.WEB_SNIPPETS)) {
+			else if(TEST_DATASET_TYPE.equals(Dataset.WEB_SNIPPETS)) {
 				List<String> dataset = new ArrayList<>(ReadDataset.read_WEB_BasedOnCategory(c,Config.getString("DATASET_TRAIN_WEB"," ")));
 				lstAllAnnotation = new ArrayList<>(AnnonatationUtil.findAnnotationAll_FilterWEB(dataset));
 
@@ -91,17 +96,14 @@ public class AnalyseDataset {
 			FileUtil.writeDataToFile(sortedMap, c.getTitle()+"_theMostSimilarArticles_filteredEntities_"+TEST_DATASET_TYPE);
 		}
 	}
-	public static void findMostSimilarEntitesForDataset() {
+	public static void findMostSimilarEntitesForDataset(List<String> dataset, Dataset dName, String fName ) {
 
 		Map<String,Integer> result = new HashMap<>();
-		List<Category> lstDatasetCatList = new ArrayList<>(LabelsOfTheTexts.getCatValue_AG().keySet());
-		for(Category c : lstDatasetCatList ) {
-			List<String> dataset = new ArrayList<>(ReadDataset.read_AG_BasedOnCategory(c,AG_DataType.TITLEANDDESCRIPTION));
-			List<Annotation> lstAllAnnotation = new ArrayList<>(AnnonatationUtil.findAnnotationAll(dataset));
-			System.out.println("Size of the annotations: "+ lstAllAnnotation.size());
-			int cCount=0;
-
-			for(Annotation a : lstAllAnnotation) {
+		List<Annotation> lstAllAnnotation = new ArrayList<>(AnnonatationUtil.findAnnotationAll(dataset));
+		System.out.println("Size of the annotations: "+ lstAllAnnotation.size());
+		int cCount=0;
+		for(Annotation a : lstAllAnnotation) {
+			if (dName.equals(Dataset.MR)&&!AnnonatationUtil.getEntityBlackList_MR().contains(a.getId())) {
 				if (!CACHE.containsKey(a.getTitle())) {
 					List<String> lstArt = new ArrayList<> (LINE_modelSingleton.getInstance().lineModel.wordsNearest(String.valueOf(a.getId()), 10));
 					if (lstArt.size()==0) {
@@ -109,23 +111,23 @@ public class AnalyseDataset {
 					}
 					CACHE.put(a.getTitle(), lstArt);
 				}
-				System.out.println(c.getTitle()+" CACHE size "+CACHE.size()+" count: "+cCount);
+				System.out.println(fName+" CACHE size "+CACHE.size()+" count: "+cCount);
 				List<String> lstArt = new ArrayList<String>(CACHE.get(a.getTitle())); 
 				for(String s : lstArt) {
 					if (WikipediaSingleton.getInstance().wikipedia.getArticleById(Integer.valueOf(s))!=null) {
 						String entity = WikipediaSingleton.getInstance().wikipedia.getArticleById(Integer.valueOf(s)).getTitle();
 						int count = result.containsKey(entity) ? result.get(entity) : 0;
-						System.out.println(a.getTitle()+" "+entity);
 						result.put(entity, count + 1);
 					}
-
 				}
 				cCount++;
 			}
-			System.out.println("Start writing..");
-			FileUtil.writeDataToFile(result, c.getTitle()+"_most similar10EntitiesForEachAn");
-			System.out.println("Finished writing: " +c.getTitle()+"_most similar1EntitiesForEachAn");
+
 		}
+		Map<String,Integer> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(result));
+		System.out.println("Start writing..");
+		FileUtil.writeDataToFile(sortedMap, fName+"_most similar10EntitiesForEachAn");
+		System.out.println("Finished writing: " +fName+"_most similar1EntitiesForEachAn");
 	}
 	public static void analyseAnchorText(int id) {
 		List<Category> lstDatasetCatList = new ArrayList<>(LabelsOfTheTexts.getCatValue_AG().keySet());
@@ -170,49 +172,56 @@ public class AnalyseDataset {
 			AnnonatationUtil.findFreqOfEntity(lstAllAnnotation,"AnnotationFrequency_"+type+"_"+TEST_DATASET_TYPE+"_"+c.getTitle());
 		}
 	}
-	private static void countEntitiesOfDatasets() {
-		List<String> agNews = new ArrayList<>(ReadDataset.read_AG_BasedOnType(Config.getString("DATASET_TEST_AG",""),AG_DataType.TITLEANDDESCRIPTION));
-		List<String> agNewsTitle = new ArrayList<>(ReadDataset.read_AG_BasedOnType(Config.getString("DATASET_TEST_AG",""),AG_DataType.TITLE));
-		List<String> snippets = new ArrayList<>(ReadDataset.read_WEB());
+	public static void countEntitiesOfDatasets(List<String> dataset) {
+		//		List<String> agNews = new ArrayList<>(ReadDataset.read_AG_BasedOnType(Config.getString("DATASET_TEST_AG",""),AG_DataType.TITLEANDDESCRIPTION));
+		//		List<String> agNewsTitle = new ArrayList<>(ReadDataset.read_AG_BasedOnType(Config.getString("DATASET_TEST_AG",""),AG_DataType.TITLE));
+		//		List<String> snippets = new ArrayList<>(ReadDataset.read_WEB());
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-		int totalEntityCountAgTitleAndDescriprtion=0;
-		int totalEntityCountAgTitle=0;
-		int totalEntityCountSnippets=0;
-		int countTitleDoesNotContainAnyEntity=0;
-
+		int counttotalEntity=0;
+		int countSentencesNoEntity=0;
 		try {
-			//			for(String str: agNews) {
-			//				List<Annotation> lstAnnotations = new ArrayList<>();
-			//				service.annotate(str, lstAnnotations);
-			//				totalEntityCountAgTitleAndDescriprtion+=lstAnnotations.size();
-			//			}
-
-			for(String str: agNewsTitle) {
+			for(String str: dataset) {
 				List<Annotation> lstAnnotations = new ArrayList<>();
 				service.annotate(str, lstAnnotations);
-				totalEntityCountAgTitle+=lstAnnotations.size();
+				counttotalEntity+=lstAnnotations.size();
+
 				if (lstAnnotations.size()==0) {
-					countTitleDoesNotContainAnyEntity++;
+					countSentencesNoEntity++;
 				}
 			}
-			//			for(String str: snippets) {
-			//				List<Annotation> lstAnnotations = new ArrayList<>();
-			//				service.annotate(str, lstAnnotations);
-			//				totalEntityCountSnippets+=lstAnnotations.size();
-			//			}
-			//System.out.println("totalEntityCountAgTitleAndDescriprtion: "+totalEntityCountAgTitleAndDescriprtion);
-			System.out.println("totalEntityCountAgTitle: "+totalEntityCountAgTitle+" countTitleDoesNotContainAnyEntity: "+countTitleDoesNotContainAnyEntity);
-			//System.out.println("totalEntityCountSnippets: "+totalEntityCountSnippets);
-
-			//			System.out.println("AvgEntCountAgTitleDesc: "+(double)totalEntityCountAgTitleAndDescriprtion*1.0/agNews.size()*1.0);
-			System.out.println("AvgEntCountAgTitle: "+(double)totalEntityCountAgTitle*1.0/agNewsTitle.size()*1.0);
-			System.out.println("AvgEntCountAgTitle: "+(double)totalEntityCountAgTitle*1.0/(agNewsTitle.size()-countTitleDoesNotContainAnyEntity)*1.0);
-			//			System.out.println("AvgEntityCountSnippets "+(double)(totalEntityCountSnippets*1.0/snippets.size()*1.0));
+			System.out.println("counttotalEntity: "+counttotalEntity);
+			System.out.println("countSentencesNoEntity: "+countSentencesNoEntity);
+			System.out.println("AvgEntCount: "+(double)counttotalEntity*1.0/dataset.size()*1.0);
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	public static void findFreqOfWord(List<String> dataset ,String fileName) {
+		final List<String> tokens = new ArrayList<String>();
+		final LexedTokenFactory<CoreLabel> tokenFactory = new CoreLabelTokenFactory();
+		for(String line: dataset) {
+			final PTBTokenizer<CoreLabel> tokenizer = new PTBTokenizer<CoreLabel>(new StringReader(line), tokenFactory,
+					"untokenizable=noneDelete");
+			while (tokenizer.hasNext()) {
+				tokens.add(tokenizer.next().toString());
+			}
+		}
+		Map<String, Integer> resultFreq = new HashMap<>();
+		
+		for(String str :tokens) {
+			if (resultFreq.containsKey(str)) {
+				resultFreq.put(str, (resultFreq.get(str)+1));
+			}
+			else{
+				resultFreq.put(str, 1);
+			}
+		}
+		Map<String, Integer> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(resultFreq));
+		FileUtil.writeDataToFile(sortedMap,fileName);
+		System.out.println("Finished one dataset writing: " + fileName);
 	}
 	private static void counteWordsOfDatasets() {
 		List<String> agNews = new ArrayList<>(ReadDataset.read_AG_BasedOnType(Config.getString("DATASET_TEST_AG",""),AG_DataType.TITLEANDDESCRIPTION));
@@ -250,5 +259,26 @@ public class AnalyseDataset {
 		System.out.println("totalWordSnippetsAvg: "+(double)(totalWordSnippets*1.0/snippets.size()*1.0));
 		System.out.println("Total: "+ (totalWordCountAgTitle+totalWordCountAgDecription));
 	}
+	
+	/*
+	 * private static void findFreqOfWords(List<String> dataset,String fileName) {
+		final List<String> tokensStr = new ArrayList<String>();
+
+		final LexedTokenFactory<CoreLabel> tokenFactory = new CoreLabelTokenFactory();
+		for(String line: dataset) {
+			final PTBTokenizer<CoreLabel> tokenizer = new PTBTokenizer<CoreLabel>(new StringReader(line), tokenFactory,
+					"untokenizable=noneDelete");
+			while (tokenizer.hasNext()) {
+				tokensStr.add(tokenizer.next().toString());
+			}
+		}
+		AnnonatationUtil.findFreqOfWord(tokensStr, fileName);
+
+	}
+	
+	
+	
+	
+	 */
 
 }

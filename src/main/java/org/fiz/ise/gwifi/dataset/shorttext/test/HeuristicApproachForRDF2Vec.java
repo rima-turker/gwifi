@@ -16,9 +16,9 @@ import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.PageCategorySingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
-import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
-import org.fiz.ise.gwifi.model.Model_LINE;
-import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.dataset.category.Categories;
+import org.fiz.ise.gwifi.model.EmbeddingModel;
+import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.EmbeddingsService;
@@ -37,7 +37,7 @@ import edu.kit.aifb.gwifi.service.NLPAnnotationService;
 import gnu.trove.impl.hash.THashIterator;
 
 public class HeuristicApproachForRDF2Vec {
-	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
+	private final static Dataset TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
 	private static Set<Category> setMainCategories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories);
 	private static boolean LOAD_MODEL = Config.getBoolean("LOAD_MODEL", false);
 	private final static Integer DEPTH_OF_CAT_TREE = Config.getInt("DEPTH_OF_CAT_TREE", 0);
@@ -317,7 +317,7 @@ public class HeuristicApproachForRDF2Vec {
 				else {
 					double similarity = 0.0;
 					try {
-						similarity=Request_LINEServer.getSimilarity(String.valueOf(annotation.getId()), String.valueOf(category.getId()), Model_LINE.LINE_1st_Complex);
+						similarity=Request_LINEServer.getSimilarity(String.valueOf(annotation.getId()), String.valueOf(category.getId()), EmbeddingModel.LINE_1st_Complex);
 						if (similarity>0) {
 							map.put(category, similarity);
 						}
@@ -376,7 +376,7 @@ public class HeuristicApproachForRDF2Vec {
 				else {
 					double similarity = 0.0;
 					try {
-						similarity=Request_LINEServer.getSimilarity(String.valueOf(annotation.getId()), String.valueOf(category.getId()), Model_LINE.LINE_COMBINED_2nd);
+						similarity=Request_LINEServer.getSimilarity(String.valueOf(annotation.getId()), String.valueOf(category.getId()), EmbeddingModel.LINE_COMBINED_2nd);
 						if (similarity>0) {
 							map.put(category, similarity);
 						}

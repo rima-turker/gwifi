@@ -20,10 +20,10 @@ import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.PageCategorySingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
-import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
-import org.fiz.ise.gwifi.dataset.test.LabelsOfTheTexts;
+import org.fiz.ise.gwifi.dataset.LabelsOfTheTexts;
+import org.fiz.ise.gwifi.dataset.category.Categories;
 import org.fiz.ise.gwifi.model.AG_DataType;
-import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.FileUtil;
 import org.fiz.ise.gwifi.util.Print;
@@ -42,7 +42,7 @@ public class TestShortTextRDF2Vec {
 	private final String DATASET_TEST_YAHOO = Config.getString("DATASET_TEST_YAHOO","");
 	private final static Integer NUMBER_OF_THREADS=  Config.getInt("NUMBER_OF_THREADS",-1);
 	private static boolean LOAD_MODEL = Config.getBoolean("LOAD_MODEL", false);
-	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE"); 
+	private final static Dataset TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE"); 
 	private static Wikipedia wikipedia = WikipediaSingleton.getInstance().wikipedia;
 	private static CategorySingleton singCategory;
 	private static SynchronizedCounter counterTruePositive;
@@ -80,11 +80,11 @@ public class TestShortTextRDF2Vec {
 
 		TestShortTextRDF2Vec test = new TestShortTextRDF2Vec();
 
-		if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
+		if (TEST_DATASET_TYPE.equals(Dataset.AG)) {
 			System.out.println("TestDatasetType AG ....");
 			startProcessingData(test.read_dataset_AG(AG_DataType.TITLE));
 		}
-		else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.WEB_SNIPPETS)) {
+		else if (TEST_DATASET_TYPE.equals(Dataset.WEB_SNIPPETS)) {
 			System.out.println("TestDatasetType WEB ....");
 			startProcessingData(test.read_dataset_WEB());
 		}
@@ -93,7 +93,7 @@ public class TestShortTextRDF2Vec {
 	public Map<String,List<Category>> read_dataset_AG(AG_DataType type) {
 		System.out.println("AG_DataType: "+type);
 		Map<String,List<Category>> dataset = new HashMap<>();
-		Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG());
+		Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG_category());
 		List<String> lst = new ArrayList<>(Categories.getCategories_Ag());
 		int count=0;
 		try {
@@ -186,10 +186,10 @@ public class TestShortTextRDF2Vec {
 	private Runnable handle(String description, List<Category> gtList,int i ) {
 		return () -> {
 			Category bestMatchingCategory=null;
-			if (TEST_DATASET_TYPE==TestDatasetType_Enum.AG ) {
+			if (TEST_DATASET_TYPE==Dataset.AG ) {
 				bestMatchingCategory = HeuristicApproachForRDF2Vec.getBestMatchingCategory(description,gtList);
 			}
-			else if(TEST_DATASET_TYPE==TestDatasetType_Enum.WEB_SNIPPETS ) {
+			else if(TEST_DATASET_TYPE==Dataset.WEB_SNIPPETS ) {
 				bestMatchingCategory = HeuristicApproachForRDF2Vec.getBestMatchingCategory(description,gtList);
 			}
 			else {

@@ -1,4 +1,4 @@
-package org.fiz.ise.gwifi.dataset.test;
+package org.fiz.ise.gwifi.dataset;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,15 +17,18 @@ import edu.kit.aifb.gwifi.model.Wikipedia;
 public class LabelsOfTheTexts {
 	private static Wikipedia wikipedia = WikipediaSingleton.getInstance().wikipedia;
 	
-	public static Map<Integer, Article> getLablesAsArticle_AG()
+	public static Map<String, Article> getLables_TREC_article()
 	{
-		Map<Integer, Article> mapLabel = new HashMap<>();
-		mapLabel.put(1, wikipedia.getArticleByTitle("Politics"));
-		mapLabel.put(2, wikipedia.getArticleByTitle("Sports"));
-		mapLabel.put(3, wikipedia.getArticleByTitle("Business"));
-		mapLabel.put(4, wikipedia.getArticleByTitle("Software"));
+		Map<String, Article> mapLabel = new HashMap<>();
+		mapLabel.put("ABBR", wikipedia.getArticleByTitle("Abbreviation"));
+		mapLabel.put("DESC", wikipedia.getArticleByTitle("Reason"));
+		mapLabel.put("ENTY", wikipedia.getArticleByTitle("Fear"));
+		mapLabel.put("HUM", wikipedia.getArticleByTitle("Actor"));
+		mapLabel.put("LOC", wikipedia.getArticleByTitle("Country"));
+		mapLabel.put("NUM", wikipedia.getArticleByTitle("Average"));
 		return mapLabel;
 	}
+	
 	public static Map<Integer, Article> getLables_AG_article()
 	{
 		Map<Integer, Article> mapLabel = new HashMap<>();
@@ -35,7 +38,7 @@ public class LabelsOfTheTexts {
 		mapLabel.put(4, wikipedia.getArticleByTitle("Software"));
 		return mapLabel;
 	}
-	public static Map<Integer, Category> getLables_AG()
+	public static Map<Integer, Category> getLables_AG_category()
 	{
 		Map<Integer, Category> mapLabel = new HashMap<>();
 //		mapLabel.put(1, wikipedia.getCategoryByTitle("World"));
@@ -56,7 +59,7 @@ public class LabelsOfTheTexts {
 	
 	public static Map<Article,Integer> getArticleValue_AG()
 	{
-		Map<Integer, Article>  mapLabel = new HashMap<>(getLablesAsArticle_AG());
+		Map<Integer, Article>  mapLabel = new HashMap<>(getLables_AG_article());
 		Map<Article,Integer> resultLabel = new HashMap<>();
 		for(Entry <Integer, Article> e : mapLabel.entrySet()) {
 			resultLabel.put(e.getValue(),e.getKey());
@@ -65,7 +68,7 @@ public class LabelsOfTheTexts {
 	}
 	public static Map<Category,Integer> getCatValue_AG()
 	{
-		Map<Integer, Category>  mapLabel = new HashMap<>(getLables_AG());
+		Map<Integer, Category>  mapLabel = new HashMap<>(getLables_AG_category());
 		Map<Category,Integer> resultLabel = new HashMap<>();
 		for(Entry <Integer, Category> e : mapLabel.entrySet()) {
 			resultLabel.put(e.getValue(),e.getKey());

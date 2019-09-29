@@ -1,4 +1,4 @@
-package org.fiz.ise.gwifi.dataset.LINE.Category;
+package org.fiz.ise.gwifi.dataset.category;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,16 +8,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.fiz.ise.gwifi.dataset.LabelsOfTheTexts;
 import org.fiz.ise.gwifi.dataset.shorttext.test.TestBasedOnAnnotatedDocument;
-import org.fiz.ise.gwifi.dataset.test.LabelsOfTheTexts;
 import org.fiz.ise.gwifi.longText.TestBasedonLongTextDatasets;
-import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.model.Dataset;
 
 import edu.kit.aifb.gwifi.model.Category;
 
 public class Categories {
 
-	public static List<String> getCategoryList(TestDatasetType_Enum t)
+	public static List<String> getCategoryList(Dataset t)
 	{
 		switch (t) {
 		case AG:  return getCategories_Ag();
@@ -80,7 +80,7 @@ public class Categories {
 		return Collections.unmodifiableList(dummySeeds);
 	}
 	public static List<Category> getCategories_AgCats() {
-		Map<Integer, Category> map = new HashMap<>(LabelsOfTheTexts.getLables_AG());
+		Map<Integer, Category> map = new HashMap<>(LabelsOfTheTexts.getLables_AG_category());
 		final List<Category> dummySeeds = new ArrayList<>();
 		for(Entry <Integer, Category> e: map.entrySet()) {
 			dummySeeds.add(e.getValue());
@@ -95,7 +95,7 @@ public class Categories {
 		return Collections.unmodifiableList(dummySeeds);
 	}
 	public static List<String> getCategories_Ag() {
-		Map<Integer, Category> map = new HashMap<>(LabelsOfTheTexts.getLables_AG());
+		Map<Integer, Category> map = new HashMap<>(LabelsOfTheTexts.getLables_AG_category());
 		final List<String> dummySeeds = new ArrayList<>();
 		for(Entry <Integer, Category> e: map.entrySet()) {
 			dummySeeds.add(e.getValue().getTitle());

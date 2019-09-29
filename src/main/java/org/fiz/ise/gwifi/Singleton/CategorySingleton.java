@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 
 import org.fiz.ise.gwifi.categoryTree.CategorySeedLoaderFromMemory;
 import org.fiz.ise.gwifi.categoryTree.CategorySeedloader;
-import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
+import org.fiz.ise.gwifi.dataset.category.Categories;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.Print;
 

@@ -10,7 +10,7 @@ import java.util.Map.Entry;
 
 import org.apache.commons.io.FileUtils;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
-import org.fiz.ise.gwifi.dataset.test.LabelsOfTheTexts;
+import org.fiz.ise.gwifi.dataset.LabelsOfTheTexts;
 
 import edu.kit.aifb.gwifi.model.Category;
 
@@ -87,7 +87,7 @@ public class EvaluateClassifictaionResults
 			List<String> linesClassification = new ArrayList<>(FileUtils.readLines(new File(classificationResults), "utf-8"));
 			Map<String, String> mapDataset = new HashMap<>();
 			Map<String, String> mapClassificaton = new HashMap<>();
-			Map<Integer, Category> catValue_AG = LabelsOfTheTexts.getLables_AG();
+			Map<Integer, Category> catValue_AG = LabelsOfTheTexts.getLables_AG_category();
 			catValue_AG.put(1, WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Society"));
 			catValue_AG.put(4, WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Science and technology"));
 

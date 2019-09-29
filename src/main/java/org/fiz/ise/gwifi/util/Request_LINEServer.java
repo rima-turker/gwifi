@@ -8,13 +8,13 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.fiz.ise.gwifi.model.Model_LINE;
+import org.fiz.ise.gwifi.model.EmbeddingModel;
 
 public class Request_LINEServer {
 
 	private static final String BASE_URL = Config.getString("SERVER_BASE_URL", "");
 	
-	public static List<String> getMostSimilarConcepts(String entity1,Model_LINE model,int n) {
+	public static List<String> getMostSimilarConcepts(String entity1,EmbeddingModel model,int n) {
 		try{
 			String url = BASE_URL+"getMostSimilarWords?"+"entity1="+entity1+"&model="+model.toString()+"&number="+n;
 			final HttpGet request = new HttpGet(url);
@@ -40,7 +40,7 @@ public class Request_LINEServer {
 			return null;
 		}
 	}
-	public static Double getWordVector(String entity1, Model_LINE model) {
+	public static Double getWordVector(String entity1, EmbeddingModel model) {
 		try{
 			String url = BASE_URL+"similarity?"+"entity1="+entity1+"&model="+model.toString();
 			final HttpGet request = new HttpGet(url);
@@ -62,7 +62,7 @@ public class Request_LINEServer {
 	}
 
 	
-	public static Double getSimilarity(String entity1, String entity2,Model_LINE model) {
+	public static Double getSimilarity(String entity1, String entity2,EmbeddingModel model) {
 		try{
 			String url = BASE_URL+"similarity?"+"entity1="+entity1+"&entity2="+entity2+"&model="+model.toString();
 			final HttpGet request = new HttpGet(url);

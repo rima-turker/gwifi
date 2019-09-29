@@ -22,11 +22,13 @@ description = """Graph-based Wikifier"""
 
 
 //mainClassName="org.fiz.ise.gwifi.test.afterESWC.DatasetGenerationBasedOnVector"
-mainClassName="org.fiz.ise.gwifi.dataset.train.generation.GenerateDatasetForNN"
-//mainClassName="org.fiz.ise.gwifi.dataset.train.generation.RedirectPageAnalysis"
+//mainClassName="org.fiz.ise.gwifi.dataset.train.generation.GenerateDatasetForNN"
+//mainClassName="org.fiz.ise.gwifi.dataset.train.generation.Analysis_Embedding_and_Redirect_Dataset"
+//mainClassName="org.fiz.ise.gwifi.dataset.train.asignLabels.AssignLabelsBasedOnVecSimilarity"
 //mainClassName="org.fiz.ise.gwifi.dataset.train.generation.PrepareDateForPython"
 //mainClassName="org.fiz.ise.gwifi.test.afterESWC.TestBasedonSortTextDatasets"
 //mainClassName="org.fiz.ise.gwifi.test.afterESWC.GenerateWideFeatureSet"
+mainClassName="org.fiz.ise.gwifi.dataset.AnalyseMRDataset"
 //mainClassName="org.fiz.ise.gwifi.test.afterESWC.GenerateWideFeatureSetWithKB"
 //mainClassName="org.fiz.ise.gwifi.dataset.LINE.Category.CategoryHieararcyAnalysis"
 

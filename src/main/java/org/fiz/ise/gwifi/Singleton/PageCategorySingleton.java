@@ -7,8 +7,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
-import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.dataset.category.Categories;
+import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.util.Config;
 
 import edu.kit.aifb.gwifi.model.Article;
@@ -16,7 +16,7 @@ import edu.kit.aifb.gwifi.model.Category;
 
 public class PageCategorySingleton {
 	private static PageCategorySingleton single_instance = null;
-	private final static TestDatasetType_Enum TEST_DATASET_TYPE = Config.getEnum("TEST_DATASET_TYPE");
+	private final static Dataset TEST_DATASET_TYPE = Config.getEnum("TEST_DATASET_TYPE");
 	public Map<Category, Set<Article>> mapMainCatAndArticles;
 
 	private PageCategorySingleton() {

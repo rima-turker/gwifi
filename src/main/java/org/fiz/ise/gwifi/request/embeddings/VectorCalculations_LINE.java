@@ -9,9 +9,9 @@ import java.util.Map;
 import java.util.Set;
 import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
-import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
-import org.fiz.ise.gwifi.model.Model_LINE;
-import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.dataset.category.Categories;
+import org.fiz.ise.gwifi.model.EmbeddingModel;
+import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.MapUtil;
 import org.fiz.ise.gwifi.util.Print;
@@ -20,7 +20,7 @@ import edu.kit.aifb.gwifi.model.Category;
 import edu.kit.aifb.gwifi.model.Wikipedia;
 
 public class VectorCalculations_LINE {
-	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
+	private final static Dataset TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
 	public static void main(String[] args) {
 		WikipediaSingleton singleton = WikipediaSingleton.getInstance();
 		Wikipedia wikipedia = singleton.wikipedia;
@@ -33,7 +33,7 @@ public class VectorCalculations_LINE {
 		list.add("Latent semantic analysis");
 		list.add("Computer");
 
-		for (Model_LINE m : Model_LINE.values()) {
+		for (EmbeddingModel m : EmbeddingModel.values()) {
 			System.out.println("---------------------Model----------------------:"+m);
 			for(String a : list)
 			{

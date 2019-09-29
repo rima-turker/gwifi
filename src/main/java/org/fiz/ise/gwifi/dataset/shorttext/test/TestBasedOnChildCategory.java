@@ -22,9 +22,9 @@ import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_2modelSingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
-import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
-import org.fiz.ise.gwifi.dataset.test.LabelsOfTheTexts;
-import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.dataset.LabelsOfTheTexts;
+import org.fiz.ise.gwifi.dataset.category.Categories;
+import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.FileUtil;
 import org.fiz.ise.gwifi.util.Print;
@@ -39,7 +39,7 @@ public class TestBasedOnChildCategory {
 	private final String DATASET_TEST_WEB = Config.getString("DATASET_TEST_WEB","");
 	private final static Integer NUMBER_OF_THREADS=  Config.getInt("NUMBER_OF_THREADS",-1);
 	private static boolean LOAD_MODEL = Config.getBoolean("LOAD_MODEL", false);
-	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE"); 
+	private final static Dataset TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE"); 
 	private static Wikipedia wikipedia = WikipediaSingleton.getInstance().wikipedia;
 	private static CategorySingleton singCategory;
 	private static SynchronizedCounter counterTruePositive;
@@ -66,16 +66,16 @@ public class TestBasedOnChildCategory {
 		counterTruePositive= new SynchronizedCounter();
 		TestBasedOnChildCategory test = new TestBasedOnChildCategory();
 	
-		if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
+		if (TEST_DATASET_TYPE.equals(Dataset.AG)) {
 			startProcessingData(test.read_dataset_AG());
 		}
-		else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.WEB_SNIPPETS)) {
+		else if (TEST_DATASET_TYPE.equals(Dataset.WEB_SNIPPETS)) {
 			test.dataset_WEB();
 		}
 	}
 	public Map<String,List<Category>> read_dataset_AG() {
 		Map<String,List<Category>> dataset = new HashMap<>();
-		Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG());
+		Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG_category());
 		try {
 			List<String> lines = FileUtils.readLines(new File(DATASET_TEST_AG), "utf-8");
 			String[] arrLines = new String[lines.size()];

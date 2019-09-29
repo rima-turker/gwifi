@@ -54,7 +54,7 @@ public class FileUtil {
 		try {
 			final FileWriter fw = new FileWriter(fileName, false);
 			for (Entry<K, V> s : map.entrySet()) {
-				fw.write(s.getKey()+"\t\t"+s.getValue()+"\n");
+				fw.write(s.getKey()+"\t"+s.getValue()+"\n");
 			}
 			fw.close();
 		} catch (final IOException e) {

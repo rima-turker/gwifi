@@ -1,4 +1,4 @@
-package org.fiz.ise.gwifi.dataset.train;
+package org.fiz.ise.gwifi.embedding.dataset.train;
 
 import java.awt.List;
 import java.io.BufferedReader;

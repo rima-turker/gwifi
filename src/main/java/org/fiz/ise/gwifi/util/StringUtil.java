@@ -1,6 +1,15 @@
 package org.fiz.ise.gwifi.util;
 
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
+
+import edu.stanford.nlp.ling.CoreLabel;
+import edu.stanford.nlp.process.CoreLabelTokenFactory;
+import edu.stanford.nlp.process.LexedTokenFactory;
+import edu.stanford.nlp.process.PTBTokenizer;
 
 public class StringUtil {
 	
@@ -8,7 +17,17 @@ public class StringUtil {
 	{
 		return str.replaceAll("[^\\w\\s]", "").replaceAll("[\\d]", "");
 	}
-	
+	public static List<String> tokinizeString(String shortText) {
+		List<String> tokensStr = new ArrayList<String>();
+		final LexedTokenFactory<CoreLabel> tokenFactory = new CoreLabelTokenFactory();
+
+		final PTBTokenizer<CoreLabel> tokenizer = new PTBTokenizer<CoreLabel>(new StringReader(removePuntionation(shortText)), tokenFactory,
+				"untokenizable=noneDelete");
+		while (tokenizer.hasNext()) {
+			tokensStr.add(tokenizer.next().toString());
+		}
+		return tokensStr;
+	}
 	public static String convertUmlaut(String text) {
         final String[][] UMLAUT_REPLACEMENTS = { { new String("Ä"), "Ae" }, { new String("Ü"), "Ue" },
                 { new String("Ö"), "Oe" }, { new String("ä"), "ae" }, { new String("ü"), "ue" },

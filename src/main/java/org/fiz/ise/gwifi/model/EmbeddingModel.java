@@ -1,6 +1,6 @@
 package org.fiz.ise.gwifi.model;
 
-public enum Model_LINE {
+public enum EmbeddingModel {
 	LINE_1st,
 	LINE_2nd,
 	LINE_COMBINED,
@@ -14,6 +14,7 @@ public enum Model_LINE {
 	CONLL,
 	GOOGLE,
 	PTE_modified,
-	Ent_Ent,
+	LINE_Ent_Ent,
+	Doc2Vec,
 	RDF2Vec;
 }

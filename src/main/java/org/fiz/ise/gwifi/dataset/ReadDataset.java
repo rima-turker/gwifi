@@ -1,4 +1,4 @@
-package org.fiz.ise.gwifi.dataset.test;
+package org.fiz.ise.gwifi.dataset;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.io.FileUtils;
 import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
-import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
+import org.fiz.ise.gwifi.dataset.category.Categories;
 import org.fiz.ise.gwifi.model.AG_DataType;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.Print;
@@ -25,12 +25,12 @@ public class ReadDataset {
 
 	//We assign the label of the dataset to a Wikipedia entity not a category
 
-	public static Map<String,List<Article>> read_dataset_AG_LabelArticle(AG_DataType type) {
+	public static Map<String,List<Article>> read_dataset_AG_LabelArticle(AG_DataType type, String fileName) {
 		Map<String,List<Article>> dataset = new HashMap<>();
-		Map<Integer, Article> mapLabel = new HashMap<>(LabelsOfTheTexts.getLablesAsArticle_AG());
+		Map<Integer, Article> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG_article());
 		try {
 			NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-			List<String> lines = FileUtils.readLines(new File(Config.getString("DATASET_TRAIN_AG","")), "utf-8");
+			List<String> lines = FileUtils.readLines(new File(fileName), "utf-8");
 			String[] arrLines = new String[lines.size()];
 			arrLines = lines.toArray(arrLines);
 			int i=0;
@@ -79,7 +79,7 @@ public class ReadDataset {
 
 	public static Map<String,List<Category>> read_dataset_AG(AG_DataType type) {
 		Map<String,List<Category>> dataset = new HashMap<>();
-		Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG());
+		Map<Integer, Category> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_AG_category());
 		try {
 			NLPAnnotationService service = AnnotationSingleton.getInstance().service;
 			List<String> lines = FileUtils.readLines(new File(Config.getString("DATASET_TEST_AG","")), "utf-8");

@@ -1,4 +1,4 @@
-package org.fiz.ise.gwifi.dataset.LINE.Category;
+package org.fiz.ise.gwifi.dataset.category;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,8 +16,8 @@ import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
 import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
-import org.fiz.ise.gwifi.dataset.test.ReadDataset;
-import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.dataset.ReadDataset;
+import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
 import org.fiz.ise.gwifi.util.CategoryUtil;
 import org.fiz.ise.gwifi.util.Config;
@@ -32,7 +32,7 @@ import edu.kit.aifb.gwifi.model.Category;
 
 public class AnalyseCategoryOfAnnotationBasedOnWiki {
 
-	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
+	private final static Dataset TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
 	private final static Category catFindMatching = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Technology"); 
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 	private final static Integer CATEGORY_DEPTH_FOR_FILTERING = Config.getInt("CATEGORY_DEPTH_FOR_FILTERING", 0);

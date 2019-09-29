@@ -1,5 +1,6 @@
 package org.fiz.ise.gwifi.util;
 
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -13,15 +14,20 @@ import java.util.Map.Entry;
 import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
 import org.fiz.ise.gwifi.Singleton.CategorySingletonAnnotationFiltering;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
-import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
-import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.dataset.category.Categories;
+import org.fiz.ise.gwifi.model.Dataset;
 
 import edu.kit.aifb.gwifi.annotation.Annotation;
+import edu.kit.aifb.gwifi.model.Article;
 import edu.kit.aifb.gwifi.model.Category;
 import edu.kit.aifb.gwifi.service.NLPAnnotationService;
+import edu.stanford.nlp.ling.CoreLabel;
+import edu.stanford.nlp.process.CoreLabelTokenFactory;
+import edu.stanford.nlp.process.LexedTokenFactory;
+import edu.stanford.nlp.process.PTBTokenizer;
 
 public class AnnonatationUtil {
-	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
+	private final static Dataset TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
 	public static String getAnnotationsXML(String shortText) {
 		try {
 			NLPAnnotationService service = AnnotationSingleton.getInstance().service;
@@ -145,20 +151,7 @@ public class AnnonatationUtil {
 		}
 		return false;
 	}
-	public static void findFreqOfWord(List<String> lst ,String fileName) {
-		Map<String, Integer> resultFreq = new HashMap<>();
-		for(String a :lst  ) {
-			if (resultFreq.containsKey(a)) {
-				resultFreq.put(a, (resultFreq.get(a)+1));
-			}
-			else{
-				resultFreq.put(a, 1);
-			}
-		}
-		Map<String, Integer> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(resultFreq));
-		FileUtil.writeDataToFile(sortedMap,fileName);
-		System.out.println("Finished one dataset writing: " + fileName);
-	}
+	
 
 	public static Map<String, Integer> findFreqOfEntitySortedMap(List<Annotation> lst ) {
 		Map<String, Integer> resultFreq = new HashMap<>();
@@ -195,6 +188,17 @@ public class AnnonatationUtil {
 		Map<Annotation, Double> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(annotations));
 		return sortedMap;
 	}
+	public static List<Integer> getEntityBlackList_MR(){
+		List<Integer> lstidBlack = new ArrayList<>();
+		lstidBlack.add(21555729); //Film
+		lstidBlack.add(76749); //Character (arts)
+		lstidBlack.add(21554680); //Film director
+		lstidBlack.add(83597);//Screenplay
+		lstidBlack.add(20914042);//Comedy
+		return lstidBlack;
+
+	}
+	
 	public static List<Integer> getEntityBlackList_AGNews(){
 		List<Integer> lstidBlack = new ArrayList<>();
 		lstidBlack.add(18935732);
@@ -221,6 +225,16 @@ public class AnnonatationUtil {
 		return lstidBlack;
 
 	}
+	public static int check_trec_annotation(Article a) {
+		System.out.println("a.getId()"+a.getId());
+		if (a.getId()==2190991) {//Why (Annie Lennox song)
+			int id = 42446; //Reason
+			return id;
+//			return WikipediaSingleton.getInstance().wikipedia.getArticleById(id);
+		}
+		return a.getId();
+	}
+	
 	public static List<Integer> getEntityBlackList_WebSnippets(){
 		List<Integer> lstidBlack = new ArrayList<>();
 		lstidBlack.add(5043734); //Wikipedia

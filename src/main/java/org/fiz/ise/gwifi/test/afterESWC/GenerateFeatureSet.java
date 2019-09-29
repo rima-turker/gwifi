@@ -48,6 +48,34 @@ public class GenerateFeatureSet {
 			System.out.println(str);
 		}
 	}
+	public static String featureSet_EntitiyVectorMeanAsString(String str) throws Exception {
+		List<String> lstEntityID = new ArrayList<String>();
+		List<Annotation> lstAnnotations = new ArrayList<>();
+		AnnotationSingleton.getInstance().service.annotate(str, lstAnnotations);//annotate the given text
+		for(Annotation a:lstAnnotations) {
+			if (LINE_modelSingleton.getInstance().lineModel.hasWord(String.valueOf(a.getId()))){
+					//WikipediaSingleton.getInstance().wikipedia.getArticleById(a.getId())!=null) {
+				lstEntityID.add(String.valueOf(a.getId()));
+			}
+		}
+		if (lstEntityID.size()==0) {
+			System.out.println(str);
+		}
+		
+		double[] vector=VectorUtil.getSentenceVector(lstEntityID,LINE_modelSingleton.getInstance().lineModel,str);
+		if (vector==null || vector.length==0) {
+			System.out.println(str);
+			return null;
+		}
+		else {
+			String strVector="";
+				for (int j = 0; j < vector.length; j++) {
+					strVector=strVector+(String.valueOf(vector[j]) + ",");
+				}
+				strVector = strVector.substring(0, strVector.length() - 1);
+				return strVector;
+		}
+	}
 	public static double[] featureSet_EntitiyVectorMean(String str) throws Exception {
 		List<String> lstEntityID = new ArrayList<String>();
 		List<Annotation> lstAnnotations = new ArrayList<>();

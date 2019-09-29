@@ -24,11 +24,11 @@ import org.fiz.ise.gwifi.Singleton.LINE_2modelSingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.PageCategorySingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
-import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
-import org.fiz.ise.gwifi.dataset.test.LabelsOfTheTexts;
-import org.fiz.ise.gwifi.dataset.test.ReadDataset;
+import org.fiz.ise.gwifi.dataset.LabelsOfTheTexts;
+import org.fiz.ise.gwifi.dataset.ReadDataset;
+import org.fiz.ise.gwifi.dataset.category.Categories;
 import org.fiz.ise.gwifi.model.AG_DataType;
-import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
+import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.FileUtil;
@@ -51,7 +51,7 @@ public class TestBasedonSortTextDatasets {
 	private final String DATASET_TEST_YAHOO = Config.getString("DATASET_TEST_YAHOO","");
 	private final static Integer NUMBER_OF_THREADS=  Config.getInt("NUMBER_OF_THREADS",-1);
 	private static boolean LOAD_MODEL = Config.getBoolean("LOAD_MODEL", false);
-	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE"); 
+	private final static Dataset TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE"); 
 	private static Wikipedia wikipedia = WikipediaSingleton.getInstance().wikipedia;
 	private static SynchronizedCounter counterTruePositive;
 	private static SynchronizedCounter counterFalsePositive;
@@ -87,18 +87,18 @@ public class TestBasedonSortTextDatasets {
 
 		TestBasedonSortTextDatasets test = new TestBasedonSortTextDatasets();
 
-		if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.AG)) {
+		if (TEST_DATASET_TYPE.equals(Dataset.AG)) {
 			System.out.println("Start reading AG News data");
 			startProcessingData(ReadDataset.read_dataset_AG(AG_DataType.TITLEANDDESCRIPTION));
 		}
-		else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.WEB_SNIPPETS)) {
+		else if (TEST_DATASET_TYPE.equals(Dataset.WEB_SNIPPETS)) {
 			System.out.println("Start reading WEB data");
 			startProcessingData(test.read_dataset_WEB());
 		}
-		else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.DBLP)) {
+		else if (TEST_DATASET_TYPE.equals(Dataset.DBLP)) {
 			test.dataset_DBLP();
 		}
-		else if (TEST_DATASET_TYPE.equals(TestDatasetType_Enum.YAHOO)) {
+		else if (TEST_DATASET_TYPE.equals(Dataset.YAHOO)) {
 			test.dataset_Yahoo();
 		}
 	}
@@ -136,10 +136,10 @@ public class TestBasedonSortTextDatasets {
 	private Runnable handle(String description, List<Category> gtList,int i ) {
 		return () -> {
 			Category bestMatchingCategory=null;
-			if (TEST_DATASET_TYPE==TestDatasetType_Enum.AG ) {
+			if (TEST_DATASET_TYPE==Dataset.AG ) {
 				bestMatchingCategory = HeuristicApproachCIKMPaperAGNews.getBestMatchingCategory(description,gtList);
 			}
-			else if(TEST_DATASET_TYPE==TestDatasetType_Enum.WEB_SNIPPETS ) {
+			else if(TEST_DATASET_TYPE==Dataset.WEB_SNIPPETS ) {
 				bestMatchingCategory = HeuristicApproachCIKMPaperWebSnippets.getBestMatchingCategory(description,gtList);
 			}
 			else {

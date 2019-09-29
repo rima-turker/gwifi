@@ -22,7 +22,7 @@ import org.deeplearning4j.parallelism.ConcurrentHashSet;
 import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
-import org.fiz.ise.gwifi.dataset.test.ReadDataset;
+import org.fiz.ise.gwifi.dataset.ReadDataset;
 import org.fiz.ise.gwifi.model.AG_DataType;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
 import org.fiz.ise.gwifi.util.Config;

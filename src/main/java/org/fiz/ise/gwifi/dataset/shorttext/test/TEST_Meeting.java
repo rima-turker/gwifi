@@ -27,13 +27,13 @@ import org.fiz.ise.gwifi.Singleton.Doc2VecModelSingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.RedirectSingelton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
-import org.fiz.ise.gwifi.dataset.LINE.Category.Categories;
-import org.fiz.ise.gwifi.dataset.test.ReadDataset;
-import org.fiz.ise.gwifi.dataset.train.generation.RedirectPageAnalysis;
+import org.fiz.ise.gwifi.dataset.ReadDataset;
+import org.fiz.ise.gwifi.dataset.category.Categories;
+import org.fiz.ise.gwifi.dataset.train.generation.AnalysisEmbeddingandRedirectDataset;
 import org.fiz.ise.gwifi.model.AG_DataType;
-import org.fiz.ise.gwifi.model.Model_LINE;
-import org.fiz.ise.gwifi.model.TestDatasetType_Enum;
-import org.fiz.ise.gwifi.test.afterESWC.HeuristicBasedOnEntitiyVectorSimilarity;
+import org.fiz.ise.gwifi.model.EmbeddingModel;
+import org.fiz.ise.gwifi.model.Dataset;
+import org.fiz.ise.gwifi.test.afterESWC.BestMatchingLabelBasedOnVectorSimilarity;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.MapUtil;
@@ -55,7 +55,7 @@ import edu.kit.aifb.gwifi.util.PageIterator;
 
 public class TEST_Meeting {
 	private static Wikipedia wikipedia = WikipediaSingleton.getInstance().wikipedia;
-	private final static TestDatasetType_Enum TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
+	private final static Dataset TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
 	static NLPAnnotationService service = AnnotationSingleton.getInstance().service;
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 
@@ -64,7 +64,7 @@ public class TEST_Meeting {
 
 	public static void main(String[] args) throws Exception {
 
-		mapRedirectPages= new HashMap<>(RedirectPageAnalysis.loadRedirectPages());
+		mapRedirectPages= new HashMap<>(AnalysisEmbeddingandRedirectDataset.loadRedirectPages());
 		//Redirect = beta Realease id:3095107
 
 		//System.out.println(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Glossary of professional wrestling terms"));
@@ -503,7 +503,7 @@ public class TEST_Meeting {
 		}
 	}
 
-	public static  Map<Category, Double> getMostSimilarCategory(Category c,Model_LINE m)
+	public static  Map<Category, Double> getMostSimilarCategory(Category c,EmbeddingModel m)
 	{
 		Set<Category> categories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setAllCategories);
 		Map<Category, Double> map = new HashMap<>();
@@ -524,7 +524,7 @@ public class TEST_Meeting {
 		//		return MapUtil.getFirst(mapSorted);
 
 	}
-	public static  Entry<Category, Double> getMostSimilarCategory(Integer id,Model_LINE m)
+	public static  Entry<Category, Double> getMostSimilarCategory(Integer id,EmbeddingModel m)
 	{
 		Set<Category> categories = new HashSet<>(CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setAllCategories);
 		Map<Category, Double> map = new HashMap<>();

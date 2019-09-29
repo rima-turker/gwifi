@@ -1,4 +1,4 @@
-package org.fiz.ise.gwifi.dataset.LINE.Category;
+package org.fiz.ise.gwifi.dataset.category;
 
 import java.io.BufferedReader;
 import java.io.File;

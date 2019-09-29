@@ -1,8 +1,12 @@
 package org.fiz.ise.gwifi.model;
 
-public enum TestDatasetType_Enum {
+public enum Dataset {
 	AG,
+	AG_train,
+	AG_test,
 	WEB_SNIPPETS,
+	TREC,
+	MR,
 	DBpedia,
 	DBLP,
 	YAHOO,
