@@ -32,7 +32,7 @@ public class AnalyseTrecDataset {
 		AnnotationSingleton.getInstance();
 		
 		GenerateDatasetForNN generate = new GenerateDatasetForNN();
-		generate.labelTrainSetParalel(EmbeddingModel.LINE_Ent_Ent, Dataset.AG);
+		//generate.labelTrainSetParalel(EmbeddingModel.LINE_Ent_Ent, Dataset.AG);
 		// ABBR-Abbreviation, DECS-Reason, ENTY-Fear, HUM-Actor, LOC-Country, NUM-Average
 		//		String[] s_labels = {"ENTY", "DESC", "ABBR", "HUM", "LOC", "NUM"};
 		//		for (int i = 0; i < s_labels.length; i++) {

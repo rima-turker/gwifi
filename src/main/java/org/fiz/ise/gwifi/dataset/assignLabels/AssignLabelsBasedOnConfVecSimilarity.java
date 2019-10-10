@@ -33,19 +33,23 @@ import edu.kit.aifb.gwifi.model.Article;
 import edu.kit.aifb.gwifi.model.Category;
 import edu.kit.aifb.gwifi.model.Wikipedia;
 
-public class AssignLabelsBasedOnVecSimilarity {
+public class AssignLabelsBasedOnConfVecSimilarity {
+	private static final String DATASET_DBP_TRAIN = Config.getString("DATASET_DBP_TRAIN","");
+	private static final String DATASET_DBP_TRAIN_CATEGORIZED_LINE = Config.getString("DATASET_DBP_TRAIN_CATEGORIZED_LINE","");
+	private static final String DATASET_DBP_TRAIN_CATEGORIZED_D2Vec = Config.getString("DATASET_DBP_TRAIN_CATEGORIZED_D2Vec","");
+	private static final String DATASET_DBP_TRAIN_CATEGORIZED_GOOGLE = Config.getString("DATASET_DBP_TRAIN_CATEGORIZED_GOOGLE","");
+	
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 	static final Logger resultLog = Logger.getLogger("reportsLogger");
-	Map<String, String> map_DOC2VEC = new HashMap<String, String>(readLabelAssignment(Dataset.AG, EmbeddingModel.Doc2Vec));
-	Map<String, String> map_GOOGLE = new HashMap<String, String>(readLabelAssignment(Dataset.AG, EmbeddingModel.GOOGLE));
-	Map<String, String> map_LINE = new HashMap<String, String>(readLabelAssignment(Dataset.AG, EmbeddingModel.LINE_Ent_Ent));
-	Map<String, List<Article>> map_AG_test_gt = ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION,Config.getString("DATASET_TEST_AG",""));
-	
+	Map<String, List<Article>> map_AG_test_gt = null;//ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION,Config.getString("DATASET_TEST_AG",""));
+
 	final String pathFolderLabelResult= "ResultLabelAssignmentDifferentModels";
 	public static void main(String[] args) throws Exception {
-		AssignLabelsBasedOnVecSimilarity assign = new AssignLabelsBasedOnVecSimilarity();
-		//assign.obtainLabelForEachSample(Dataset.AG, EmbeddingModel.PTE_modified, null);
+		AssignLabelsBasedOnConfVecSimilarity assign = new AssignLabelsBasedOnConfVecSimilarity();
+		//assign.obtainLabelForEachSample(Dataset.DBpedia, EmbeddingModel.LINE_Ent_Ent, new ArrayList<Article>(LabelsOfTheTexts.getLables_DBP_article().values()));
 		//assign.generateDatasetOneHotEncoding(Dataset.AG,Config.getString("DATASET_TEST_AG",""));
+
+
 		assign.generateDatasetBasedOnConfidenceForEachModel(Dataset.AG,Config.getString("DATASET_TRAIN_AG",""));
 		//		assign.getIntersectedLabel(Dataset.AG);
 
@@ -78,12 +82,17 @@ public class AssignLabelsBasedOnVecSimilarity {
 		}
 	}
 	public String getLabelBasedOnConfidenceForEachModel(Dataset dname,String str ) throws Exception {
-		double conf_LINE=0.9384;
-		double conf_GOOGLE=0.7667;
-		double conf_Doc2Vec=0.8247583333333334;
+
 
 		if (dname.equals(Dataset.AG)) {
-			
+			double conf_LINE=0.9384;
+			double conf_GOOGLE=0.7667;
+			double conf_Doc2Vec=0.8247583333333334;
+
+			Map<String, String> map_DOC2VEC = new HashMap<String, String>(readLabelAssignment(Dataset.AG, EmbeddingModel.Doc2Vec));
+			Map<String, String> map_GOOGLE = new HashMap<String, String>(readLabelAssignment(Dataset.AG, EmbeddingModel.GOOGLE));
+			Map<String, String> map_LINE = new HashMap<String, String>(readLabelAssignment(Dataset.AG, EmbeddingModel.LINE_Ent_Ent));
+
 
 			Map<String, Double> temp= new HashMap<String, Double>();
 			List<Article> lstCats = new ArrayList<Article>(LabelsOfTheTexts.getArticleValue_AG().keySet());
@@ -150,7 +159,7 @@ public class AssignLabelsBasedOnVecSimilarity {
 				temp.put(a.getTitle(), 0.0);
 			}
 			temp.put(map_AG_test_gt.get(str).get(0).getTitle(), 1.);
-			
+
 			LinkedHashMap<String, Double> sortedMap = new LinkedHashMap<>();
 			temp.entrySet()
 			.stream()
@@ -244,73 +253,84 @@ public class AssignLabelsBasedOnVecSimilarity {
 		}
 
 	}
-	public void calculateConfidenceForEachModel( Dataset dname) {
-		Map<String, List<String>> mapModelOverlapConflict = new HashMap<String, List<String>>();
-		if (dname.equals(Dataset.AG)) {
-			Map<String, List<Article>> dataset = ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION,Config.getString("DATASET_TRAIN_AG",""));
-			Map<String, String> map_DOC2VEC = new HashMap<String, String>(readLabelAssignment(Dataset.AG, EmbeddingModel.Doc2Vec));
-			Map<String, String> map_GOOGLE = new HashMap<String, String>(readLabelAssignment(Dataset.AG, EmbeddingModel.GOOGLE));
-			Map<String, String> map_LINE = new HashMap<String, String>(readLabelAssignment(Dataset.AG, EmbeddingModel.LINE_Ent_Ent));
 
-			for(Entry<String, List<Article>> e : dataset.entrySet()) {
-				String str_DOC2VEC = map_DOC2VEC.get(e.getKey());
-				String str_LINE = map_LINE.get(e.getKey());
-				String str_GOOGLE = map_GOOGLE.get(e.getKey());
-				String key = null;
-				List<String> lstKey= new ArrayList<String>();
-				if ((str_DOC2VEC!=null&&str_LINE!=null)&&(str_LINE.equals(str_GOOGLE)&&str_LINE.equals(str_DOC2VEC))) {
-					key = EmbeddingModel.Doc2Vec.name() +EmbeddingModel.GOOGLE.name()+EmbeddingModel.LINE_Ent_Ent.name();
-				}
-				else if(str_DOC2VEC!=null&&(str_DOC2VEC.equals(str_LINE))) {
-					key = EmbeddingModel.Doc2Vec.name()+EmbeddingModel.LINE_Ent_Ent.name();
-				}
-				else if(str_DOC2VEC!=null&&str_DOC2VEC.equals(str_GOOGLE)) {
-					key = EmbeddingModel.Doc2Vec.name()+EmbeddingModel.GOOGLE.name();
-				}
-				else if(str_LINE!=null&&str_LINE.equals(str_GOOGLE)) {
-					key = EmbeddingModel.GOOGLE.name()+EmbeddingModel.LINE_Ent_Ent.name();
-				}
-				else {
-					if (str_LINE!=null) {
-						lstKey.add(EmbeddingModel.LINE_Ent_Ent.name());
-					}
-					if (str_GOOGLE!=null) {
-						lstKey.add(EmbeddingModel.GOOGLE.name());
-					}
-					if (str_DOC2VEC!=null) {
-						lstKey.add(EmbeddingModel.Doc2Vec.name());
-					}
-				}
-				if (lstKey.size()==0) {
-					mapModelOverlapConflict=new HashMap<>(addElementToMapModelOverlapConflict(mapModelOverlapConflict, key, e.getKey()));
-				}
-				else {
-					for(String k:lstKey) {
-						mapModelOverlapConflict=new HashMap<>(addElementToMapModelOverlapConflict(mapModelOverlapConflict, k, e.getKey()));
-					}
-				}
-			}
-			int countLINE=0;
-			int countGOOGLE=0;
-			int countDOC2VEC=0;
-			for (Entry<String, List<String>> e :mapModelOverlapConflict.entrySet()) {
-				System.out.println(e.getKey()+": "+e.getValue().size());
-				if (e.getKey().contains("LINE")) {
-					countLINE+=e.getValue().size();
-				}
-				if (e.getKey().contains("GOOGLE")) {
-					countGOOGLE+=e.getValue().size();
-				}
-				if (e.getKey().contains("Doc2Vec")) {
-					countDOC2VEC+=e.getValue().size();
-				}
-			}
-			System.out.println();
-			System.out.println("countLINE: "+countLINE+" confidence:"+(double)countLINE/(double)dataset.size());
-			System.out.println("countGOOGLE: "+countGOOGLE+" confidence:"+(double)countGOOGLE/(double)dataset.size());
-			System.out.println("countDOC2VEC: "+countDOC2VEC+" confidence:"+(double)countDOC2VEC/(double)dataset.size());
-			//Print.printMap(mapModelOverlapConflict);
+	public void calculateConfidenceForEachModel(Dataset dname) {
+		Map<String, List<String>> mapModelOverlapConflict = new HashMap<String, List<String>>();
+		Map<String, List<Article>> dataset=null;
+		Map<String,  List<Article>> map_DOC2VEC = null;
+		Map<String,  List<Article>> map_GOOGLE = null;
+		Map<String, List<Article>> map_LINE= null;
+		if (dname.equals(Dataset.AG)) {
+//			dataset = ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION,Config.getString("DATASET_TRAIN_AG",""));
+//			map_DOC2VEC = new HashMap<String, String>(readLabelAssignment(Dataset.AG, EmbeddingModel.Doc2Vec));
+//			map_GOOGLE = new HashMap<String, String>(readLabelAssignment(Dataset.AG, EmbeddingModel.GOOGLE));
+//			map_LINE = new HashMap<String, String>(readLabelAssignment(Dataset.AG, EmbeddingModel.LINE_Ent_Ent));
 		}
+		else if (dname.equals(Dataset.DBpedia)) {
+			dataset = ReadDataset.read_dataset_DBPedia_SampleLabel(DATASET_DBP_TRAIN);
+			map_DOC2VEC = new HashMap<String,List<Article>>(ReadDataset.read_dataset_Doc2Vec_categorized(Dataset.DBpedia, DATASET_DBP_TRAIN_CATEGORIZED_D2Vec));
+			map_GOOGLE = new HashMap<String,List<Article>>( ReadDataset.read_dataset_DBPedia_SampleLabel(DATASET_DBP_TRAIN_CATEGORIZED_GOOGLE));
+			map_LINE = new HashMap<String,List<Article>>(ReadDataset.read_dataset_DBPedia_SampleLabel(DATASET_DBP_TRAIN_CATEGORIZED_LINE));
+		}
+		for(Entry<String, List<Article>> e : dataset.entrySet()) {
+			String str_DOC2VEC = map_DOC2VEC.get(e.getKey()).get(0).getTitle();
+			String str_LINE = map_LINE.get(e.getKey()).get(0).getTitle();
+			String str_GOOGLE = map_GOOGLE.get(e.getKey()).get(0).getTitle();
+			String key = null;
+			List<String> lstKey= new ArrayList<String>();
+			if ((str_DOC2VEC!=null&&str_LINE!=null)&&(str_LINE.equals(str_GOOGLE)&&str_LINE.equals(str_DOC2VEC))) {
+				key = EmbeddingModel.Doc2Vec.name() +EmbeddingModel.GOOGLE.name()+EmbeddingModel.LINE_Ent_Ent.name();
+			}
+			else if(str_DOC2VEC!=null&&(str_DOC2VEC.equals(str_LINE))) {
+				key = EmbeddingModel.Doc2Vec.name()+EmbeddingModel.LINE_Ent_Ent.name();
+			}
+			else if(str_DOC2VEC!=null&&str_DOC2VEC.equals(str_GOOGLE)) {
+				key = EmbeddingModel.Doc2Vec.name()+EmbeddingModel.GOOGLE.name();
+			}
+			else if(str_LINE!=null&&str_LINE.equals(str_GOOGLE)) {
+				key = EmbeddingModel.GOOGLE.name()+EmbeddingModel.LINE_Ent_Ent.name();
+			}
+			else {
+				if (str_LINE!=null) {
+					lstKey.add(EmbeddingModel.LINE_Ent_Ent.name());
+				}
+				if (str_GOOGLE!=null) {
+					lstKey.add(EmbeddingModel.GOOGLE.name());
+				}
+				if (str_DOC2VEC!=null) {
+					lstKey.add(EmbeddingModel.Doc2Vec.name());
+				}
+			}
+			if (lstKey.size()==0) {
+				mapModelOverlapConflict=new HashMap<>(addElementToMapModelOverlapConflict(mapModelOverlapConflict, key, e.getKey()));
+			}
+			else {
+				for(String k:lstKey) {
+					mapModelOverlapConflict=new HashMap<>(addElementToMapModelOverlapConflict(mapModelOverlapConflict, k, e.getKey()));
+				}
+			}
+		}
+		int countLINE=0;
+		int countGOOGLE=0;
+		int countDOC2VEC=0;
+		for (Entry<String, List<String>> e :mapModelOverlapConflict.entrySet()) {
+			System.out.println(e.getKey()+": "+e.getValue().size());
+			if (e.getKey().contains(EmbeddingModel.LINE_Ent_Ent.name())) {
+				countLINE+=e.getValue().size();
+			}
+			if (e.getKey().contains(EmbeddingModel.GOOGLE.name())) {
+				countGOOGLE+=e.getValue().size();
+			}
+			if (e.getKey().contains(EmbeddingModel.Doc2Vec.name())) {
+				countDOC2VEC+=e.getValue().size();
+			}
+		}
+		System.out.println();
+		System.out.println("countLINE: "+countLINE+" confidence:"+countLINE*1./1.0*dataset.size());
+		System.out.println("countGOOGLE: "+countGOOGLE+" confidence:"+countGOOGLE*1./1.0*dataset.size());
+		System.out.println("countDOC2VEC: "+countDOC2VEC+" confidence:"+countDOC2VEC*1./1.0*dataset.size());
+		//Print.printMap(mapModelOverlapConflict);
+
 	}
 
 	private Map<String, List<String>> addElementToMapModelOverlapConflict(Map<String, List<String>> mapModelOverlapConflict, String key, String value) {
@@ -327,31 +347,22 @@ public class AssignLabelsBasedOnVecSimilarity {
 		}
 		return mapResult; 
 	}
-	public void obtainLabelForEachSample(Dataset dname, EmbeddingModel model, String fileName) {
+	public void obtainLabelForEachSample(Dataset dname, EmbeddingModel model, List<Article> labels) {
 		if (dname.equals(Dataset.AG)) {
 			if (model.equals(EmbeddingModel.LINE_Ent_Ent)) {
 				LINE_modelSingleton.getInstance();
 				GenerateDatasetForNN generate = new GenerateDatasetForNN();
-				Map<String, Article> mapResultLabelAssignment = new HashMap<String, Article>(generate.labelTrainSetParalel(model, dname));
+				Map<String, Article> mapResultLabelAssignment = new HashMap<String, Article>(generate.labelTrainSetParalel(model, dname,labels));
 				String fname = "LabelAssignment_AG_LINE";
 				FileUtil.writeDataToFile(mapResultLabelAssignment, fname);
 			}
-			else if (model.equals(EmbeddingModel.GOOGLE)) {
-				GoogleModelSingleton.getInstance();
-				GenerateDatasetForNN generate = new GenerateDatasetForNN();
-				Map<String, Article> mapResultLabelAssignment = new HashMap<String, Article>(generate.labelTrainSetParalel(EmbeddingModel.GOOGLE, dname));
-				String fname = "LabelAssignment_AG_GOOGLE";
-				FileUtil.writeDataToFile(mapResultLabelAssignment, fname);
-			}
-			else if (model.equals(EmbeddingModel.PTE_modified)) {
-				LINE_modelSingleton.getInstance();
-				GenerateDatasetForNN generate = new GenerateDatasetForNN();
-				CategorySingleton.getInstance(Categories.getCategoryList(Dataset.AG));
-				Map<String, Article> mapResultLabelAssignment = new HashMap<String, Article>(generate.labelTrainSetParalel(model, dname));
-				String fname = "LabelAssignment_AG_PTE";
-				FileUtil.writeDataToFile(mapResultLabelAssignment, fname);
-
-			}
+		}
+		if (model.equals(EmbeddingModel.GOOGLE)) {
+			GoogleModelSingleton.getInstance();
+			GenerateDatasetForNN generate = new GenerateDatasetForNN();
+			Map<String, Article> mapResultLabelAssignment = new HashMap<String, Article>(generate.labelTrainSetParalel(EmbeddingModel.GOOGLE, dname,labels));
+			String fname = "LabelAssignment_"+dname.toString()+"_GOOGLE";
+			FileUtil.writeDataToFile(mapResultLabelAssignment, fname);
 		}
 	}
 	public Map<String, String> readLabelAssignment(Dataset dname, EmbeddingModel model) {

@@ -14,15 +14,19 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.fiz.ise.gwifi.Singleton.CategorySingleton;
+import org.fiz.ise.gwifi.Singleton.GoogleModelSingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.dataset.category.Categories;
 import org.fiz.ise.gwifi.model.Dataset;
+import org.fiz.ise.gwifi.model.EmbeddingModel;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.MapUtil;
+import org.fiz.ise.gwifi.util.VectorUtil;
 import org.nd4j.linalg.api.ndarray.INDArray;
 
 import edu.kit.aifb.gwifi.annotation.Annotation;
 import edu.kit.aifb.gwifi.model.Category;
+import edu.stanford.nlp.neural.Embedding;
 
 public class BasedOnWordsCategorize {
 	private final static Dataset TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE"); //here you get the name of the dataset
@@ -75,20 +79,27 @@ public class BasedOnWordsCategorize {
 		}
 		return null;
 	}
-	public static double getSimilarity(double[] docVec,String category) {
-		Word2Vec model= LINE_modelSingleton.getInstance().lineModel;
-		double[] catVec = getSentenceVector(Arrays.asList(category), model);
+	
+	public static double getSimilarity(EmbeddingModel eName,double[] docVec,String category) {
+		Word2Vec model=null;
+		if (eName.equals(EmbeddingModel.LINE_Ent_Ent)) {
+			model= LINE_modelSingleton.getInstance().lineModel;
+		}
+		else if (eName.equals(EmbeddingModel.GOOGLE)) {
+			model = GoogleModelSingleton.getInstance().google_model;
+		}
+		double[] catVec = VectorUtil.getSentenceVector(Arrays.asList(category), model);
 		if (docVec!=null && catVec!=null) {
-			return cosineSimilarity(docVec, catVec);
+			return VectorUtil.cosineSimilarity(docVec, catVec);
 		}
 		return 0;
 	}
 	public static double getSimilarity(List<String> words,List<String> words2) {
 		Word2Vec model= LINE_modelSingleton.getInstance().lineModel;
-		double[] docVec= getSentenceVector(words, model);
-		double[] catVec= getSentenceVector(words2, model);
+		double[] docVec= VectorUtil.getSentenceVector(words, model);
+		double[] catVec= VectorUtil.getSentenceVector(words2, model);
 		if (docVec!=null && catVec!=null) {
-			return cosineSimilarity(docVec, catVec);
+			return VectorUtil.cosineSimilarity(docVec, catVec);
 		}
 		return 0;
 	}
@@ -98,19 +109,19 @@ public class BasedOnWordsCategorize {
 		for(Annotation a: annotations) {
 			words.add(String.valueOf(a.getId()));
 		}
-		double[] docVec= getSentenceVector(words, model);
-		double[] catVec = getSentenceVector(Arrays.asList(category), model);
+		double[] docVec= VectorUtil.getSentenceVector(words, model);
+		double[] catVec = VectorUtil.getSentenceVector(Arrays.asList(category), model);
 		if (docVec!=null && catVec!=null) {
-			return cosineSimilarity(docVec, catVec);
+			return VectorUtil.cosineSimilarity(docVec, catVec);
 		}
 		return 0;
 	}
 	public static double getSimilarity(List<String> words,String category) {
 		Word2Vec model= LINE_modelSingleton.getInstance().lineModel;
-		double[] docVec= getSentenceVector(words, model);
-		double[] catVec = getSentenceVector(Arrays.asList(category), model);
+		double[] docVec= VectorUtil.getSentenceVector(words, model);
+		double[] catVec = VectorUtil.getSentenceVector(Arrays.asList(category), model);
 		if (docVec!=null && catVec!=null) {
-			return cosineSimilarity(docVec, catVec);
+			return VectorUtil.cosineSimilarity(docVec, catVec);
 		}
 		return 0;
 	}
@@ -121,8 +132,8 @@ public class BasedOnWordsCategorize {
 		final String[] cats = category.split(" ");
 		double[] catVec2;
 
-		double[] docVec= getSentenceVector(Arrays.asList(words), model);
-		double[] catVec = getSentenceVector(Arrays.asList(category), model);
+		double[] docVec= VectorUtil.getSentenceVector(Arrays.asList(words), model);
+		double[] catVec = VectorUtil.getSentenceVector(Arrays.asList(category), model);
 		//		double[] catVec = model.getWordVector(category);
 		//		if(cats.length==1) {
 		//			if (cosineSimilarity(docVec, catVec)!=cosineSimilarity(docVec, catVec2)) {
@@ -130,38 +141,9 @@ public class BasedOnWordsCategorize {
 		//			}
 		//		}
 		if (docVec!=null && catVec!=null) {
-			return cosineSimilarity(docVec, catVec);
+			return VectorUtil.cosineSimilarity(docVec, catVec);
 		}
 		return 0;
 	}
-	public static double[] getSentenceVector(List<String> words, Word2Vec model) {        
-		if (words.size()==1) {
-			return model.getWordVector(words.get(0));
-		}
-		INDArray a = null;
-		try{
-			a = model.getWordVectorsMean(words);
-		}catch(Exception e) {
-			System.out.println(words);
-			e.printStackTrace();
-			return null;
-		}
-		int cols = a.columns();
-		double[] result = new double[cols];
-		for(int i=0;i<cols;i++) {
-			result[i] = a.getDouble(i);
-		}
-		return result;
-	}
-	public static double cosineSimilarity(double[] vectorA, double[] vectorB) {
-		double dotProduct = 0.0;
-		double normA = 0.0;
-		double normB = 0.0;
-		for (int i = 0; i < vectorA.length; i++) {
-			dotProduct += vectorA[i] * vectorB[i];
-			normA += Math.pow(vectorA[i], 2);
-			normB += Math.pow(vectorB[i], 2);
-		}   
-		return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-	}
+	
 }

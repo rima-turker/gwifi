@@ -10,9 +10,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
+import org.apache.log4j.Logger;
 import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
 import org.fiz.ise.gwifi.Singleton.CategorySingletonAnnotationFiltering;
+import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.category.Categories;
 import org.fiz.ise.gwifi.model.Dataset;
@@ -28,6 +34,14 @@ import edu.stanford.nlp.process.PTBTokenizer;
 
 public class AnnonatationUtil {
 	private final static Dataset TEST_DATASET_TYPE= Config.getEnum("TEST_DATASET_TYPE");
+	private final static Integer NUMBER_OF_THREADS= Config.getInt("NUMBER_OF_THREADS",-1);
+	static CopyOnWriteArrayList<Annotation> listAnnotations = new CopyOnWriteArrayList<>();	
+	static final Logger secondLOG = Logger.getLogger("debugLogger");
+	static final Logger resultLog = Logger.getLogger("reportsLogger");
+	private final static NLPAnnotationService service = AnnotationSingleton.getInstance().service;
+	private static SynchronizedCounter synCountNumberOfEntityPairs;
+
+	private static ExecutorService executor;
 	public static String getAnnotationsXML(String shortText) {
 		try {
 			NLPAnnotationService service = AnnotationSingleton.getInstance().service;
@@ -77,19 +91,121 @@ public class AnnonatationUtil {
 		}
 		return result;
 	}
-	public static List<Annotation> findAnnotationAll(List<String> lst) {
-		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-		List<Annotation> result = new ArrayList<>();
+
+	public static List<Annotation> findAnnotationAll_filter(List<String> lst, List<Integer> lstBlack) {
 		try {
-			for(String text:lst) {
-				List<Annotation> lstAnnotations = new ArrayList<>();
-				service.annotate(text, lstAnnotations);
-				result.addAll(lstAnnotations);
+			synCountNumberOfEntityPairs=new SynchronizedCounter();
+
+			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);		
+			for (int i = 0; i < lst.size(); i++) {
+				executor.execute(handleAnnotate_filter(lst.get(i),i,lstBlack));
 			}
-		} catch (Exception e) {
+			executor.shutdown();
+			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return result;
+		System.out.println("Sentences with no entitiy "+synCountNumberOfEntityPairs.value());
+		return listAnnotations;
+	}
+	private static  Runnable handleAnnotate_filter(String str,int count, List<Integer> lstBlack)  {
+		return () -> {
+			try {
+				List<Annotation> lstAnnotations = new ArrayList<>();
+				service.annotate(str, lstAnnotations);
+				if (lstAnnotations.isEmpty()) {
+					synCountNumberOfEntityPairs.increment();
+				}
+				for(Annotation an: lstAnnotations) {
+					if (!lstBlack.contains(an.getId())&&!StringUtil.isNumeric(an.getTitle())) {
+						listAnnotations.add(an);
+					}
+				}
+				//System.out.println("Number of processed samples:"+count);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		};
+	}
+	public static void writeAnnotationFile(List<String> dataset) {
+		try {
+			System.out.println("Size of the dataset"+dataset.size());
+			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);		
+			for(String str : dataset) {
+				executor.execute(handleWriteAnnotation(str));
+			}
+			executor.shutdown();
+			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+
+	private static  Runnable handleWriteAnnotation(String str)  {
+		return () -> {
+			try {
+				List<Annotation> lstAnnotations = new ArrayList<>();
+				service.annotate(str, lstAnnotations);
+				StringBuilder sbuilder = new StringBuilder(str+"\t\t");
+				for (Annotation a : lstAnnotations) {
+					sbuilder.append(a.getId()+",");
+				}
+				secondLOG.info(sbuilder.toString().subSequence(0, sbuilder.toString().length()-1));
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		};
+	}
+	public static List<Annotation> findAnnotationAll(List<String> lst) {
+		try {
+			synCountNumberOfEntityPairs=new SynchronizedCounter();
+
+			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);		
+			for (int i = 0; i < lst.size(); i++) {
+				executor.execute(handleAnnotate(lst.get(i),i));
+			}
+			executor.shutdown();
+			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		//		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
+		//		List<Annotation> result = new ArrayList<>();
+		//		try {
+		//			for(String text:lst) {
+		//				List<Annotation> lstAnnotations = new ArrayList<>();
+		//				service.annotate(text, lstAnnotations);
+		//				result.addAll(lstAnnotations);
+		//			}
+		//		} catch (Exception e) {
+		//			e.printStackTrace();
+		//		}
+
+		System.out.println("Sentences with no entitiy "+synCountNumberOfEntityPairs.value());
+		return listAnnotations;
+	}
+
+	private static  Runnable handleAnnotate(String str,int count)  {
+		return () -> {
+			try {
+				List<Annotation> lstAnnotations = new ArrayList<>();
+				service.annotate(str, lstAnnotations);
+				if (lstAnnotations.isEmpty()) {
+					synCountNumberOfEntityPairs.increment();
+				}
+				listAnnotations.addAll(lstAnnotations);
+				//System.out.println("Number of processed samples:"+count);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		};
 	}
 	public static int countALinkToMainCat(String str, Category c, int depth) {
 		Set<Category> categories = new HashSet<>(CategoryUtil.generateCategoryTree(c, depth));
@@ -151,7 +267,7 @@ public class AnnonatationUtil {
 		}
 		return false;
 	}
-	
+
 
 	public static Map<String, Integer> findFreqOfEntitySortedMap(List<Annotation> lst ) {
 		Map<String, Integer> resultFreq = new HashMap<>();
@@ -166,19 +282,54 @@ public class AnnonatationUtil {
 		Map<String, Integer> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(resultFreq));
 		return sortedMap;
 	}
-	public static void findFreqOfEntity(List<Annotation> lst ,String fileName) {
+	public static void getAvgAnnotationOfDatasets(List<String> dataset) {
+		List<Annotation> findAnnotationAll = AnnonatationUtil.findAnnotationAll(dataset);
+		//		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
+		//		int counttotalEntity=0;
+		//		int countSentencesNoEntity=0;
+		try {
+			//			for(String str: dataset) {
+			//				List<Annotation> lstAnnotations = new ArrayList<>();
+			//				service.annotate(str, lstAnnotations);
+			//				counttotalEntity+=lstAnnotations.size();
+			//
+			//				if (lstAnnotations.size()==0) {
+			//					countSentencesNoEntity++;
+			//				}
+			//			}
+			System.out.println("counttotalAnnotation: "+findAnnotationAll.size());
+			System.out.println("countSentencesNoAnnotation: "+synCountNumberOfEntityPairs);
+			System.out.println("AvgAnnCount: "+(double)findAnnotationAll.size()*1.0/dataset.size()*1.0);
+
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	public static void findFreqOfAnnotation(List<Annotation> lstAllAnnotation ,String fileName) {
 		Map<String, Integer> resultFreq = new HashMap<>();
-		for(Annotation a :lst  ) {
-			if (resultFreq.containsKey(a.getTitle()+"-"+a.getId())) {
-				resultFreq.put(a.getTitle()+"-"+a.getId(), (resultFreq.get(a.getTitle()+"-"+a.getId())+1));
-			}
-			else{
-				resultFreq.put(a.getTitle()+"-"+a.getId(), 1);
+		for(Annotation a :lstAllAnnotation  ) {
+			if (!StringUtil.isNumeric(a.getTitle())) {
+				String key=a.getTitle()+"-"+a.getId();
+				resultFreq.merge(key, 1, Integer::sum);
 			}
 		}
 		Map<String, Integer> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(resultFreq));
 		FileUtil.writeDataToFile(sortedMap,fileName);
 		System.out.println("Finished one dataset writing: " + fileName);
+	}
+	public static int getFreqOfAnnotation(List<String> dataset ,String fileName) {
+		List<Annotation> lstAllAnnotation = new ArrayList<>(AnnonatationUtil.findAnnotationAll(dataset));
+
+		Map<String, Integer> resultFreq = new HashMap<>();
+		for(Annotation a :lstAllAnnotation  ) {
+			String key=a.getTitle()+"-"+a.getId();
+			resultFreq.merge(key, 1, Integer::sum);
+		}
+		Map<String, Integer> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(resultFreq));
+		FileUtil.writeDataToFile(sortedMap,fileName);
+		System.out.println("Finished one dataset writing: " + fileName);
+		return sortedMap.size();
 	}
 	public Map<Annotation, Double> analizeWeightOfAnnotations(List<Annotation> lst) {
 		Map<Annotation, Double> annotations = new HashMap<>();
@@ -188,6 +339,8 @@ public class AnnonatationUtil {
 		Map<Annotation, Double> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(annotations));
 		return sortedMap;
 	}
+
+
 	public static List<Integer> getEntityBlackList_MR(){
 		List<Integer> lstidBlack = new ArrayList<>();
 		lstidBlack.add(21555729); //Film
@@ -198,7 +351,7 @@ public class AnnonatationUtil {
 		return lstidBlack;
 
 	}
-	
+
 	public static List<Integer> getEntityBlackList_AGNews(){
 		List<Integer> lstidBlack = new ArrayList<>();
 		lstidBlack.add(18935732);
@@ -225,16 +378,70 @@ public class AnnonatationUtil {
 		return lstidBlack;
 
 	}
+	public static List<Integer> getEntityBlackList_DBp(){
+		List<Integer> lst = new ArrayList<>();
+		lst.add(3194908);// \n
+		lst.add(600744);// !!!
+		lst.add(3434750);// US
+		lst.add(31717);// United Kingdom
+		lst.add(5042916);// Canada
+		lst.add(5405);// China
+		lst.add(5407);// California
+		//lst.add(4918223);//Company
+		//lst.add(28022);//School
+		lst.add(10568);//Association football
+		lst.add(554992);//Secondary school
+		lst.add(14653);//Iran-
+		lst.add(11600);//Persian language-
+		lst.add(60534);//Shilling-
+		lst.add(8569916);//English language-
+		lst.add(14533);//India-
+		lst.add(645042);//New York City-	1968
+		lst.add(4689264);//Australia-	
+		
+		return lst;
+	}
+	public static int getCorrectAnnotation_DBp(int id){
+		if (id==540448) {
+			return 285436;
+		}
+		else if (id==145418) {
+			return 4918223;
+		}
+		return id;
+	}
+	public static List<Integer> getEntityBlackList_Yahoo(){
+		List<Integer> lst = new ArrayList<>();
+		lst.add(3194908);// \n
+		lst.add(600744);// !!!
+		lst.add(3434750);// US
+		lst.add(43975);// Yes (band)
+		lst.add(2190991);// Why (Annie Lennox song)
+		lst.add(251573);//Can (band)
+		lst.add(42445);//Unified atomic mass unit-
+		lst.add(251573);//Can (band)-
+		lst.add(5042765);//God
+		lst.add(1095706);//Jesus
+		lst.add(25414);//Religion
+		lst.add(33306);//Water
+		lst.add(19192);//Mean
+		lst.add(42445);//Unified atomic mass unit
+		lst.add(523137);//Try-
+		lst.add(18337522);//Christian
+		lst.add(3390);//Bible  
+		lst.add(11064);//Faith-
+		return lst;
+	}
 	public static int check_trec_annotation(Article a) {
 		System.out.println("a.getId()"+a.getId());
 		if (a.getId()==2190991) {//Why (Annie Lennox song)
 			int id = 42446; //Reason
 			return id;
-//			return WikipediaSingleton.getInstance().wikipedia.getArticleById(id);
+			//			return WikipediaSingleton.getInstance().wikipedia.getArticleById(id);
 		}
 		return a.getId();
 	}
-	
+
 	public static List<Integer> getEntityBlackList_WebSnippets(){
 		List<Integer> lstidBlack = new ArrayList<>();
 		lstidBlack.add(5043734); //Wikipedia

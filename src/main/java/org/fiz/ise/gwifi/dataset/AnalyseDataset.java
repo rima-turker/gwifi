@@ -8,26 +8,44 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.Set;
 
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.log4j.Logger;
+import org.apache.lucene.analysis.util.CharacterUtils;
+import org.deeplearning4j.models.word2vec.VocabWord;
+import org.deeplearning4j.models.word2vec.wordstore.VocabCache;
 import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
 import org.fiz.ise.gwifi.Singleton.FilteredWikipediaPagesSingleton;
+import org.fiz.ise.gwifi.Singleton.GoogleModelSingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.category.Categories;
 import org.fiz.ise.gwifi.model.AG_DataType;
 import org.fiz.ise.gwifi.model.Dataset;
+import org.fiz.ise.gwifi.model.EmbeddingModel;
 import org.fiz.ise.gwifi.test.longDocument.BasedOnWordsCategorize;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.FileUtil;
 import org.fiz.ise.gwifi.util.MapUtil;
 import org.fiz.ise.gwifi.util.SentenceSegmentator;
+import org.fiz.ise.gwifi.util.StopWordRemoval;
+import org.fiz.ise.gwifi.util.StringUtil;
+import org.fiz.ise.gwifi.util.SynchronizedCounter;
+import org.fiz.ise.gwifi.util.VectorUtil;
+import org.openjena.atlas.lib.AlarmClock;
 
 import com.mongodb.util.Hash;
 
+import TEST.CharactersUtils;
 import edu.kit.aifb.gwifi.annotation.Annotation;
 import edu.kit.aifb.gwifi.model.Article;
 import edu.kit.aifb.gwifi.model.Category;
@@ -41,94 +59,303 @@ public class AnalyseDataset {
 	private final static Dataset TEST_DATASET_TYPE= Dataset.WEB_SNIPPETS;//Config.getEnum("TEST_DATASET_TYPE");
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 	static final Logger resultLog = Logger.getLogger("reportsLogger");
-	public static final Map<String,List<String>> CACHE = new HashMap<>();
-	public static void main(String[] args) {
-		//		Article at =WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Job");
-		//		System.out.println(at.getId()+" "+at.getTitle()+" "+Arrays.asList(at.getParentCategories()));
+	private final static Integer NUMBER_OF_THREADS= Config.getInt("NUMBER_OF_THREADS",-1);
+	public static final Map<String,List<String>> CACHE = new ConcurrentHashMap<>();
+	static Map<String,Integer> result = new ConcurrentHashMap<>();
+	private static ExecutorService executor;
 
-
-		//counteWordsOfDatasets();
-		//countEntitiesOfDatasets();
-		//		findFreqOfEntitiesOfDataset(AG_DataType.TITLEANDDESCRIPTION);
-		//		findFreqOfEntitiesOfDatasetwithSimilarities(AG_DataType.TITLEANDDESCRIPTION);
-		//analyseAnchorText(1220573);
-		findMostSimilarEntitesForDatasetBasedOnDatasetVector();
-	}
-	public static void findMostSimilarEntitesForDatasetBasedOnDatasetVector() {
-		System.out.println("Start running: "+"findMostSimilarEntitesForDatasetBasedOnSentenceVector");
-		List<Category> lstDatasetCatList = null;
-		if (TEST_DATASET_TYPE.equals(Dataset.AG)) {
-			lstDatasetCatList = new ArrayList<>(LabelsOfTheTexts.getCatValue_AG().keySet());
+	public static void compareTwoFiles(Dataset dset, String gtFile, String cFile) {
+		Map<String, List<Article>> map_gt =  null;
+		Map<String, List<Article>> map_categorized = null;
+		if (dset.equals(Dataset.DBpedia)) {
+			map_gt = ReadDataset.read_dataset_DBPedia_SampleLabel(gtFile);
+			map_categorized = ReadDataset.read_dataset_DBPedia_SampleLabel(cFile);
 		}
-		else if(TEST_DATASET_TYPE.equals(Dataset.WEB_SNIPPETS)) {
-			List<String> arrTemp = new ArrayList<>(Categories.getCategoryList(Dataset.WEB_SNIPPETS));
-			lstDatasetCatList = new ArrayList<Category>();
-			for(String s :arrTemp) {
-				lstDatasetCatList.add(WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle(s));	
+		int countCorrect=0;
+		int countWrong=0;
+		int countNotInDataset=0;
+		for(Entry <String, List<Article>> e: map_gt.entrySet()) {
+			List<Article> list = map_categorized.get(e.getKey());
+			if (list==null) {
+				countNotInDataset++;
+			}
+			else if (list.contains(e.getValue().get(0))) {
+				countCorrect++;
+			}
+			else {
+				countWrong++;
 			}
 		}
+		System.out.println("File name: "+cFile);
+		System.out.println("Size of the original dataset: "+map_gt.size());
+		System.out.println("Size of the categorized dataset: "+map_categorized.size());
+
+		System.out.println("countCorrect: "+countCorrect);
+		System.out.println("countWrong: "+countWrong);
+		System.out.println("countNotInDataset: "+countNotInDataset);
+		System.out.println("accuracy: "+countCorrect*1.0/(countWrong+countCorrect)*1.0);
+		System.out.println("***********************");
+		
+	}
+	
+	public static void compareTwoFiles_d2vec(Dataset dset, String gtFile, String cFile) {
+		Map<String, List<Article>> map_gt =  null;
+		Map<String, List<Article>> map_categorized = null;
+		if (dset.equals(Dataset.DBpedia)) {
+			map_gt = ReadDataset.read_dataset_DBPedia_SampleLabel(gtFile);
+			map_categorized = ReadDataset.read_dataset_Doc2Vec_categorized(Dataset.DBpedia,cFile);
+		}
+		int countCorrect=0;
+		int countWrong=0;
+		int countNotInDataset=0;
+		for(Entry <String, List<Article>> e: map_gt.entrySet()) {
+			List<Article> list = map_categorized.get(e.getKey());
+			if (list==null) {
+				countNotInDataset++;
+			}
+			else if (list.contains(e.getValue().get(0))) {
+				countCorrect++;
+			}
+			else {
+				countWrong++;
+			}
+		}
+		System.out.println("File name: "+cFile);
+		System.out.println("Size of the original dataset: "+map_gt.size());
+		System.out.println("Size of the categorized dataset: "+map_categorized.size());
+
+		System.out.println("countCorrect: "+countCorrect);
+		System.out.println("countWrong: "+countWrong);
+		System.out.println("countNotInDataset: "+countNotInDataset);
+		System.out.println("accuracy: "+countCorrect*1.0/(countWrong+countCorrect)*1.0);
+		System.out.println("***********************");
+		
+	}
+	public static void findMostSimilarEntitesIDsForDatasetBasedOnDatasetVector(List<String> lstAllAnnotation, String fName) {
+		System.out.println("Start running: "+"findMostSimilarEntitesForDatasetBasedOnSentenceVector");
+		Set<Article> articles = FilteredWikipediaPagesSingleton.getInstance().articles;   
+		Map<String,Double> result = new HashMap<>();
+		
+		List<String> listWithoutNulls = lstAllAnnotation.parallelStream()
+				.filter(Objects::nonNull)
+				.collect(Collectors.toList());
+
+		double[] docVec= VectorUtil.getSentenceVector(listWithoutNulls, LINE_modelSingleton.getInstance().lineModel);
+
+		for(Article a : articles) {
+			if (!StringUtil.isNumeric(a.getTitle())&&LINE_modelSingleton.getInstance().lineModel.hasWord(String.valueOf(a.getId()))) {
+				result.put(a.getTitle(), BasedOnWordsCategorize.getSimilarity(EmbeddingModel.LINE_Ent_Ent,docVec, String.valueOf(a.getId())));
+			}
+		}
+		System.out.println("Start writing..");
+		Map<String, Double> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(result));
+		FileUtil.writeDataToFile(sortedMap,fName);
+	}
+	public static void findMostSimilarEntitesForDatasetBasedOnDatasetVector(List<Annotation> lstAllAnnotation, String fName) {
+		System.out.println("Start running: "+"findMostSimilarEntitesForDatasetBasedOnSentenceVector");
 		Set<Article> articles = FilteredWikipediaPagesSingleton.getInstance().articles;   
 		int i =0;
-		for(Category c : lstDatasetCatList ) {
-			System.out.println("category: "+c.getTitle());
-			Map<String,Double> result = new HashMap<>();
-			List<Annotation> lstAllAnnotation=null;
-			if (TEST_DATASET_TYPE.equals(Dataset.AG)) {
-				List<String> dataset = new ArrayList<>(ReadDataset.read_AG_BasedOnCategory(c,AG_DataType.TITLEANDDESCRIPTION));
-				lstAllAnnotation = new ArrayList<>(AnnonatationUtil.findAnnotationAll_FilterAG(dataset));
-			}
-			else if(TEST_DATASET_TYPE.equals(Dataset.WEB_SNIPPETS)) {
-				List<String> dataset = new ArrayList<>(ReadDataset.read_WEB_BasedOnCategory(c,Config.getString("DATASET_TRAIN_WEB"," ")));
-				lstAllAnnotation = new ArrayList<>(AnnonatationUtil.findAnnotationAll_FilterWEB(dataset));
+		Map<String,Double> result = new HashMap<>();
 
+		List<String> annoID = new ArrayList<>();
+		for(Annotation a: lstAllAnnotation) {
+			if (!StringUtil.isNumeric(a.getTitle())) {
+				annoID.add(String.valueOf(a.getId()));
 			}
-			List<String> words = new ArrayList<>();
-			for(Annotation a: lstAllAnnotation) {
-				words.add(String.valueOf(a.getId()));
-			}
-			double[] docVec= BasedOnWordsCategorize.getSentenceVector(words, LINE_modelSingleton.getInstance().lineModel);
-			for(Article a : articles) {
-				result.put(a.getTitle(), BasedOnWordsCategorize.getSimilarity(docVec, String.valueOf(a.getId())));
-				System.out.println(++i);
-			}
-			System.out.println("Start writing..");
-			Map<String, Double> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(result));
-			FileUtil.writeDataToFile(sortedMap, c.getTitle()+"_theMostSimilarArticles_filteredEntities_"+TEST_DATASET_TYPE);
 		}
+		List<String> listWithoutNulls = annoID.parallelStream()
+				.filter(Objects::nonNull)
+				.collect(Collectors.toList());
+
+		double[] docVec= VectorUtil.getSentenceVector(listWithoutNulls, LINE_modelSingleton.getInstance().lineModel);
+
+		for(Article a : articles) {
+			result.put(a.getTitle(), BasedOnWordsCategorize.getSimilarity(EmbeddingModel.LINE_Ent_Ent,docVec, String.valueOf(a.getId())));
+			//System.out.println(++i);
+		}
+		System.out.println("Start writing..");
+		Map<String, Double> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(result));
+		FileUtil.writeDataToFile(sortedMap,fName);
+	}
+	public static void findMostSimilarWordsForDatasetBasedOnDatasetVector(List<String> dSet, String fName) {
+		System.out.println("Start running: "+"findMostSimilarWordsForDatasetBasedOnSentenceVector");
+		int i =0;
+		Map<String,Double> result = new HashMap<>();
+		List<String> words = new ArrayList<String>();
+		for (String str : dSet) {
+			List<String> tokinizeString = StringUtil.tokinizeString(StopWordRemoval.removeStopWords(str));
+			words.addAll(tokinizeString);
+		}
+
+		double[] docVec= VectorUtil.getSentenceVector(words, GoogleModelSingleton.getInstance().google_model);
+		VocabCache<VocabWord> vocab = GoogleModelSingleton.getInstance().google_model.vocab();
+		List<String> stopWords = Arrays.asList(StopWordRemoval.stopwords);
+		
+		for (String w : vocab.words()) {
+			if (!stopWords.contains(w)&& !w.contains("_")&& !w.contains("#")) {
+				result.put(w, BasedOnWordsCategorize.getSimilarity(EmbeddingModel.GOOGLE, docVec, w));
+			}
+		}
+		System.out.println("Size of the dataset for word-doc: "+result.size());
+
+		System.out.println("Start writing..");
+		Map<String, Double> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(result));
+		FileUtil.writeDataToFile(sortedMap,fName);
 	}
 	public static void findMostSimilarEntitesForDataset(List<String> dataset, Dataset dName, String fName ) {
-
-		Map<String,Integer> result = new HashMap<>();
 		List<Annotation> lstAllAnnotation = new ArrayList<>(AnnonatationUtil.findAnnotationAll(dataset));
 		System.out.println("Size of the annotations: "+ lstAllAnnotation.size());
 		int cCount=0;
-		for(Annotation a : lstAllAnnotation) {
-			if (dName.equals(Dataset.MR)&&!AnnonatationUtil.getEntityBlackList_MR().contains(a.getId())) {
-				if (!CACHE.containsKey(a.getTitle())) {
-					List<String> lstArt = new ArrayList<> (LINE_modelSingleton.getInstance().lineModel.wordsNearest(String.valueOf(a.getId()), 10));
-					if (lstArt.size()==0) {
-						System.out.println("Size is zero: "+a.getTitle()+" "+a.getId());
+		if (dName.equals(Dataset.MR)){
+			for(Annotation a : lstAllAnnotation) {
+				if (!AnnonatationUtil.getEntityBlackList_MR().contains(a.getId())) {
+					if (!CACHE.containsKey(a.getTitle())) {
+						List<String> lstArt = new ArrayList<> (LINE_modelSingleton.getInstance().lineModel.wordsNearest(String.valueOf(a.getId()), 10));
+						if (lstArt.size()==0) {
+							System.out.println("Size is zero: "+a.getTitle()+" "+a.getId());
+						}
+						CACHE.put(a.getTitle(), lstArt);
 					}
-					CACHE.put(a.getTitle(), lstArt);
-				}
-				System.out.println(fName+" CACHE size "+CACHE.size()+" count: "+cCount);
-				List<String> lstArt = new ArrayList<String>(CACHE.get(a.getTitle())); 
-				for(String s : lstArt) {
-					if (WikipediaSingleton.getInstance().wikipedia.getArticleById(Integer.valueOf(s))!=null) {
-						String entity = WikipediaSingleton.getInstance().wikipedia.getArticleById(Integer.valueOf(s)).getTitle();
-						int count = result.containsKey(entity) ? result.get(entity) : 0;
-						result.put(entity, count + 1);
+					//System.out.println(fName+" CACHE size "+CACHE.size()+" count: "+cCount);
+					List<String> lstArt = new ArrayList<String>(CACHE.get(a.getTitle())); 
+					for(String s : lstArt) {
+						if (WikipediaSingleton.getInstance().wikipedia.getArticleById(Integer.valueOf(s))!=null) {
+							String entity = WikipediaSingleton.getInstance().wikipedia.getArticleById(Integer.valueOf(s)).getTitle();
+							int count = result.containsKey(entity) ? result.get(entity) : 0;
+							result.put(entity, count + 1);
+						}
 					}
+					cCount++;
 				}
-				cCount++;
 			}
-
+		}
+		else if (dName.equals(Dataset.YAHOO)) {
+			for(Annotation a : lstAllAnnotation) {
+				if(!AnnonatationUtil.getEntityBlackList_Yahoo().contains(a.getId())
+						&&!StringUtil.isNumeric(a.getTitle())) {
+					if (!CACHE.containsKey(a.getTitle())) {
+						List<String> lstArt = new ArrayList<> (LINE_modelSingleton.getInstance().lineModel.wordsNearest(String.valueOf(a.getId()), 10));
+						if (lstArt.size()==0) {
+							System.out.println("Size is zero: "+a.getTitle()+" "+a.getId());
+						}
+						CACHE.put(a.getTitle(), lstArt);
+					}
+					//System.out.println(fName+" CACHE size "+CACHE.size()+" count: "+cCount);
+					List<String> lstArt = new ArrayList<String>(CACHE.get(a.getTitle())); 
+					for(String s : lstArt) {
+						if (WikipediaSingleton.getInstance().wikipedia.getArticleById(Integer.valueOf(s))!=null) {
+							String entity = WikipediaSingleton.getInstance().wikipedia.getArticleById(Integer.valueOf(s)).getTitle();
+							int count = result.containsKey(entity) ? result.get(entity) : 0;
+							result.put(entity, count + 1);
+						}
+					}
+					cCount++;
+				}
+			}
+		}
+		else if (dName.equals(Dataset.DBpedia)) {
+			System.out.println("Analysing DBpedia Dataset annotations with filtering");
+			try {
+				int count=0;
+				LINE_modelSingleton.getInstance();
+				executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);		
+				for(Annotation a : lstAllAnnotation) {
+					executor.execute(handleAnnotation(a, count++));
+				}
+				executor.shutdown();
+				executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		Map<String,Integer> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(result));
 		System.out.println("Start writing..");
 		FileUtil.writeDataToFile(sortedMap, fName+"_most similar10EntitiesForEachAn");
-		System.out.println("Finished writing: " +fName+"_most similar1EntitiesForEachAn");
+		System.out.println("Finished writing: " +fName+"_most similar10EntitiesForEachAn");
 	}
+
+	private static  Runnable handleAnnotation(Annotation a, int aCount)  {
+		return () -> {
+			try {
+				if(!AnnonatationUtil.getEntityBlackList_DBp().contains(a.getId())
+						&&!StringUtil.isNumeric(a.getTitle())) {
+					if (!CACHE.containsKey(a.getTitle())) {
+						List<String> lstArt = new ArrayList<> (LINE_modelSingleton.getInstance().lineModel.wordsNearest(String.valueOf(a.getId()), 10));
+						if (lstArt.size()==0) {
+							System.out.println("Size is zero: "+a.getTitle()+" "+a.getId());
+						}
+						CACHE.put(a.getTitle(), lstArt);
+					}
+					System.out.println(" CACHE size "+CACHE.size()+" count: "+aCount);
+					List<String> lstArt = new ArrayList<String>(CACHE.get(a.getTitle())); 
+					for(String s : lstArt) {
+						if (WikipediaSingleton.getInstance().wikipedia.getArticleById(Integer.valueOf(s))!=null) {
+							String entity = WikipediaSingleton.getInstance().wikipedia.getArticleById(Integer.valueOf(s)).getTitle();
+							int count = result.containsKey(entity) ? result.get(entity) : 0;
+							result.put(entity, count + 1);
+						}
+					}
+				}
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		};
+	}
+	//	public static void findMostSimilarEntitesForDataset(List<String> dataset, Dataset dName, String fName ) {
+	//		Map<String,Integer> result = new HashMap<>();
+	//		List<Annotation> lstAllAnnotation = new ArrayList<>(AnnonatationUtil.findAnnotationAll(dataset));
+	//		System.out.println("Size of the annotations: "+ lstAllAnnotation.size());
+	//		int cCount=0;
+	//		for(Annotation a : lstAllAnnotation) {
+	//			if (dName.equals(Dataset.MR)&&!AnnonatationUtil.getEntityBlackList_MR().contains(a.getId())) {
+	//				if (!CACHE.containsKey(a.getTitle())) {
+	//					List<String> lstArt = new ArrayList<> (LINE_modelSingleton.getInstance().lineModel.wordsNearest(String.valueOf(a.getId()), 10));
+	//					if (lstArt.size()==0) {
+	//						System.out.println("Size is zero: "+a.getTitle()+" "+a.getId());
+	//					}
+	//					CACHE.put(a.getTitle(), lstArt);
+	//				}
+	//				System.out.println(fName+" CACHE size "+CACHE.size()+" count: "+cCount);
+	//				List<String> lstArt = new ArrayList<String>(CACHE.get(a.getTitle())); 
+	//				for(String s : lstArt) {
+	//					if (WikipediaSingleton.getInstance().wikipedia.getArticleById(Integer.valueOf(s))!=null) {
+	//						String entity = WikipediaSingleton.getInstance().wikipedia.getArticleById(Integer.valueOf(s)).getTitle();
+	//						int count = result.containsKey(entity) ? result.get(entity) : 0;
+	//						result.put(entity, count + 1);
+	//					}
+	//				}
+	//				cCount++;
+	//			}
+	//
+	//			if (dName.equals(Dataset.YAHOO)&&!AnnonatationUtil.getEntityBlackList_Yahoo().contains(a.getId())
+	//					&&!StringUtil.isNumeric(a.getTitle())) {
+	//				if (!CACHE.containsKey(a.getTitle())) {
+	//					List<String> lstArt = new ArrayList<> (LINE_modelSingleton.getInstance().lineModel.wordsNearest(String.valueOf(a.getId()), 10));
+	//					if (lstArt.size()==0) {
+	//						System.out.println("Size is zero: "+a.getTitle()+" "+a.getId());
+	//					}
+	//					CACHE.put(a.getTitle(), lstArt);
+	//				}
+	//				System.out.println(fName+" CACHE size "+CACHE.size()+" count: "+cCount);
+	//				List<String> lstArt = new ArrayList<String>(CACHE.get(a.getTitle())); 
+	//				for(String s : lstArt) {
+	//					if (WikipediaSingleton.getInstance().wikipedia.getArticleById(Integer.valueOf(s))!=null) {
+	//						String entity = WikipediaSingleton.getInstance().wikipedia.getArticleById(Integer.valueOf(s)).getTitle();
+	//						int count = result.containsKey(entity) ? result.get(entity) : 0;
+	//						result.put(entity, count + 1);
+	//					}
+	//				}
+	//				cCount++;
+	//			}
+	//
+	//		}
+	//		Map<String,Integer> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(result));
+	//		System.out.println("Start writing..");
+	//		FileUtil.writeDataToFile(sortedMap, fName+"_most similar10EntitiesForEachAn");
+	//		System.out.println("Finished writing: " +fName+"_most similar1EntitiesForEachAn");
+	//	}
 	public static void analyseAnchorText(int id) {
 		List<Category> lstDatasetCatList = new ArrayList<>(LabelsOfTheTexts.getCatValue_AG().keySet());
 		for(Category c : lstDatasetCatList ) {
@@ -164,42 +391,11 @@ public class AnalyseDataset {
 			FileUtil.writeDataToFile(result, fileName);
 		}
 	}
-	private static void findFreqOfEntitiesOfDataset(AG_DataType type) {
-		List<Category> lstDatasetCatList = new ArrayList<>(LabelsOfTheTexts.getCatValue_AG().keySet());
-		for(Category c : lstDatasetCatList ) {
-			List<String> dataset = new ArrayList<>(ReadDataset.read_AG_BasedOnCategory(c,type));
-			List<Annotation> lstAllAnnotation = new ArrayList<>(AnnonatationUtil.findAnnotationAll(dataset));
-			AnnonatationUtil.findFreqOfEntity(lstAllAnnotation,"AnnotationFrequency_"+type+"_"+TEST_DATASET_TYPE+"_"+c.getTitle());
-		}
-	}
-	public static void countEntitiesOfDatasets(List<String> dataset) {
-		//		List<String> agNews = new ArrayList<>(ReadDataset.read_AG_BasedOnType(Config.getString("DATASET_TEST_AG",""),AG_DataType.TITLEANDDESCRIPTION));
-		//		List<String> agNewsTitle = new ArrayList<>(ReadDataset.read_AG_BasedOnType(Config.getString("DATASET_TEST_AG",""),AG_DataType.TITLE));
-		//		List<String> snippets = new ArrayList<>(ReadDataset.read_WEB());
-		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-		int counttotalEntity=0;
-		int countSentencesNoEntity=0;
-		try {
-			for(String str: dataset) {
-				List<Annotation> lstAnnotations = new ArrayList<>();
-				service.annotate(str, lstAnnotations);
-				counttotalEntity+=lstAnnotations.size();
 
-				if (lstAnnotations.size()==0) {
-					countSentencesNoEntity++;
-				}
-			}
-			System.out.println("counttotalEntity: "+counttotalEntity);
-			System.out.println("countSentencesNoEntity: "+countSentencesNoEntity);
-			System.out.println("AvgEntCount: "+(double)counttotalEntity*1.0/dataset.size()*1.0);
 
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	public static void findFreqOfWord(List<String> dataset ,String fileName) {
+
+
+	public static void findMostSimilarWordForVectorOfDataset(List<String> dataset ,String fileName) {
 		final List<String> tokens = new ArrayList<String>();
 		final LexedTokenFactory<CoreLabel> tokenFactory = new CoreLabelTokenFactory();
 		for(String line: dataset) {
@@ -209,8 +405,39 @@ public class AnalyseDataset {
 				tokens.add(tokenizer.next().toString());
 			}
 		}
+		double[] docVec= VectorUtil.getSentenceVector(tokens, GoogleModelSingleton.getInstance().google_model);
+		System.out.println("Document Vector Generated...");
+		VocabCache<VocabWord> vocab = GoogleModelSingleton.getInstance().google_model.getVocab();
+		Map<String, Double> result = new HashMap<>();
+
+		for (int i = 0; i < vocab.numWords(); i++) {
+			String word=vocab.elementAtIndex(i).getWord();
+			if (!word.contains("_")&&!word.contains("*")&&!word.contains(".")&&!word.contains("#")) {
+				Double sim = VectorUtil.getSimilarity2Vecs(docVec, VectorUtil.getSentenceVector(Arrays.asList(word), GoogleModelSingleton.getInstance().google_model));
+				result.put(word,sim);
+			}
+		}
+
+		System.out.println("Size of the word similarity map..."+result.size());
+		Map<String, Double> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(result));
+		FileUtil.writeDataToFile(sortedMap,fileName);
+		System.out.println("Finished one dataset writing: " + fileName);
+	}
+
+	public static void findFreqOfWord(List<String> dataset ,String fileName) {
+		final List<String> tokens = new ArrayList<String>();
+		final LexedTokenFactory<CoreLabel> tokenFactory = new CoreLabelTokenFactory();
+		for(String line: dataset) {
+			line=StopWordRemoval.removeStopWords(line);
+			line=StringUtil.removePuntionation(line);
+			final PTBTokenizer<CoreLabel> tokenizer = new PTBTokenizer<CoreLabel>(new StringReader(line), tokenFactory,
+					"untokenizable=noneDelete");
+			while (tokenizer.hasNext()) {
+				tokens.add(tokenizer.next().toString());
+			}
+		}
 		Map<String, Integer> resultFreq = new HashMap<>();
-		
+
 		for(String str :tokens) {
 			if (resultFreq.containsKey(str)) {
 				resultFreq.put(str, (resultFreq.get(str)+1));
@@ -223,43 +450,17 @@ public class AnalyseDataset {
 		FileUtil.writeDataToFile(sortedMap,fileName);
 		System.out.println("Finished one dataset writing: " + fileName);
 	}
-	private static void counteWordsOfDatasets() {
-		List<String> agNews = new ArrayList<>(ReadDataset.read_AG_BasedOnType(Config.getString("DATASET_TEST_AG",""),AG_DataType.TITLEANDDESCRIPTION));
-		List<String> agNewsTitle = new ArrayList<>(ReadDataset.read_AG_BasedOnType(Config.getString("DATASET_TEST_AG",""),AG_DataType.TITLE));
-		List<String> agNewsDecription = new ArrayList<>(ReadDataset.read_AG_BasedOnType(Config.getString("DATASET_TEST_AG",""),AG_DataType.DESCRIPTION));
-		List<String> snippets = new ArrayList<>(ReadDataset.read_WEB());
-
-		int totalWordCountAgTitleAndDescriprtion=0;
-		int totalWordCountAgTitle=0;
-		int totalWordCountAgDecription=0;
-		int totalWordSnippets=0;
-		System.out.println("Size of dataset Ag Title and Description: "+ agNews.size());
-		System.out.println("Size of dataset Ag Title: "+ agNewsTitle.size());
-		System.out.println("Size of dataset Ag Decription: "+ agNewsDecription.size());
-		for(String str: snippets) {
-			totalWordSnippets+=SentenceSegmentator.wordCount(str);
-		}
-
-		for(String str: agNews) {
-			totalWordCountAgTitleAndDescriprtion+=SentenceSegmentator.wordCount(str);
-		}
-		for(String str: agNewsTitle) {
-			totalWordCountAgTitle+=SentenceSegmentator.wordCount(str);
-		}
-		for(String str: agNewsDecription) {
-			totalWordCountAgDecription+=SentenceSegmentator.wordCount(str);
-		}
-		System.out.println("totalWordCountAgTitleAndDescriprtion: "+totalWordCountAgTitleAndDescriprtion);
-		System.out.println("totalWordCountAgTitle: "+totalWordCountAgTitle);
-		System.out.println("totalWordCountAgDecription: "+totalWordCountAgDecription);
-		System.out.println("totalWordSnippets: "+totalWordSnippets);
-		System.out.println("totalWordCountAgTitleAvg: "+(double)totalWordCountAgTitle*1.0/agNewsTitle.size()*1.0);
-		System.out.println("totalWordCountAgDescAvg: "+(double)totalWordCountAgDecription*1.0/agNewsTitle.size()*1.0);
-		System.out.println("totalWordCountAgTitleAndDescriprtion: "+(double)(totalWordCountAgTitleAndDescriprtion*1.0/agNews.size()*1.0));
-		System.out.println("totalWordSnippetsAvg: "+(double)(totalWordSnippets*1.0/snippets.size()*1.0));
-		System.out.println("Total: "+ (totalWordCountAgTitle+totalWordCountAgDecription));
-	}
 	
+	public static void printAvgNumberOfWordsOfDatasets(List<String> dataset) {
+		int totalWord=0;
+		System.out.println("Size of dataset: "+ dataset.size());
+		for(String str: dataset) {
+			totalWord+=SentenceSegmentator.wordCount(str);
+		}
+		System.out.println("totalWordCount : "+totalWord);
+		System.out.println("WordAvg: "+totalWord*1.0/dataset.size()*1.0);
+	}
+
 	/*
 	 * private static void findFreqOfWords(List<String> dataset,String fileName) {
 		final List<String> tokensStr = new ArrayList<String>();
@@ -275,10 +476,10 @@ public class AnalyseDataset {
 		AnnonatationUtil.findFreqOfWord(tokensStr, fileName);
 
 	}
-	
-	
-	
-	
+
+
+
+
 	 */
 
 }

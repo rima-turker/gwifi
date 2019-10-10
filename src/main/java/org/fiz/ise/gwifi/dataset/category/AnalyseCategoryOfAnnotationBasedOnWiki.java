@@ -52,7 +52,7 @@ public class AnalyseCategoryOfAnnotationBasedOnWiki {
 //						Category cDataset=WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Technology");
 			System.out.println(c.getTitle());
 			Category cDataset=c;
-			List<String> dataset = new ArrayList<>(ReadDataset.read_WEB_BasedOnCategory(cDataset,Config.getString("DATASET_TEST_WEB","")));
+			List<String> dataset = new ArrayList<>(ReadDataset.read_WEB_BasedOnCategory(cDataset.getTitle(),Config.getString("DATASET_TEST_WEB","")));
 			test.analyseAnchorText(dataset);
 			
 			//			List<Annotation> lstAllAnnotation = new ArrayList<>(AnnonatationUtil.findAnnotationAll(dataset));

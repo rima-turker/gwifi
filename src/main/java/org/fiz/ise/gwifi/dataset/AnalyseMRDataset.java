@@ -3,6 +3,7 @@ package org.fiz.ise.gwifi.dataset;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,8 +19,10 @@ import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.train.generation.GenerateDatasetForNN;
 import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.model.EmbeddingModel;
+import org.fiz.ise.gwifi.test.longDocument.BasedOnWordsCategorize;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
 import org.fiz.ise.gwifi.util.Config;
+import org.fiz.ise.gwifi.util.VectorUtil;
 import org.nd4j.linalg.api.ndarray.INDArray;
 
 import edu.kit.aifb.gwifi.annotation.Annotation;
@@ -40,14 +43,15 @@ public class AnalyseMRDataset {
 		
 		List<String> lines_pos = FileUtils.readLines(new File(DATASET_TRAIN_MR_POS), "utf-8");
 		List<String> lines_neg = FileUtils.readLines(new File(DATASET_TRAIN_MR_NEG), "utf-8");
+		analyse(lines_pos,lines_neg);
+//		AnalyseDataset.findMostSimilarWordForVectorOfDataset(lines_pos, "mr_mostSimWordsForSentenceVec_pos");
+//		AnalyseDataset.findMostSimilarWordForVectorOfDataset(lines_neg, "mr_mostSimWordsForSentenceVec_neg");
+		
+		
 //		AnnonatationUtil.findFreqOfWord(lines_pos, "mr_freqOfWords_pos");
 //		AnnonatationUtil.findFreqOfWord(lines_neg, "mr_freqOfWords_neg");
 		
-		VocabCache<VocabWord> vocab = GoogleModelSingleton.getInstance().google_model.getVocab();
-		System.out.println(vocab.numWords());
-		for (int i = 0; i < 20; i++) {
-			System.out.println(vocab.elementAtIndex(i).getWord());
-		}
+	
 //		AnalyseDataset.findMostSimilarEntitesForDataset(lines_pos, Dataset.MR, "pos");
 //		AnalyseDataset.findMostSimilarEntitesForDataset(lines_neg, Dataset.MR, "neg");
 		
@@ -59,60 +63,73 @@ public class AnalyseMRDataset {
 		
 		
 	}
-	public static List<String> read_trec_dataset_per_cat(String c) {
-		try {
-			List<String> dataset = new ArrayList<>();
-			List<String> lines = FileUtils.readLines(new File(DATASET_TRAIN_MR_POS), "utf-8");
-			String[] arrLines = new String[lines.size()];
-			arrLines = lines.toArray(arrLines);
-			for (int i = 0; i < arrLines.length; i++) {
-				String[] split = arrLines[i].split(" ",2);
-				String sentence=split[1];
-				String mainLabel=split[0].split(":")[0];
-				if (mainLabel.equals(c)) {
-					dataset.add(sentence);
-				}
-			}
-			System.out.println("Number of samples:"+dataset.size()+", category: "+c);
-			return dataset;
-		} catch (Exception e) {
-			// TODO: handle exception
+	public static void analyse(List<String> datasetPos,List<String> datasetNeg) {
+//		String[] adjPos = {"terrific", "great", "awesome", "enjoyable"};
+		String[] adjPos = {"first-rate","insightful","clever","charming","comical","charismatic",
+				"enjoyable","uproarious","original","tender","hilarious","absorbing","sensitive",
+				"riveting","intriguing","powerful","fascinating","pleasant","surprising","dazzling",
+				"thought provoking","imaginative","legendary","unpretentious"};
+		System.out.println(adjPos.length);
+		
+		String[] adjNeg = {"second-rate","violent","moronic","third-rate","flawed","juvenile",
+				"boring","distasteful","ordinary","disgusting","senseless","static","brutal",
+				"confused","disappointing","bloody","silly","tired","predictable","stupid",
+				"uninteresting","weak","incredibly tiresome","trite","uneven","cliché ridden",
+				"outdated","dreadful","bland"};
+
+		System.out.println(adjNeg.length);
+		
+		
+		//		String[] adjNeg = {"horrible", "disappointing", "boring", "weak"};
+		int countWrongPos=0;
+		int countWrongNeg=0;
+		List<double[]> lstVectorsPos = new ArrayList<double[]>();
+		List<double[]> lstVectorsNeg = new ArrayList<double[]>();
+		
+		for (int i = 0; i < adjPos.length; i++) {
+			lstVectorsPos.add(VectorUtil.getSentenceVector(Arrays.asList(adjPos[i]), GoogleModelSingleton.getInstance().google_model));
 		}
-		return null;
-	}
-	public static Map<String, List<Article>> read_trec_dataset_aLabel(String datasetName) {
-		Map<String, List<Article>> result = new HashMap<String, List<Article>>();
-		try {
-			List<String> lines = FileUtils.readLines(new File(datasetName), "utf-8");
-			for(String line : lines) {
-				String[] split = line.split(" ",2);
-				String sentence=split[1];
-				String mainLabel=split[0].split(":")[0];
-				List<Article> t = new ArrayList<Article>();
-				t.add(LabelsOfTheTexts.getLables_TREC_article().get(mainLabel));
-				result.put(sentence, t);
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
+		for (int i = 0; i < adjNeg.length; i++) {
+			lstVectorsNeg.add(VectorUtil.getSentenceVector(Arrays.asList(adjNeg[i]), GoogleModelSingleton.getInstance().google_model));
 		}
-		System.out.println("Size of the trec dataset:"+result.size());
-		return result;
-	}
-	public static Map<String, String> read_trec_dataset(String datasetName) {
-		Map<String, String> result = new HashMap<String, String>();
-		try {
-			List<String> lines = FileUtils.readLines(new File(datasetName), "utf-8");
-			for(String line : lines) {
-//				
-//				if (result.containsKey(split[1])) {
-//					System.out.println(split[1]);
-//				}
-//				result.put(split[1], split[0]);
+		
+		for (String sP : datasetPos) {
+			double simP=0;
+			double simN=0;
+			double[] vecSentence=VectorUtil.getSentenceVector(sP,GoogleModelSingleton.getInstance().google_model);
+			for(double[] vP : lstVectorsPos ) {
+				simP+=VectorUtil.getSimilarity2Vecs(vP,vecSentence);
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
+			for(double[] vP : lstVectorsNeg ) {
+				simN+=VectorUtil.getSimilarity2Vecs(vP,vecSentence);
+			}
+			simN=simN/29.0;
+			simP=simP/24.0;
+			if (simP<simN) {
+				countWrongPos++;
+			}
 		}
-		System.out.println("Size of the trec dataset:"+result.size());
-		return result;
+		
+		for (String sP : datasetNeg) {
+			double simP=0;
+			double simN=0;
+			double[] vecSentence=VectorUtil.getSentenceVector(sP,GoogleModelSingleton.getInstance().google_model);
+			for(double[] vP : lstVectorsPos ) {
+				simP+=VectorUtil.getSimilarity2Vecs(vP,vecSentence);
+			}
+			for(double[] vP : lstVectorsNeg ) {
+				simN+=VectorUtil.getSimilarity2Vecs(vP,vecSentence);
+			}
+			simN=simN/29.0;
+			simP=simP/24.0;
+			if (simN<simP) {
+				countWrongNeg++;
+			}
+		}
+		
+		System.out.println("Total POs: "+datasetPos.size()+" Wrong Pos:"+countWrongPos);
+		System.out.println("Total Neg: "+datasetNeg.size()+" Wrong Neg:"+countWrongNeg);
+	
 	}
+	
 }

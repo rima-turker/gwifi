@@ -1,5 +1,7 @@
 package org.fiz.ise.gwifi.test.afterESWC;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,6 +15,7 @@ import java.util.Set;
 import java.util.Vector;
 import java.util.Map.Entry;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.math3.ml.distance.ManhattanDistance;
 import org.apache.log4j.Logger;
 import org.apache.xpath.operations.Gt;
@@ -31,10 +34,13 @@ import org.fiz.ise.gwifi.util.AnnonatationUtil;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.MapUtil;
 import org.fiz.ise.gwifi.util.Print;
+import org.fiz.ise.gwifi.util.StopWordRemoval;
 import org.fiz.ise.gwifi.util.StringUtil;
 import org.fiz.ise.gwifi.util.VectorUtil;
 import org.nd4j.linalg.api.ops.impl.accum.AMin;
 import org.openjena.atlas.test.Gen;
+
+import com.hp.hpl.jena.sparql.pfunction.library.listIndex;
 
 import edu.kit.aifb.gwifi.annotation.Annotation;
 import edu.kit.aifb.gwifi.model.Article;
@@ -69,29 +75,69 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 		System.out.println("Finished initializing the cache");
 		Print.printMap(CACHE_mostSimilarNArticles);
 	}	
-	
-	public static Article getBestMatchingArticleFromWordVectorModel(Dataset dname, String shortText, List<Article> gtList) {
-		List<Article> labels = null;
-		
-		if (dname.equals(Dataset.AG)) {
-			 labels = new ArrayList<Article>(LabelsOfTheTexts.getLables_AG_article().values());
-		}
+	public static Article getBestMatchingArticleFromWordVectorModel(Dataset dname, List<Article> labels, String shortText, List<Article> gtList) {
 		try {
 			Map<Article, Double> mapScore = new HashMap<>();
+			shortText=StopWordRemoval.removeStopWords(StringUtil.removePuntionation(shortText));
 			List<String> tokensStr = new ArrayList<String>(StringUtil.tokinizeString(shortText));
-			double[] sentenceVector = VectorUtil.getSentenceVector(tokensStr, GoogleModelSingleton.getInstance().google_model);
-
+			StringBuilder strB = new StringBuilder(shortText+"\n");
 			for (Article amainCat : labels) { //iterate over categories and calculate a score for each of them
-				String amainCatAbstract = amainCat.getFirstParagraphMarkup().replaceAll("[^\\w\\s]",""); 
-				tokensStr = new ArrayList<String>(StringUtil.tokinizeString(amainCatAbstract));
-
-				double[] labelVector = VectorUtil.getSentenceVector(tokensStr, GoogleModelSingleton.getInstance().google_model);
-				double score = VectorUtil.cosineSimilarity(labelVector, sentenceVector);
+				double score = 0.0; 
+				for (String t : tokensStr) {
+					double tempScore=0;
+					tempScore=get_word_similarity(dname,t ,amainCat.getTitle());
+					if (!Double.isNaN(tempScore)) {
+						score +=tempScore ;
+					}
+				}
+				strB.append(amainCat+": "+score+"\n");
 				mapScore.put(amainCat, score);
 			}
-
 			Map<Article, Double> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(mapScore));
 			Article firstElement = MapUtil.getFirst(sortedMap).getKey();
+			secondLOG.info(strB.toString());
+			return firstElement;
+		}
+		catch (Exception e) {
+			System.out.println();
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public static Article getBestMatchingArticleFromWordVectorModel_(Dataset dname, List<Article> labels, String shortText, List<Article> gtList) {
+		try {
+			Map<Article, Double> mapScore = new HashMap<>();
+			shortText=StopWordRemoval.removeStopWords(StringUtil.removePuntionation(shortText));
+			List<String> tokensStr = new ArrayList<String>(StringUtil.tokinizeString(shortText));
+			double[] sentenceVector = VectorUtil.getSentenceVector(tokensStr, GoogleModelSingleton.getInstance().google_model);
+			StringBuilder strB = new StringBuilder(shortText+"\n");
+			for (Article amainCat : labels) { //iterate over categories and calculate a score for each of them
+				String amainCatAbstract = null; 
+				if (dname.equals(Dataset.DBpedia)) {
+					if (amainCat.getTitle().equals("Office-holder")) {
+						//amainCatAbstract = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Politician").getFirstParagraphMarkup();
+						amainCatAbstract ="Politician";
+					}
+//					else if (amainCat.getTitle().equals("Educational institution")) {
+//						amainCatAbstract="School College Library University";
+//					}
+					else {
+//					amainCatAbstract = amainCat.getFirstParagraphMarkup();
+						amainCatAbstract = amainCat.getTitle();
+					}
+					
+				}
+				tokensStr = new ArrayList<String>(StringUtil.tokinizeString(StringUtil.removePuntionation(amainCatAbstract)));
+				double[] labelVector = VectorUtil.getSentenceVector(tokensStr, GoogleModelSingleton.getInstance().google_model);
+				double score = VectorUtil.cosineSimilarity(labelVector, sentenceVector);
+				strB.append(amainCat.getTitle()+": "+score+"\n");
+				mapScore.put(amainCat, score);
+			}
+			
+			Map<Article, Double> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(mapScore));
+			Article firstElement = MapUtil.getFirst(sortedMap).getKey();
+			secondLOG.info(strB.toString());
 			return firstElement;
 		}
 		catch (Exception e) {
@@ -102,7 +148,7 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 	}
 	public static Article getBestMatchingArticlewith_3_DifferentApproachAgreement(String shortText,List<Article> gtList) {
 		Article bestMatching1 = getBestMatchingArticle(shortText, gtList);
-		Article bestMatching2 = getBestMatchingArticleFromWordVectorModel(TEST_DATASET_TYPE,shortText, gtList);
+		Article bestMatching2 = null;// getBestMatchingArticleFromWordVectorModel(TEST_DATASET_TYPE,shortText, gtList);
 		Article bestMatching3 = GenerateDatasetForNN.map_results_doc2vec.get(shortText);
 		if (bestMatching1==null || bestMatching2==null || bestMatching3==null) {
 			return null;
@@ -114,10 +160,10 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 	}
 	public static Article getBestMatchingArticlewith_3_DifferentApproachAgreement_categorize_all_dataset_write(Dataset dname,String shortText,List<Article> gtList) {
 		Article best_LINE = getBestMatchingArticle_resolve_redirect(dname, shortText, gtList);
-		Article best_google = getBestMatchingArticleFromWordVectorModel(TEST_DATASET_TYPE,shortText, gtList);
+		Article best_google = null;//getBestMatchingArticleFromWordVectorModel(TEST_DATASET_TYPE,shortText, gtList);
 		Article best_doc2vec = GenerateDatasetForNN.map_results_doc2vec.get(shortText);
 		Map<Article, Integer> map = new HashMap<Article, Integer>();
-		
+
 		if (best_LINE!=null ) {
 			Integer integer = map.get(best_LINE);
 			if (integer==null) {
@@ -150,18 +196,18 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 		}
 		Map<Article, Integer> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(map));
 		Entry<Article, Integer> firstElement = MapUtil.getFirst(sortedMap);
-		
+
 		if (firstElement.getValue()==3) {
 			resultLog.info("\""+LabelsOfTheTexts.getArticleValue_AG().get(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(firstElement.getKey().getTitle()))+
-			"\",\""+shortText+"\"");
+					"\",\""+shortText+"\"");
 			return firstElement.getKey();
 		}else if(firstElement.getValue()==2) {
 			for (Entry <Article, Integer> e: map.entrySet()) {
 				resultLog.info("\""+LabelsOfTheTexts.getArticleValue_AG().get(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(e.getKey().getTitle()))+
 						"\",\""+shortText+"\"");
 			}
-//			resultLog.info("\""+LabelsOfTheTexts.getArticleValue_AG().get(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(firstElement.getKey().getTitle()))+
-//					"\",\""+shortText+"\"");
+			//			resultLog.info("\""+LabelsOfTheTexts.getArticleValue_AG().get(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(firstElement.getKey().getTitle()))+
+			//					"\",\""+shortText+"\"");
 			return firstElement.getKey();
 		}
 		else {
@@ -174,10 +220,10 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 	}
 	public static Article getBestMatchingArticlewith_3_DifferentApproachAgreement_categorize_all_dataset(Dataset dname,String shortText,List<Article> gtList) {
 		Article best_LINE = getBestMatchingArticle_resolve_redirect(dname, shortText, gtList);
-		Article best_google = getBestMatchingArticleFromWordVectorModel(TEST_DATASET_TYPE,shortText, gtList);
+		Article best_google = null;//getBestMatchingArticleFromWordVectorModel(TEST_DATASET_TYPE,shortText, gtList);
 		Article best_doc2vec = GenerateDatasetForNN.map_results_doc2vec.get(shortText);
 		Map<Article, Integer> map = new HashMap<Article, Integer>();
-		
+
 		if (best_LINE!=null ) {
 			Integer integer = map.get(best_LINE);
 			if (integer==null) {
@@ -205,11 +251,11 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 				map.put(best_doc2vec, integer+1);
 			}
 		}
-		
+
 		if(map.isEmpty()) {
 			return null;
 		}
-		
+
 		Map<Article, Integer> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(map));
 		Entry<Article, Integer> firstElement = MapUtil.getFirst(sortedMap);
 		if (firstElement.getValue()==3) {
@@ -217,14 +263,14 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 		}else if(firstElement.getValue()==2) {
 			return firstElement.getKey();
 		}
-		
+
 		else
 			return best_LINE;
 	}
 
 	public static Article getBestMatchingArticlewithTwoDifferentApproachAgreement(String shortText, List<Article> gtList) {
 		Article bestMatching1 = getBestMatchingArticle(shortText, gtList);
-		Article bestMatching2 = getBestMatchingArticleFromWordVectorModel(TEST_DATASET_TYPE,shortText, gtList);
+		Article bestMatching2 = null;//getBestMatchingArticleFromWordVectorModel(TEST_DATASET_TYPE,shortText, gtList);
 		if (bestMatching1==null || bestMatching2==null) {
 			return null;
 		}
@@ -494,56 +540,380 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 		}
 		return null;
 	}
-	
-	public static Article getBestMatchingArticle_resolve_redirect(Dataset dname, String shortText, List<Article> gtList) {
-		List<Article> labels = null;
-		if (dname.equals(Dataset.AG)) {
-			 labels = new ArrayList<Article>(LabelsOfTheTexts.getLables_AG_article().values());
-		}
-		else if (dname.equals(Dataset.TREC)) {
-			 labels = new ArrayList<Article>(LabelsOfTheTexts.getLables_TREC_article().values());
-		}
-		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
-		//BestMatchingLabelBasedOnVectorSimilarity heuristic = new BestMatchingLabelBasedOnVectorSimilarity();
-		StringBuilder mainBuilder = new StringBuilder();
+	public static Article getBestMatchingArticlewithAnnotationList(Dataset dname, List<String> lstAnnotationIDs, List<Article>  labels) {
 		try {
+			StringBuilder strBuild = new StringBuilder();
+			strBuild.append(lstAnnotationIDs + "\n");
+			Map<Article, Double> mapScore = new HashMap<>();
+			for (Article amainCat : labels) { //iterate over categories and calculate a score for each of them
+				double score = 0.0; 
+				for (String a : lstAnnotationIDs) {
+					double tempScore=0;
+					tempScore=get_article_similarity_clean(dname,Integer.valueOf(a) ,amainCat);
+					if (!Double.isNaN(tempScore)) {
+						score +=tempScore ;
+					}
+				}
+				strBuild.append(amainCat+": "+score+"\n");
+				mapScore.put(amainCat, score);
+			}
+			Map<Article, Double> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(mapScore));
+			Article firstElement = MapUtil.getFirst(sortedMap).getKey();
+			if (sortedMap.get(firstElement)==0.0) {
+				return null;
+			}
+			strBuild.append("\n\n");
+			
+			secondLOG.info(strBuild.toString());
+			return firstElement;
+		}
+		catch (Exception e) {
+			System.out.println();
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public static double get_word_similarity(Dataset dSet,String word, String label) {
+		if (dSet.equals(Dataset.DBpedia)) {
+			try {
+				List<String> enrich = new ArrayList<String>();
+				if(label.equals("Company")){
+					enrich = new ArrayList<String>();
+					enrich.add("company");
+				}
+				else if(label.equals("Educational institution")){
+					enrich = new ArrayList<String>();
+					enrich.add("School");
+					enrich.add("College");
+					enrich.add("Library");
+					enrich.add("University");
+
+				}
+				else if (label.equals("Artist")) {
+					enrich = new ArrayList<String>();
+					enrich.add("singer");
+					enrich.add("music");
+					enrich.add("writer");
+					enrich.add("artist");
+				}
+				else if(label.equals("Athlete")){
+					enrich = new ArrayList<String>();
+					enrich.add("player");
+					enrich.add("footballer");
+				}
+				else if(label.equals("Office-holder")){
+					enrich = new ArrayList<String>();
+					enrich.add("Politician");
+				}
+				else if (label.equals("Transport")) {
+					enrich = new ArrayList<String>();
+					enrich.add("Transport");
+				}
+				else if(label.equals("Building")){
+					enrich = new ArrayList<String>();
+					enrich.add("building");				}
+				else if (label.equals("Natural environment")) {
+					enrich = new ArrayList<String>();
+					enrich.add("river");
+					enrich.add("lake");
+					enrich.add("mountain");
+				}
+				else if(label.equals("Village")){
+					enrich = new ArrayList<String>();
+					enrich.add("village");
+				}
+				else if(label.equals("Animal")){
+					enrich = new ArrayList<String>();
+					enrich.add("animal");
+				}
+				else if(label.equals("Plant")){
+					enrich = new ArrayList<String>();
+					enrich.add("plant");
+				}
+				else if(label.equals("Album")){
+
+					enrich = new ArrayList<String>();
+					enrich.add("album");
+				}
+				else if(label.equals("Film")){
+
+					enrich = new ArrayList<String>();
+					enrich.add("film");
+				}
+				else if(label.equals("Writing")){
+					enrich = new ArrayList<String>();
+					enrich.add("written");
+				}
+				else {
+					System.out.println("Entity title is not matching");
+					System.exit(1);
+				}
+				double score =0.0;
+				double size =0.0;
+				for (String a : enrich) {
+					double tempScore=0;
+					tempScore=GoogleModelSingleton.getInstance().google_model.similarity(a, word);
+					if (!Double.isNaN(tempScore)) {
+						score +=tempScore ;
+						size+=1.0;
+					}
+				}
+				return score/size;
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				System.exit(0);
+			}
+
+		}
+//		if (dSet.equals(Dataset.WEB_SNIPPETS)) {
+//			return LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(articleID),String.valueOf(cArticle.getId()));
+//		}
+		return 0.0;
+	}
+	public static double get_article_similarity_clean(Dataset dSet,int articleID, Article cArticle) {
+		if (dSet.equals(Dataset.DBpedia)) {
+			String fName="/home/rima/playground/GeneralFiles/gwifi/Dataset_ShortTextClassification/dbpedia_csv/dbp_sub_classes/";
+//			String fName="/home/rtue/Desktop/";
+			try {
+				List<String> enrich = new ArrayList<String>();
+				int cleanAnnotation =AnnonatationUtil.getCorrectAnnotation_DBp(articleID);
+				if(cArticle.getTitle().equals("Company")){
+					enrich = new ArrayList<String>();
+					enrich.add(String.valueOf(cArticle.getId()));
+
+//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Winery").getId()));
+//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Record Label").getId()));
+//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Law Firm").getId()));
+//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Caterer").getId()));
+//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Brewery").getId()));
+//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Bank").getId()));
+//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Airline").getId()));
+//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Publisher").getId()));
+				}
+				else if(cArticle.getTitle().equals("Educational institution")){
+					enrich = new ArrayList<String>();
+//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Education").getId()));
+
+
+					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("School").getId()));
+					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("College").getId()));
+					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Library").getId()));
+					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("University").getId()));
+
+				}
+
+				else if (cArticle.getTitle().equals("Artist")) {
+					enrich = new ArrayList<String>();
+					enrich.add(String.valueOf(cArticle.getId()));
+
+
+//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Sculptor").getId()));
+//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Photographer").getId()));
+//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Painter").getId()));
+//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Musical artist").getId()));
+//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Humorist").getId()));
+//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Fashion Designer").getId()));
+//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Dancer").getId()));
+//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Comedian").getId()));
+//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Actor").getId()));
+
+
+					//				enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Writer").getId()));
+					//				enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Screenwriter").getId()));
+					//				enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Musician").getId()));
+					//				enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Singer").getId()));
+
+
+				}
+				else if(cArticle.getTitle().equals("Athlete")){
+					enrich.add(String.valueOf(cArticle.getId()));
+
+//					List<String> lines = FileUtils.readLines(new File(fName+"Athlete_sub_classes.txt"), "utf-8");
+//					for(String str:lines) {
+//						if (WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str)!=null) {
+//							enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str).getId()));
+//						}
+//					}
+
+				}
+				else if(cArticle.getTitle().equals("Office-holder")){
+					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Politician").getId()));
+				}
+				else if (cArticle.getTitle().equals("Transport")) {
+					enrich.add(String.valueOf(cArticle.getId()));
+					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Aircraft").getId()));
+					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Automobile").getId()));
+					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Locomotive").getId()));
+					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Motorcycle").getId()));
+					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Rocket").getId()));
+					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Ship").getId()));
+					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Space Shuttle").getId()));
+					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Spacecraft").getId()));
+					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Train").getId()));
+					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Tram").getId()));
+
+				}
+				else if(cArticle.getTitle().equals("Building")){
+					List<String> lines = FileUtils.readLines(new File(fName+"Building_sub_classes.txt"), "utf-8");
+					enrich.add(String.valueOf(cArticle.getId()));
+
+					for(String str:lines) {
+						if (WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str)!=null) {
+							enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str).getId()));
+						}
+					}
+				}
+				else if (cArticle.getTitle().equals("Natural environment")) {
+					List<String> lines = FileUtils.readLines(new File(fName+"Natural environment_sub_classes.txt"), "utf-8");
+					enrich.add(String.valueOf(cArticle.getId()));
+
+					for(String str:lines) {
+						if (WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str)!=null) {
+							enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str).getId()));
+						}
+					}
+					//					enrich = new ArrayList<String>();
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Natural environment").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("River").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Lake").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Construction").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Mountain").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Valley").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Church").getId()));
+
+				}
+				else if(cArticle.getTitle().equals("Village")){
+					enrich.add(String.valueOf(cArticle.getId()));
+				}
+				else if(cArticle.getTitle().equals("Animal")){
+					List<String> lines = FileUtils.readLines(new File(fName+"Animal_sub_classes.txt"), "utf-8");
+					enrich.add(String.valueOf(cArticle.getId()));
+
+//					for(String str:lines) {
+//						if (WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str)!=null) {
+//							enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str).getId()));
+//						}
+//					}
+				}
+				else if(cArticle.getTitle().equals("Plant")){
+					List<String> lines = FileUtils.readLines(new File(fName+"Plant_sub_classes.txt"), "utf-8");
+					enrich.add(String.valueOf(cArticle.getId()));
+
+//					for(String str:lines) {
+//						if (WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str)!=null) {
+//							enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str).getId()));
+//						}
+//					}
+				}
+				else if(cArticle.getTitle().equals("Album")){
+
+					enrich.add(String.valueOf(cArticle.getId()));
+				}
+				else if(cArticle.getTitle().equals("Film")){
+
+					enrich.add(String.valueOf(cArticle.getId()));
+				}
+				else if(cArticle.getTitle().equals("Writing")){
+//					List<String> lines = FileUtils.readLines(new File(fName+"Writing_sub_classes.txt"), "utf-8");
+					enrich.add(String.valueOf(cArticle.getId()));
+
+//					for(String str:lines) {
+//						if (WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str)!=null) {
+//							enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str).getId()));
+//						}
+//					}
+				}
+				else {
+					System.out.println("Entity title is not matching");
+					System.exit(1);
+				}
+				double score =0.0;
+				double size =0.0;
+				for (String a : enrich) {
+					double tempScore=0;
+					tempScore=LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(cleanAnnotation),String.valueOf(a));
+					if (!Double.isNaN(tempScore)) {
+						score +=tempScore ;
+						size+=1.0;
+					}
+				}
+				return score/size;
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				System.exit(0);
+			}
+
+		}
+		if (dSet.equals(Dataset.WEB_SNIPPETS)) {
+			return LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(articleID),String.valueOf(cArticle.getId()));
+		}
+		return 0.0;
+	}
+
+	public static Article getBestMatchingArticle_resolve_redirect(Dataset dname, String shortText, List<Article> gtList) {
+		try {
+			List<Article> labels = null;
+			NLPAnnotationService service = AnnotationSingleton.getInstance().service;
+			List<Annotation> lstAnnotations = new ArrayList<>();
+			service.annotate(shortText, lstAnnotations);//annotate the given text
+
+			List<Annotation> filteredAnnotations = new ArrayList<>(filterEntitiesNotInVectorSpace(lstAnnotations));
+			List<Annotation> ffilteredAnnotations= null;
+
+
+			if (dname.equals(Dataset.AG)) {
+				labels = new ArrayList<Article>(LabelsOfTheTexts.getLables_AG_article().values());
+			}
+			else if (dname.equals(Dataset.TREC)) {
+				labels = new ArrayList<Article>(LabelsOfTheTexts.getLables_TREC_article().values());
+			}
+			else if (dname.equals(Dataset.DBpedia)) {
+				labels = new ArrayList<Article>(LabelsOfTheTexts.getLables_DBP_article().values());
+				ffilteredAnnotations = new ArrayList<>();
+				for(Annotation a : filteredAnnotations) {
+					if (!AnnonatationUtil.getEntityBlackList_DBp().contains(a.getId())&& !StringUtil.isNumeric(a.getTitle())) {
+						ffilteredAnnotations.add(a);
+					}
+				}
+
+			}
+			//BestMatchingLabelBasedOnVectorSimilarity heuristic = new BestMatchingLabelBasedOnVectorSimilarity();
+			StringBuilder mainBuilder = new StringBuilder();
+
 			Map<Article, Double> mapScore = new HashMap<>();
 			mainBuilder.append(shortText + "\n");
 			StringBuilder strBuild = new StringBuilder();
 			for (Article c : gtList) {
 				strBuild.append("Ground Truth"+c + " ");
 			}
-			List<Annotation> lstAnnotations = new ArrayList<>();
-			service.annotate(shortText, lstAnnotations);//annotate the given text
-			
-			List<Annotation> filteredAnnotations = new ArrayList<>(filterEntitiesNotInVectorSpace(lstAnnotations));
 			mainBuilder.append(strBuild.toString() + "\n" + "\n");
 			for (Article amainCat : labels) { //iterate over categories and calculate a score for each of them
 				double score = 0.0; 
-				for (Annotation a : filteredAnnotations) {
-					if (!AnnonatationUtil.getEntityBlackList_AGNews().contains(a.getId())) { //we had so many noisy entities therefore filtering required
-						double tempScore=0;
-						
-						if (WikipediaSingleton.getInstance().wikipedia.getArticleById(a.getId())==null) {
-							Page p = new Page(WikipediaSingleton.getInstance().wikipedia.getEnvironment(), a.getId());
-							if (p.getType().equals(Page.PageType.redirect)) {
+				for (Annotation a : ffilteredAnnotations) {
+					double tempScore=0;
+					if (WikipediaSingleton.getInstance().wikipedia.getArticleById(a.getId())==null) {
+						Page p = new Page(WikipediaSingleton.getInstance().wikipedia.getEnvironment(), a.getId());
+						if (p.getType().equals(Page.PageType.redirect)) {
 
-								String key = a.getURL().replace("http://en.wikipedia.org/wiki/", "");
-								if(GenerateDatasetForNN.mapRedirectPages.containsKey(key)) {
-									String tName = GenerateDatasetForNN.mapRedirectPages.get(key).replace("_", " ");
-									Article article = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(tName);
-									if (article!=null) {
-										tempScore=get_article_similarity(article,amainCat);
-									}
+							String key = a.getURL().replace("http://en.wikipedia.org/wiki/", "");
+							if(GenerateDatasetForNN.mapRedirectPages.containsKey(key)) {
+								String tName = GenerateDatasetForNN.mapRedirectPages.get(key).replace("_", " ");
+								Article article = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(tName);
+								if (article!=null) {
+									tempScore=get_article_similarity(article,amainCat);
 								}
 							}
 						}
-						else {
-							tempScore=get_article_similarity(WikipediaSingleton.getInstance().wikipedia.getArticleById(a.getId()),amainCat);
-						}
-						
-						score +=tempScore ;
-					} 
+					}
+					else {
+						tempScore=get_article_similarity(WikipediaSingleton.getInstance().wikipedia.getArticleById(a.getId()),amainCat);
+					}
+
+					score +=tempScore ;
+
 				}
 				mapScore.put(amainCat, score);
 				mainBuilder.append(amainCat+": "+score+"\n\n");
@@ -562,38 +932,41 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 		return null;
 	}
 	public static double get_article_similarity(Article article, Article cArticle) {
-		double P_e_c=0; 
-		if(article.getId()==25614) {
-			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle("Racing"), cArticle); 
-		}
-		else if(article.getId()==12240) {
-			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle("Gold medal"), cArticle); 
-		}
-		else if(article.getId()==870936) 
-		{
-			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle("Coach (sport)"), cArticle); 
-		}
-		else if(article.getId()==60930) 
-		{
-			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle("New product development"), cArticle); 
-		} 
-		else if(article.getId()==2532101) 
-		{
-			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle("Profit (accounting)"), cArticle); 
-		}
-		else if(article.getId()==16888425) 
-		{
-			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle("Job"), cArticle); 
-		}
-		else if(article.getId()==770846) 
-		{
-			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle("Personal trainer"), cArticle); 
-		}
-		else {
-			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle(article.getTitle()), cArticle);
-		}
-		return P_e_c;
+		return LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(article.getId()), String.valueOf(cArticle.getId()));
 	}
+	//	public static double get_article_similarity(Article article, Article cArticle) {
+	//		double P_e_c=0; 
+	//		if(article.getId()==25614) {
+	//			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle("Racing"), cArticle); 
+	//		}
+	//		else if(article.getId()==12240) {
+	//			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle("Gold medal"), cArticle); 
+	//		}
+	//		else if(article.getId()==870936) 
+	//		{
+	//			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle("Coach (sport)"), cArticle); 
+	//		}
+	//		else if(article.getId()==60930) 
+	//		{
+	//			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle("New product development"), cArticle); 
+	//		} 
+	//		else if(article.getId()==2532101) 
+	//		{
+	//			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle("Profit (accounting)"), cArticle); 
+	//		}
+	//		else if(article.getId()==16888425) 
+	//		{
+	//			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle("Job"), cArticle); 
+	//		}
+	//		else if(article.getId()==770846) 
+	//		{
+	//			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle("Personal trainer"), cArticle); 
+	//		}
+	//		else {
+	//			P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle(article.getTitle()), cArticle);
+	//		}
+	//		return P_e_c;
+	//	}
 
 	public static Article getBestMatchingArticle(String shortText, List<Article> gtList) {
 		List<Article> labels = new ArrayList<Article>(LabelsOfTheTexts.getLables_AG_article().values());

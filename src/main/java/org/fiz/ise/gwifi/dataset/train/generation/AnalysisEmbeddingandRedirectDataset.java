@@ -58,7 +58,7 @@ public class AnalysisEmbeddingandRedirectDataset {
 	public static void main(String[] args) throws Exception {
 		//LINE_modelSingleton.getInstance();
 		GoogleModelSingleton.getInstance();
-		mapRedirectPages= new HashMap<>(loadRedirectPages());
+		//mapRedirectPages= new HashMap<>(loadRedirectPages());
 		totalRedirect=new SynchronizedCounter();
 		resolvedRedirect=new SynchronizedCounter();
 		mapDoesnotContain=new SynchronizedCounter();
