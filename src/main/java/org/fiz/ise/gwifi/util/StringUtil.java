@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.process.CoreLabelTokenFactory;
@@ -12,7 +13,9 @@ import edu.stanford.nlp.process.LexedTokenFactory;
 import edu.stanford.nlp.process.PTBTokenizer;
 
 public class StringUtil {
-	
+	public static boolean isNumeric(final String str) {
+        return NumberUtils.isDigits(str);
+    }
 	public static String removePuntionation(String str)
 	{
 		return str.replaceAll("[^\\w\\s]", "").replaceAll("[\\d]", "");

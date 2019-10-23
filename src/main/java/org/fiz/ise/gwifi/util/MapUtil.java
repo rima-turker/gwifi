@@ -5,7 +5,15 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class MapUtil {
-
+	
+	public static <T, E> T getKeyByValue(Map<T, E> map, E value) {
+	    for (Entry<T, E> entry : map.entrySet()) {
+	        if (Objects.equals(value, entry.getValue())) {
+	            return entry.getKey();
+	        }
+	    }
+	    return null;
+	}
 	
 	public static <K, V> Entry<K, V> getFirst(Map<K, V> map) {
 		  if (map.isEmpty()) return null;
@@ -95,6 +103,7 @@ public class MapUtil {
 		}
 		return result;
 	}
+	
 
 	/**
 	 * Sort a Map by key in descending order

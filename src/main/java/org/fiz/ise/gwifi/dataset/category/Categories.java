@@ -8,11 +8,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.LabelsOfTheTexts;
 import org.fiz.ise.gwifi.dataset.shorttext.test.TestBasedOnAnnotatedDocument;
 import org.fiz.ise.gwifi.longText.TestBasedonLongTextDatasets;
 import org.fiz.ise.gwifi.model.Dataset;
 
+import edu.kit.aifb.gwifi.model.Article;
 import edu.kit.aifb.gwifi.model.Category;
 
 public class Categories {
@@ -46,9 +48,25 @@ public class Categories {
 //		final List<String> dummySeeds = Arrays.asList("Business","Software","Music",
 //				"Science","Automotive industry","Health","Politics","Sports");
 		
-		final List<String> dummySeeds = Arrays.asList("Business","Computers","Culture","Arts","Entertainment","Education",
+		final List<String> dummySeeds = Arrays.asList("Business","Computers","Culture","The arts","Entertainment","Education",
 				"Science","Engineering","Health","Politics","Society","Sports");
 		return Collections.unmodifiableList(dummySeeds);
+	}
+	public static List<Article> getLabels_Snippets() {
+		final List<Article> labels = new ArrayList<Article>(); 
+		labels.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Business"));
+		labels.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Computers"));
+		labels.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Culture"));
+		labels.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("The arts"));
+		labels.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Entertainment"));
+		labels.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Education"));
+		labels.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Science"));
+		labels.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Engineering"));
+		labels.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Health"));
+		labels.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Politics"));
+		labels.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Society"));
+		labels.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Sports"));
+		return Collections.unmodifiableList(labels);
 	}
 	private static List<String> getCategories_YOVISTO() {
 		List<String> categoryList = new ArrayList<>(TestBasedonLongTextDatasets.getLstCategory());

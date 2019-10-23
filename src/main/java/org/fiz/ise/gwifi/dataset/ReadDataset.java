@@ -9,10 +9,14 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
+import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.category.Categories;
 import org.fiz.ise.gwifi.model.AG_DataType;
+import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.util.Config;
+import org.fiz.ise.gwifi.util.MapUtil;
 import org.fiz.ise.gwifi.util.Print;
 
 import edu.kit.aifb.gwifi.annotation.Annotation;
@@ -21,9 +25,221 @@ import edu.kit.aifb.gwifi.model.Category;
 import edu.kit.aifb.gwifi.service.NLPAnnotationService;
 
 public class ReadDataset {
-	private static Map<Category, Integer> numberOfSamplesPerCategory = new ConcurrentHashMap<>();
+	private static Map<Article, Integer> numberOfSamplesPerCategory = new ConcurrentHashMap<>();
+	private static final String DATASET_TRAIN_MR_POS = Config.getString("DATASET_TRAIN_MR_POS","");
 
-	//We assign the label of the dataset to a Wikipedia entity not a category
+
+	public static List<String> read_trec_dataset_per_cat(String c) {
+		try {
+			List<String> dataset = new ArrayList<>();
+			List<String> lines = FileUtils.readLines(new File(DATASET_TRAIN_MR_POS), "utf-8");
+			String[] arrLines = new String[lines.size()];
+			arrLines = lines.toArray(arrLines);
+			for (int i = 0; i < arrLines.length; i++) {
+				String[] split = arrLines[i].split(" ",2);
+				String sentence=split[1];
+				String mainLabel=split[0].split(":")[0];
+				if (mainLabel.equals(c)) {
+					dataset.add(sentence);
+				}
+			}
+			System.out.println("Number of samples:"+dataset.size()+", category: "+c);
+			return dataset;
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return null;
+	}
+	public static Map<String, List<Article>> read_trec_dataset_aLabel(String datasetName) {
+		Map<String, List<Article>> result = new HashMap<String, List<Article>>();
+		try {
+			List<String> lines = FileUtils.readLines(new File(datasetName), "utf-8");
+			for(String line : lines) {
+				String[] split = line.split(" ",2);
+				String sentence=split[1];
+				String mainLabel=split[0].split(":")[0];
+				List<Article> t = new ArrayList<Article>();
+				t.add(LabelsOfTheTexts.getLables_TREC_article().get(mainLabel));
+				result.put(sentence, t);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		System.out.println("Size of the trec dataset:"+result.size());
+		return result;
+	}
+	public static Map<String, String> read_trec_dataset(String datasetName) {
+		Map<String, String> result = new HashMap<String, String>();
+		try {
+			List<String> lines = FileUtils.readLines(new File(datasetName), "utf-8");
+			for(String line : lines) {
+				//				
+				//				if (result.containsKey(split[1])) {
+				//					System.out.println(split[1]);
+				//				}
+				//				result.put(split[1], split[0]);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		System.out.println("Size of the trec dataset:"+result.size());
+		return result;
+	}
+
+	public static List<String> read_dataset_DBP_BasedOnLabel(String fileName, Article a) {
+		List<String> dataset = new ArrayList<>();
+		Map<Integer, Article> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_DBP_article());
+		try {
+			List<String> lines = FileUtils.readLines(new File(fileName), "utf-8");
+			String[] arrLines = new String[lines.size()];
+			arrLines = lines.toArray(arrLines);
+			int i=0;
+			for (i = 0; i < arrLines.length; i++) {
+				String[] split = arrLines[i].split(",\"");
+				String label = split[0];
+				if (mapLabel.containsKey(Integer.valueOf(label))) {
+					if (a.equals(mapLabel.get(Integer.valueOf(label)))) {
+						String title = split[1].replace("\"", "");
+						String description = split[2].replace("\"", "").trim();
+						dataset.add(title+" "+description);
+					}
+				}
+				else {
+					System.out.println("ERROR the dataset does not contain the predefined label");
+					System.exit(1);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		System.out.println("Size of the dataset label: "+a.getTitle()+": "+dataset.size());
+		return dataset;
+	}
+	public static Map<String,List<Article>> read_dataset_Doc2Vec_categorized(Dataset dName, String fileName) {
+		Map<String,List<Article>> dataset = new HashMap<>();
+		String eL=null;
+		try {
+			if (dName.equals(Dataset.DBpedia)) {
+				List<String> lines = FileUtils.readLines(new File(fileName), "utf-8");
+				for(String line : lines) {
+					eL=line;
+					List<Article> gtList = new ArrayList<>(); 
+					String[] split = line.split("\t");
+					gtList.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(split[1]));
+					dataset.put(split[0], gtList);
+				}
+			}
+		} catch (Exception e) {
+			System.out.println("Exception with the line:"+eL);
+			e.printStackTrace();
+
+		}
+		System.out.println("Size of the DBpedia datset read_dataset_Doc2Vec_categorized : "+dataset.size());
+		return dataset;
+	}
+
+	public static Map<String,List<Article>> read_dataset_DBPedia_SampleLabel(String fileName) {
+		Map<String,List<Article>> dataset = new HashMap<>();
+		Map<Integer, Article> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_DBP_article());
+		String eLine=null;
+		try {
+			List<String> lines = FileUtils.readLines(new File(fileName), "utf-8");
+			String[] arrLines = new String[lines.size()];
+			arrLines = lines.toArray(arrLines);
+			int i=0;
+			for (i = 0; i < arrLines.length; i++) {
+				eLine=arrLines[i];
+				List<Article> gtList = new ArrayList<>(); 
+				String[] split = arrLines[i].split(",\"");
+				String label = split[0];
+				if (mapLabel.containsKey(Integer.valueOf(label))&&split.length==3) {
+					gtList.add(mapLabel.get(Integer.valueOf(label)));
+					String title = split[1].replace("\"", "");
+					String description = split[2].replace("\"", "").trim();
+					dataset.put(title+" "+description, gtList);
+				}
+				else if (mapLabel.containsKey(Integer.valueOf(label))&&split.length==2) {
+					gtList.add(mapLabel.get(Integer.valueOf(label)));
+					String title = split[1].replace("\"", "");
+					dataset.put(title, gtList);
+				}
+				else {
+					System.out.println("ERROR the dataset does not contain the predefined label");
+					System.exit(1);
+				}
+			}
+		} catch (Exception e) {
+			System.out.println("Exception with the line:"+eLine);
+			e.printStackTrace();
+
+		}
+		System.out.println("read_dataset_DBPedia_SampleLabel: Size of the DBpedia datset: "+dataset.size());
+		return dataset;
+	}
+
+	public static List<String> read_dataset_Yahoo_BasedOnLabel(String fileName, int labelID) {
+		List<String> dataset = new ArrayList<>();
+		Map<Integer, Article> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_Yahoo_article());
+		try {
+			List<String> lines = FileUtils.readLines(new File(fileName), "utf-8");
+			for (String line: lines) {
+				String[] split = line.split("\",\"");
+				String label = split[0].replace("\"", "");
+				if (mapLabel.containsKey(Integer.valueOf(label))) {
+
+					if (labelID == Integer.valueOf(label)) {
+						String title = split[1].replace("\"", "").trim();
+						String question = split[2].replace("\"", "").trim();
+						String answer = split[3].replace("\"", "").trim();
+						dataset.add(title+" "+question+" "+answer);
+						//						dataset.add(title+" "+question);
+					}
+				}
+				else {
+					System.out.println("ERROR the dataset does not contain the predefined label");
+					System.exit(1);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println("Yahoo dataset "+mapLabel.get(labelID).getTitle()+" size:"+dataset.size());
+		return dataset;
+	}
+	public static Map<String,List<Article>> read_dataset_Yahoo_LabelArticle(String fileName) {
+		Map<String,List<Article>> dataset = new HashMap<>();
+		//Map<Integer, Article> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_Yahoo_article());
+		Map<Integer, String> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_Yahoo());
+		try {
+			List<String> lines = FileUtils.readLines(new File(fileName), "utf-8");
+			for (String line: lines) {
+				List<Article> gtList = new ArrayList<>(); 
+				String[] split = line.split("\",\"");
+				String label = split[0].replace("\"", "");
+				if (mapLabel.containsKey(Integer.valueOf(label))) {
+					String sLabels = mapLabel.get(Integer.valueOf(label));
+					String[] splitLabel = sLabels.split("-");
+					for (int i = 0; i < splitLabel.length; i++) {
+						gtList.add(WikipediaSingleton.getInstance().getArticle(splitLabel[i]));
+					}
+					String title = split[1].replace("\"", "").trim();
+					String question = split[2].replace("\"", "").trim();
+					String answer = split[3].replace("\"", "").trim();
+					dataset.put(title+" "+question+" "+answer, gtList);
+
+				}
+				else {
+					System.out.println("ERROR the dataset does not contain the predefined label");
+					System.exit(1);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println("Size of the Yahoo datset: "+dataset.size());
+		return dataset;
+	}
 
 	public static Map<String,List<Article>> read_dataset_AG_LabelArticle(AG_DataType type, String fileName) {
 		Map<String,List<Article>> dataset = new HashMap<>();
@@ -92,11 +308,11 @@ public class ReadDataset {
 				String label = split[0].replace("\"", "");
 				if (mapLabel.containsKey(Integer.valueOf(label))) {
 					if (label.equals("4")) {
-						numberOfSamplesPerCategory.put(mapLabel.get(4), numberOfSamplesPerCategory.getOrDefault(mapLabel.get(4), 0) + 1);
+						//numberOfSamplesPerCategory.put(mapLabel.get(4), numberOfSamplesPerCategory.getOrDefault(mapLabel.get(4), 0) + 1);
 						gtList.add(mapLabel.get(4));
 					}
 					else {
-						numberOfSamplesPerCategory.put(mapLabel.get(Integer.valueOf(label)), numberOfSamplesPerCategory.getOrDefault(mapLabel.get(Integer.valueOf(label)), 0) + 1);
+						//numberOfSamplesPerCategory.put(mapLabel.get(Integer.valueOf(label)), numberOfSamplesPerCategory.getOrDefault(mapLabel.get(Integer.valueOf(label)), 0) + 1);
 						gtList.add(mapLabel.get(Integer.valueOf(label)));
 					}
 					if (type==AG_DataType.TITLE) {
@@ -189,10 +405,11 @@ public class ReadDataset {
 		}
 		return dataset;
 	}
-	public static List<String> read_WEB(){
+
+	public static List<String> read_snippets(String fName){
 		try {
 			List<String> dataset = new ArrayList<>();
-			List<String> lines = FileUtils.readLines(new File(Config.getString("DATASET_TEST_WEB","")), "utf-8");
+			List<String> lines = FileUtils.readLines(new File(fName), "utf-8");
 			String[] arrLines = new String[lines.size()];
 			arrLines = lines.toArray(arrLines);
 			for (int i = 0; i < arrLines.length; i++) {
@@ -203,11 +420,11 @@ public class ReadDataset {
 			}
 			return dataset;
 		} catch (Exception e) {
-			// TODO: handle exception
+			System.out.println(e.getMessage());
 		}
 		return null;
 	}
-	public static List<String> read_WEB_BasedOnCategory(Category c,String file){
+	public static List<String> read_WEB_BasedOnCategory(String c,String file){
 		try {
 			List<String> dataset = new ArrayList<>();
 			List<String> lines = FileUtils.readLines(new File(file), "utf-8");
@@ -218,13 +435,50 @@ public class ReadDataset {
 				String[] split = arrLines[i].split(" ");
 				String label = split[split.length-1];
 				String snippet = arrLines[i].substring(0, arrLines[i].length()-(label).length()).trim();
-				if (label.contains(c.getTitle().toLowerCase())) {
+				if (label.contains(c.toLowerCase())) {
 					dataset.add(snippet);
 				}
 			}
 			return dataset;
 		} catch (Exception e) {
 			// TODO: handle exception
+		}
+		return null;
+	}
+	public static Map<String,List<Article>> read_dataset_Snippets(String fName) {
+		String[] arrLines = null;
+		Integer index=0;
+		try {
+			Map<String,List<Article>> dataset = new HashMap<>();
+			List<String> lines = FileUtils.readLines(new File(fName), "utf-8");
+			System.out.println("size of the file "+lines.size());
+			arrLines = new String[lines.size()];
+			arrLines = lines.toArray(arrLines);
+			for (int i = 0; i < arrLines.length; i++) {
+				index=i;
+				String[] split = arrLines[i].split(" ");
+				String label = split[split.length-1];
+				String snippet = arrLines[i].substring(0, arrLines[i].length()-(label).length()).trim();
+				List<Article> gtList = new ArrayList<>(); 
+
+				if (label.contains("-")) {
+					String[] splitLabel = label.split("-");
+					for (int j = 0; j < splitLabel.length; j++) {
+						gtList.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(StringUtils.capitalize(splitLabel[j])));
+						numberOfSamplesPerCategory.put(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(StringUtils.capitalize(splitLabel[j])), numberOfSamplesPerCategory.getOrDefault(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(StringUtils.capitalize(splitLabel[j])), 0) + 1);
+					}
+				}
+				else{
+					gtList.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(StringUtils.capitalize(label)));
+					numberOfSamplesPerCategory.put(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(StringUtils.capitalize(label)), numberOfSamplesPerCategory.getOrDefault(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(StringUtils.capitalize(label)), 0) + 1);
+				}
+				dataset.put(snippet, gtList);
+			}
+			Print.printMap(numberOfSamplesPerCategory);
+			return dataset;
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			System.out.println(arrLines[index]);
 		}
 		return null;
 	}

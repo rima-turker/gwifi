@@ -104,7 +104,7 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 		}
 		return null;
 	}
-	
+
 	public static Article getBestMatchingArticleFromWordVectorModel_(Dataset dname, List<Article> labels, String shortText, List<Article> gtList) {
 		try {
 			Map<Article, Double> mapScore = new HashMap<>();
@@ -119,14 +119,14 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 						//amainCatAbstract = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Politician").getFirstParagraphMarkup();
 						amainCatAbstract ="Politician";
 					}
-//					else if (amainCat.getTitle().equals("Educational institution")) {
-//						amainCatAbstract="School College Library University";
-//					}
+					//					else if (amainCat.getTitle().equals("Educational institution")) {
+					//						amainCatAbstract="School College Library University";
+					//					}
 					else {
-//					amainCatAbstract = amainCat.getFirstParagraphMarkup();
+						//					amainCatAbstract = amainCat.getFirstParagraphMarkup();
 						amainCatAbstract = amainCat.getTitle();
 					}
-					
+
 				}
 				tokensStr = new ArrayList<String>(StringUtil.tokinizeString(StringUtil.removePuntionation(amainCatAbstract)));
 				double[] labelVector = VectorUtil.getSentenceVector(tokensStr, GoogleModelSingleton.getInstance().google_model);
@@ -134,7 +134,7 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 				strB.append(amainCat.getTitle()+": "+score+"\n");
 				mapScore.put(amainCat, score);
 			}
-			
+
 			Map<Article, Double> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(mapScore));
 			Article firstElement = MapUtil.getFirst(sortedMap).getKey();
 			secondLOG.info(strB.toString());
@@ -548,10 +548,21 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 			for (Article amainCat : labels) { //iterate over categories and calculate a score for each of them
 				double score = 0.0; 
 				for (String a : lstAnnotationIDs) {
-					double tempScore=0;
-					tempScore=get_article_similarity_clean(dname,Integer.valueOf(a) ,amainCat);
-					if (!Double.isNaN(tempScore)) {
-						score +=tempScore ;
+					if (dname.equals(Dataset.WEB_SNIPPETS)) {
+						if (!AnnonatationUtil.getEntityBlackList_WebSnippets().contains(Integer.valueOf(a))) {
+							double tempScore=0;
+							tempScore=get_article_similarity_clean(dname,Integer.valueOf(a) ,amainCat);
+							if (!Double.isNaN(tempScore)) {
+								score +=tempScore ;
+							}
+						}
+					}
+					else {
+						double tempScore=0;
+						tempScore=get_article_similarity_clean(dname,Integer.valueOf(a) ,amainCat);
+						if (!Double.isNaN(tempScore)) {
+							score +=tempScore ;
+						}
 					}
 				}
 				strBuild.append(amainCat+": "+score+"\n");
@@ -563,7 +574,7 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 				return null;
 			}
 			strBuild.append("\n\n");
-			
+
 			secondLOG.info(strBuild.toString());
 			return firstElement;
 		}
@@ -573,11 +584,11 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 		}
 		return null;
 	}
-	
+
 	public static double get_word_similarity(Dataset dSet,String word, String label) {
+		List<String> enrich = new ArrayList<String>();
 		if (dSet.equals(Dataset.DBpedia)) {
 			try {
-				List<String> enrich = new ArrayList<String>();
 				if(label.equals("Company")){
 					enrich = new ArrayList<String>();
 					enrich.add("company");
@@ -667,15 +678,50 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 			}
 
 		}
-//		if (dSet.equals(Dataset.WEB_SNIPPETS)) {
-//			return LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(articleID),String.valueOf(cArticle.getId()));
-//		}
+		if (dSet.equals(Dataset.WEB_SNIPPETS)) {
+			if (label.equalsIgnoreCase("Computer")) {
+				enrich.add("Software");
+				enrich.add("Computer");
+			}
+			else if (label.equalsIgnoreCase("Culture")||label.equalsIgnoreCase("The arts") || label.equalsIgnoreCase("Entertainment")) {
+				enrich.add("music");
+				//				enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Lyrics").getId()));
+				//				enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("The arts").getId()));
+				//				enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Book").getId()));
+			}
+			else if (label.equalsIgnoreCase("Education")||label.equalsIgnoreCase("Science")) {
+				enrich.add("science");
+				enrich.add("research");
+				enrich.add("theory");
+			}
+			else if (label.equalsIgnoreCase("Engineering")) {
+				enrich.add("car");
+			}
+			else if (label.equalsIgnoreCase("Health")) {
+				enrich.add("disease");
+				enrich.add("drug");
+			}
+			else {
+				enrich.add(label.toLowerCase());
+			}
+			double score =0.0;
+			double size =0.0;
+			for (String a : enrich) {
+				double tempScore=0;
+				tempScore=GoogleModelSingleton.getInstance().google_model.similarity(a, word);
+				if (!Double.isNaN(tempScore)) {
+					score +=tempScore ;
+					size+=1.0;
+				}
+			}
+			return score/size;		
+		}
 		return 0.0;
 	}
 	public static double get_article_similarity_clean(Dataset dSet,int articleID, Article cArticle) {
 		if (dSet.equals(Dataset.DBpedia)) {
 			String fName="/home/rima/playground/GeneralFiles/gwifi/Dataset_ShortTextClassification/dbpedia_csv/dbp_sub_classes/";
-//			String fName="/home/rtue/Desktop/";
+			//			String fName="/home/rtue/Desktop/";
 			try {
 				List<String> enrich = new ArrayList<String>();
 				int cleanAnnotation =AnnonatationUtil.getCorrectAnnotation_DBp(articleID);
@@ -683,18 +729,18 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 					enrich = new ArrayList<String>();
 					enrich.add(String.valueOf(cArticle.getId()));
 
-//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Winery").getId()));
-//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Record Label").getId()));
-//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Law Firm").getId()));
-//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Caterer").getId()));
-//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Brewery").getId()));
-//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Bank").getId()));
-//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Airline").getId()));
-//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Publisher").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Winery").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Record Label").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Law Firm").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Caterer").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Brewery").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Bank").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Airline").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Publisher").getId()));
 				}
 				else if(cArticle.getTitle().equals("Educational institution")){
 					enrich = new ArrayList<String>();
-//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Education").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Education").getId()));
 
 
 					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("School").getId()));
@@ -709,15 +755,15 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 					enrich.add(String.valueOf(cArticle.getId()));
 
 
-//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Sculptor").getId()));
-//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Photographer").getId()));
-//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Painter").getId()));
-//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Musical artist").getId()));
-//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Humorist").getId()));
-//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Fashion Designer").getId()));
-//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Dancer").getId()));
-//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Comedian").getId()));
-//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Actor").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Sculptor").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Photographer").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Painter").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Musical artist").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Humorist").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Fashion Designer").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Dancer").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Comedian").getId()));
+					//					enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Actor").getId()));
 
 
 					//				enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Writer").getId()));
@@ -730,12 +776,12 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 				else if(cArticle.getTitle().equals("Athlete")){
 					enrich.add(String.valueOf(cArticle.getId()));
 
-//					List<String> lines = FileUtils.readLines(new File(fName+"Athlete_sub_classes.txt"), "utf-8");
-//					for(String str:lines) {
-//						if (WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str)!=null) {
-//							enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str).getId()));
-//						}
-//					}
+					//					List<String> lines = FileUtils.readLines(new File(fName+"Athlete_sub_classes.txt"), "utf-8");
+					//					for(String str:lines) {
+					//						if (WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str)!=null) {
+					//							enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str).getId()));
+					//						}
+					//					}
 
 				}
 				else if(cArticle.getTitle().equals("Office-holder")){
@@ -791,21 +837,21 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 					List<String> lines = FileUtils.readLines(new File(fName+"Animal_sub_classes.txt"), "utf-8");
 					enrich.add(String.valueOf(cArticle.getId()));
 
-//					for(String str:lines) {
-//						if (WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str)!=null) {
-//							enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str).getId()));
-//						}
-//					}
+					//					for(String str:lines) {
+					//						if (WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str)!=null) {
+					//							enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str).getId()));
+					//						}
+					//					}
 				}
 				else if(cArticle.getTitle().equals("Plant")){
 					List<String> lines = FileUtils.readLines(new File(fName+"Plant_sub_classes.txt"), "utf-8");
 					enrich.add(String.valueOf(cArticle.getId()));
 
-//					for(String str:lines) {
-//						if (WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str)!=null) {
-//							enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str).getId()));
-//						}
-//					}
+					//					for(String str:lines) {
+					//						if (WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str)!=null) {
+					//							enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str).getId()));
+					//						}
+					//					}
 				}
 				else if(cArticle.getTitle().equals("Album")){
 
@@ -816,14 +862,14 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 					enrich.add(String.valueOf(cArticle.getId()));
 				}
 				else if(cArticle.getTitle().equals("Writing")){
-//					List<String> lines = FileUtils.readLines(new File(fName+"Writing_sub_classes.txt"), "utf-8");
+					//					List<String> lines = FileUtils.readLines(new File(fName+"Writing_sub_classes.txt"), "utf-8");
 					enrich.add(String.valueOf(cArticle.getId()));
 
-//					for(String str:lines) {
-//						if (WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str)!=null) {
-//							enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str).getId()));
-//						}
-//					}
+					//					for(String str:lines) {
+					//						if (WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str)!=null) {
+					//							enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(str).getId()));
+					//						}
+					//					}
 				}
 				else {
 					System.out.println("Entity title is not matching");
@@ -847,8 +893,50 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 			}
 
 		}
-		if (dSet.equals(Dataset.WEB_SNIPPETS)) {
-			return LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(articleID),String.valueOf(cArticle.getId()));
+		else if (dSet.equals(Dataset.WEB_SNIPPETS)) {
+			List<String> enrich = new ArrayList<String>();
+
+			if (cArticle.getTitle().equalsIgnoreCase("Computer")) {
+				enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Software").getId()));
+				enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Computer").getId()));
+			}
+			else if (cArticle.getTitle().equalsIgnoreCase("Culture")||cArticle.getTitle().equalsIgnoreCase("The arts") || cArticle.getTitle().equalsIgnoreCase("Entertainment")) {
+				enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Music").getId()));
+				//				enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Lyrics").getId()));
+				//				enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("The arts").getId()));
+				//				enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Book").getId()));
+			}
+			else if (cArticle.getTitle().equalsIgnoreCase("Education")||cArticle.getTitle().equalsIgnoreCase("Science")) {
+				enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Science").getId()));
+				enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Research").getId()));
+				enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Theory").getId()));
+			}
+			else if (cArticle.getTitle().equalsIgnoreCase("Engineering")) {
+				enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Automotive industry").getId()));
+			}
+			else if (cArticle.getTitle().equalsIgnoreCase("Health")) {
+				enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Disease").getId()));
+				enrich.add(String.valueOf(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Drug").getId()));
+			}
+
+			else {
+				if (enrich.size()==0) {
+					return LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(articleID),String.valueOf(cArticle.getId()));
+				}
+			}
+
+			double score =0.0;
+			double size =0.0;
+			for (String a : enrich) {
+				double tempScore=0;
+				tempScore=LINE_modelSingleton.getInstance().lineModel.similarity(String.valueOf(articleID),String.valueOf(a));
+				if (!Double.isNaN(tempScore)) {
+					score +=tempScore ;
+					size+=1.0;
+				}
+			}
+			return score/size;
+
 		}
 		return 0.0;
 	}

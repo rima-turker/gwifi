@@ -17,6 +17,46 @@ import edu.kit.aifb.gwifi.model.Wikipedia;
 public class LabelsOfTheTexts {
 	private static Wikipedia wikipedia = WikipediaSingleton.getInstance().wikipedia;
 	
+	public static Map<Integer, Article> getLables_Yahoo_article()
+	{
+		Map<Integer, Article> mapLabel = new HashMap<>();
+		mapLabel.put(1, wikipedia.getArticleByTitle("Society"));
+		mapLabel.put(2, wikipedia.getArticleByTitle("Science"));
+		mapLabel.put(3, wikipedia.getArticleByTitle("Health"));
+		mapLabel.put(4, wikipedia.getArticleByTitle("Education"));
+		mapLabel.put(5, wikipedia.getArticleByTitle("Computers"));
+		mapLabel.put(6, wikipedia.getArticleByTitle("Sports"));
+		mapLabel.put(7, wikipedia.getArticleByTitle("Business"));
+		mapLabel.put(8, wikipedia.getArticleByTitle("Entertainment"));
+		mapLabel.put(9, wikipedia.getArticleByTitle("Family"));
+		mapLabel.put(10, wikipedia.getArticleByTitle("Politics"));
+		return mapLabel;
+	}
+	
+	
+	//Company, EducationalInstitution, Artist, Athlete,OfficeHolder,MeanOfTransportation,Building,NaturalPlace
+	//Village,Animal,Plant,	Album,Film,WrittenWork
+	
+	public static Map<Integer, Article> getLables_DBP_article()
+	{
+		Map<Integer, Article> mapLabel = new HashMap<>();
+		mapLabel.put(1, wikipedia.getArticleByTitle("Company"));
+		mapLabel.put(2, wikipedia.getArticleByTitle("Educational institution"));
+		mapLabel.put(3, wikipedia.getArticleByTitle("Artist"));
+		mapLabel.put(4, wikipedia.getArticleByTitle("Athlete"));
+		mapLabel.put(5, wikipedia.getArticleByTitle("Office Holder"));
+		mapLabel.put(6, wikipedia.getArticleByTitle("Transport"));
+		mapLabel.put(7, wikipedia.getArticleByTitle("Building"));
+		mapLabel.put(8, wikipedia.getArticleByTitle("Natural environment"));
+		mapLabel.put(9, wikipedia.getArticleByTitle("Village"));
+		mapLabel.put(10, wikipedia.getArticleByTitle("Animal"));
+		mapLabel.put(11, wikipedia.getArticleByTitle("Plant"));
+		mapLabel.put(12, wikipedia.getArticleByTitle("Album"));
+		mapLabel.put(13, wikipedia.getArticleByTitle("Film"));
+		mapLabel.put(14, wikipedia.getArticleByTitle("Writing"));
+		return mapLabel;
+		
+	}
 	public static Map<String, Article> getLables_TREC_article()
 	{
 		Map<String, Article> mapLabel = new HashMap<>();

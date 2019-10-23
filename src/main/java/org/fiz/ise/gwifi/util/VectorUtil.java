@@ -50,23 +50,70 @@ public class VectorUtil {
         }
         return result;
     }
-	
 	public static double[] getSentenceVector(List<String> words, Word2Vec model) {        
-        INDArray a = null;
-        try{
-            a = model.getWordVectorsMean(words);
-        }catch(Exception e) {
-        	System.out.println("I am in getSentenceVector exception "+words +" "+words.size()+" "+a);
-        	e.printStackTrace();
-        	System.exit(1);
-            return null;
-        }
-        int cols = a.columns();
-        double[] result = new double[cols];
-        for(int i=0;i<cols;i++) {
-            result[i] = a.getDouble(i);
-        }
-        return result;
-    }
+		if (words.size()==1) {
+			return model.getWordVector(words.get(0));
+		}
+		INDArray a = null;
+		try{
+			a = model.getWordVectorsMean(words);
+		}catch(Exception e) {
+			System.out.println(words);
+			System.out.println("words size :" +words.size());
+			System.out.println("Could not obtain the sentence vector");
+			e.printStackTrace();
+			return null;
+		}
+		int cols = a.columns();
+		double[] result = new double[cols];
+		for(int i=0;i<cols;i++) {
+			result[i] = a.getDouble(i);
+		}
+		return result;
+	}
+	
+	public static double[] getSentenceVector(String sentence, Word2Vec model) {        
+		List<String> words = SentenceSegmentator.tokenizeSentence(sentence);
+		if (words.size()==1) {
+			return model.getWordVector(words.get(0));
+		}
+		INDArray a = null;
+		try{
+			a = model.getWordVectorsMean(words);
+		}catch(Exception e) {
+			System.out.println(words);
+			e.printStackTrace();
+			return null;
+		}
+		int cols = a.columns();
+		double[] result = new double[cols];
+		for(int i=0;i<cols;i++) {
+			result[i] = a.getDouble(i);
+		}
+		return result;
+	}
+	public static double getSimilarity2Vecs(double[] docVec,double[] wordVec) {
+		if (docVec!=null && wordVec!=null) {
+			return VectorUtil.cosineSimilarity(docVec, wordVec);
+		}
+		return 0;
+	}
+//	public static double[] getSentenceVector(List<String> words, Word2Vec model) {        
+//        INDArray a = null;
+//        try{
+//            a = model.getWordVectorsMean(words);
+//        }catch(Exception e) {
+//        	System.out.println("I am in getSentenceVector exception "+words +" "+words.size()+" "+a);
+//        	e.printStackTrace();
+//        	System.exit(1);
+//            return null;
+//        }
+//        int cols = a.columns();
+//        double[] result = new double[cols];
+//        for(int i=0;i<cols;i++) {
+//            result[i] = a.getDouble(i);
+//        }
+//        return result;
+//    }
 
 }

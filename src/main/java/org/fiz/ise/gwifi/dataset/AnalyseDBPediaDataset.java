@@ -45,11 +45,16 @@ public class AnalyseDBPediaDataset {
 	public static  List<Article> lstFilter;// = new ArrayList<Article>(
 	//		      Arrays.asList(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Natural environment"),
 	//		    		  WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Building")));
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		long start = TimeUtil.getStart();
 		
 		System.out.println("Running DBpedia analyses");
 		lstFilter = new ArrayList<Article>(LabelsOfTheTexts.getLables_DBP_article().values());
+		AssignLabelsBasedOnConfVecSimilarity assign = new AssignLabelsBasedOnConfVecSimilarity();
+		
+		assign.generateDatasetBasedOnConfidenceForEachModel(Dataset.DBpedia);
+//		assign.generateDatasetOneHotEncoding(Dataset.DBpedia, DATASET_DBP_TRAIN);
+		
 		
 		for(Article a : lstFilter) {
 //			findWordFreq(a);
@@ -57,9 +62,9 @@ public class AnalyseDBPediaDataset {
 //			AnalyseDataset.findMostSimilarWordsForDatasetBasedOnDatasetVector(read_dataset_DBP_BasedOnLabel,"dbpedia_"+a.getTitle()+"mostsimilarwords_datasetVec.txt");
 		}
 		
-				AnalyseDataset.compareTwoFiles(Dataset.DBpedia, DATASET_DBP_TRAIN, DATASET_DBP_TRAIN_CATEGORIZED_LINE);
-				AnalyseDataset.compareTwoFiles(Dataset.DBpedia, DATASET_DBP_TRAIN, DATASET_DBP_TRAIN_CATEGORIZED_GOOGLE);
-				AnalyseDataset.compareTwoFiles_d2vec(Dataset.DBpedia, DATASET_DBP_TRAIN, DATASET_DBP_TRAIN_CATEGORIZED_D2Vec);
+//				AnalyseDataset.compareTwoFiles(Dataset.DBpedia, DATASET_DBP_TRAIN, DATASET_DBP_TRAIN_CATEGORIZED_LINE);
+//				AnalyseDataset.compareTwoFiles(Dataset.DBpedia, DATASET_DBP_TRAIN, DATASET_DBP_TRAIN_CATEGORIZED_GOOGLE);
+//				AnalyseDataset.compareTwoFiles_d2vec(Dataset.DBpedia, DATASET_DBP_TRAIN, DATASET_DBP_TRAIN_CATEGORIZED_D2Vec);
 		
 		
 		//		AssignLabelsBasedOnVecSimilarity assign = new AssignLabelsBasedOnVecSimilarity();
@@ -148,12 +153,17 @@ public class AnalyseDBPediaDataset {
 			}
 		}
 		else if (dName.equals(Dataset.WEB_SNIPPETS)) {
-			System.out.println("Start Categorizing Web Snippets dataset");
+			System.out.println("Start Categorizing Web Snippets dataset:"+fName);
+			
 			map_dbp_annotations_sentences = read_annotations_sentences(Dataset.WEB_SNIPPETS, fName);
 			lstFilter = new ArrayList<Article>(Categories.getLabels_Snippets());
 		}
 		GenerateDatasetForNN generate = new GenerateDatasetForNN();
-		
+		if (model.equals(EmbeddingModel.GOOGLE)&&dName.equals(Dataset.WEB_SNIPPETS)) {
+			System.out.println("The name of the dataset is "+Dataset.WEB_SNIPPETS.name()+" the model: "+EmbeddingModel.GOOGLE.name());
+			GoogleModelSingleton.getInstance();
+			generate.labelTrainSetParalel(EmbeddingModel.GOOGLE, Dataset.WEB_SNIPPETS,lstFilter);
+		}
 		if (model.equals(EmbeddingModel.LINE_Ent_Ent)&&dName.equals(Dataset.WEB_SNIPPETS)) {
 			LINE_modelSingleton.getInstance();
 			generate.labelAnnotatedTrainSetParalel(EmbeddingModel.LINE_Ent_Ent, Dataset.WEB_SNIPPETS, map_dbp_annotations_sentences,lstFilter);

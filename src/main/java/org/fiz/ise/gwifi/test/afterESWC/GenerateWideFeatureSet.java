@@ -28,7 +28,7 @@ import org.deeplearning4j.parallelism.ConcurrentHashSet;
 import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.ReadDataset;
-import org.fiz.ise.gwifi.dataset.assignLabels.AssignLabelsBasedOnVecSimilarity;
+import org.fiz.ise.gwifi.dataset.assignLabels.AssignLabelsBasedOnConfVecSimilarity;
 import org.fiz.ise.gwifi.model.AG_DataType;
 import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.util.AnnonatationUtil;
@@ -64,7 +64,7 @@ public class GenerateWideFeatureSet {
 	private static SynchronizedCounter synCountNumberOfEntityPairs;
 	private static SynchronizedCounter synCountNumberOfEntityPairs_test;
 	static final Integer i_filter =4;
-	AssignLabelsBasedOnVecSimilarity assigLabel = new AssignLabelsBasedOnVecSimilarity();
+	AssignLabelsBasedOnConfVecSimilarity assigLabel = new AssignLabelsBasedOnConfVecSimilarity();
 
 	public static void main(String[] args) throws Exception {
 
@@ -478,17 +478,17 @@ public class GenerateWideFeatureSet {
 		Map<String, Integer> map = new LinkedHashMap<>();
 		int index=0;
 		List<Integer> filter = new ArrayList<Integer>();
-		for (int i = 1; i<=i_filter; i++) {
-			filter.add(i);
-		}
+//		for (int i = 1; i<=i_filter; i++) {
+//			filter.add(i);
+//		}
 		try (BufferedReader br = Files.newBufferedReader(Paths.get(fileName))) {
 			String line;
 			while ((line = br.readLine()) != null) {
 				String[] split = line.split(separator);
-				if (filter.contains(Integer.parseInt(split[1]))) {
+//				if (filter.contains(Integer.parseInt(split[1]))) {
 					map.put(split[0],index);
 					index=index+1;
-				}
+//				}
 			}
 		} catch (IOException e) {
 			System.err.format("IOException: %s%n", e);

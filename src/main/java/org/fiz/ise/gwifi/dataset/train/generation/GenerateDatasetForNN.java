@@ -59,10 +59,9 @@ public class GenerateDatasetForNN {
 	private static final String DATASET_YAHOO_TRAIN = Config.getString("DATASET_YAHOO_TRAIN","");
 	private final static String TRAIN_SET_AG = Config.getString("DATASET_TRAIN_AG","");
 	private final static Double THRESHOLD = Config.getDouble("THRESHOLD",1.0);
-	private final static String TRAIN_SET_WEB = Config.getString("DATASET_TRAIN_WEB","");
 	private final static Integer NUMBER_OF_THREADS= Config.getInt("NUMBER_OF_THREADS",-1);
 	private static final String DATASET_DBP_TRAIN = Config.getString("DATASET_DBP_TRAIN","");
-	private static final String DATASET_TRAIN_SNIPPETS = Config.getString("DATASET_TRAIN_WEB","");
+	private static final String DATASET_TRAIN_SNIPPETS = Config.getString("DATASET_TRAIN_SNIPPETS","");
 	public static Map<String, String> mapRedirectPages;//= new HashMap<>(AnalysisEmbeddingandRedirectDataset.loadRedirectPages());
 
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
@@ -190,7 +189,7 @@ public class GenerateDatasetForNN {
 			}
 			else if (dname.equals(Dataset.WEB_SNIPPETS)) {
 				mapDataset = new HashMap<String, List<Article>>(ReadDataset.read_dataset_Snippets(DATASET_TRAIN_SNIPPETS));
-				System.out.println("Finished reading DBpedia data set size: "+mapDataset.size());
+				System.out.println("Finished reading WebSnippets data set size: "+mapDataset.size());
 			}
 			else {
 				System.out.println("The dataset is not in the list");
@@ -241,7 +240,6 @@ public class GenerateDatasetForNN {
 			else {
 				mapResultLabelAssignment.put(sentence, bestMatchingCategory);
 				mapCount.put(bestMatchingCategory.getTitle(), mapCount.getOrDefault(bestMatchingCategory.getTitle(), 0) + 1); 
-				listEstimated.add(bestMatchingCategory.getTitle()+"\t"+sentence);
 				String keyByValue=null;
 				if (dname.equals(Dataset.WEB_SNIPPETS)) {
 					if (bestMatchingCategory.getTitle().equalsIgnoreCase("Culture")||bestMatchingCategory.getTitle().equalsIgnoreCase("Art")||
@@ -255,8 +253,10 @@ public class GenerateDatasetForNN {
 						keyByValue="politics-society";
 					}
 					else {
-						keyByValue=bestMatchingCategory.getTitle();
+						keyByValue=bestMatchingCategory.getTitle().toLowerCase();
 					}
+					
+					listEstimated.add(keyByValue+"\t"+sentence);
 					resultLog.info(keyByValue+",\""+sentence+"\"");
 				}
 				else if (dname.equals(Dataset.DBpedia)) {
@@ -297,6 +297,9 @@ public class GenerateDatasetForNN {
 			}
 			else if(dname.equals(Dataset.DBpedia)) {
 				dataset = ReadDataset.read_dataset_DBPedia_SampleLabel(Config.getString("DATASET_DBP_TRAIN",""));
+			}
+			else if(dname.equals(Dataset.WEB_SNIPPETS)) {
+				dataset = ReadDataset.read_dataset_Snippets(Config.getString("DATASET_TRAIN_SNIPPETS",""));
 			}
 			int count =0;
 			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
@@ -346,8 +349,29 @@ public class GenerateDatasetForNN {
 				mapCount.put(bestMatchingCategory.getTitle(), mapCount.getOrDefault(bestMatchingCategory.getTitle(), 0) + 1); 
 				listEstimated.add(bestMatchingCategory.getTitle()+"\t"+description);
 
-				Integer keyByValue = MapUtil.getKeyByValue(LabelsOfTheTexts.getLables_DBP_article(),bestMatchingCategory);
-				resultLog.info(keyByValue+",\""+description+"\"");
+				String keyByValue=null;
+				if (dname.equals(Dataset.WEB_SNIPPETS)) {
+					if (bestMatchingCategory.getTitle().equalsIgnoreCase("Culture")||bestMatchingCategory.getTitle().equalsIgnoreCase("Art")||
+							bestMatchingCategory.getTitle().equalsIgnoreCase("Entertainment")){
+						keyByValue="culture-arts-entertainment";
+					}
+					else if (bestMatchingCategory.getTitle().equalsIgnoreCase("Education")||bestMatchingCategory.getTitle().equalsIgnoreCase("Science")) {
+						keyByValue="education-science";
+					}
+					else if(bestMatchingCategory.getTitle().equalsIgnoreCase("Politics")||bestMatchingCategory.getTitle().equalsIgnoreCase("Society")) {
+						keyByValue="politics-society";
+					}
+					else {
+						keyByValue=bestMatchingCategory.getTitle().toLowerCase();
+					}
+					
+					listEstimated.add(keyByValue+"\t"+description);
+					resultLog.info(keyByValue+",\""+description+"\"");
+				}
+				else if (dname.equals(Dataset.DBpedia)) {
+					keyByValue = String.valueOf(MapUtil.getKeyByValue(LabelsOfTheTexts.getLables_DBP_article(),bestMatchingCategory));
+					resultLog.info(keyByValue+",\""+description+"\"");
+				}
 
 				if (gtList.contains(bestMatchingCategory)) {
 					countCorrectSyn.increment();
@@ -449,6 +473,9 @@ public class GenerateDatasetForNN {
 				if (dName.equals(Dataset.DBpedia)) {
 					Integer keyByValue = MapUtil.getKeyByValue(LabelsOfTheTexts.getLables_DBP_article(), entry.getKey());
 					lst_result_to_write_file.add(keyByValue+",\""+s+"\"");
+				}
+				else if (dName.equals(Dataset.WEB_SNIPPETS)) {
+					
 				}
 				else {
 					if (entry.getKey().getTitle().equals("Sport")) {

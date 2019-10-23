@@ -8,6 +8,7 @@ public enum Dataset {
 	TREC,
 	MR,
 	DBpedia,
+	DBpedia_test,
 	DBLP,
 	YAHOO,
 	TWENTYNEWS,
