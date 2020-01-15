@@ -135,7 +135,13 @@ public class ReadDataset {
 			e.printStackTrace();
 
 		}
+		if (dataset.size()==0) {
+			System.out.println("Size of the DBpedia datset read_dataset_Doc2Vec_categorized : "+dataset.size());
+			System.out.println(dName+ " "+fileName);
+			System.exit(1);
+		}
 		System.out.println("Size of the DBpedia datset read_dataset_Doc2Vec_categorized : "+dataset.size());
+		System.out.println(dName+ " "+fileName);
 		return dataset;
 	}
 
@@ -161,6 +167,122 @@ public class ReadDataset {
 				}
 				else if (mapLabel.containsKey(Integer.valueOf(label))&&split.length==2) {
 					gtList.add(mapLabel.get(Integer.valueOf(label)));
+					String title = split[1].replace("\"", "");
+					dataset.put(title, gtList);
+				}
+				else {
+					System.out.println("ERROR the dataset does not contain the predefined label");
+					System.exit(1);
+				}
+			}
+		} catch (Exception e) {
+			System.out.println("Exception with the line:"+eLine);
+			e.printStackTrace();
+
+		}
+		if (dataset.size()==0) {
+			System.out.println("read_dataset_DBPedia_SampleLabel: Size of the DBpedia datset: "+dataset.size());
+			System.exit(1);
+		}
+		System.out.println("read_dataset_DBPedia_SampleLabel: Size of the DBpedia datset: "+dataset.size());
+		return dataset;
+	}
+	
+	public static Map<String,List<Category>> read_dataset_DBPedia_SampleLabel_with_Categories(String fileName) {
+		Map<String,List<Category>> dataset = new HashMap<>();
+		Map<Integer, Article> mapLabel = new HashMap<>(LabelsOfTheTexts.getLables_DBP_article());
+		String eLine=null;
+		try {
+			List<String> lines = FileUtils.readLines(new File(fileName), "utf-8");
+			String[] arrLines = new String[lines.size()];
+			arrLines = lines.toArray(arrLines);
+			int i=0;
+			for (i = 0; i < arrLines.length; i++) {
+				eLine=arrLines[i];
+				List<Category> gtList = new ArrayList<>(); 
+				String[] split = arrLines[i].split(",\"");
+				String label = split[0];
+				if (mapLabel.containsKey(Integer.valueOf(label))&&split.length==3) {
+					
+					Category c = null;
+					if (mapLabel.get(Integer.valueOf(label)).getTitle().equals("Company")) {
+						c = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Companies");
+					}
+					else if (mapLabel.get(Integer.valueOf(label)).getTitle().equals("Educational institution")) {
+						c = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Educational institutions");	
+					}
+					else if (mapLabel.get(Integer.valueOf(label)).getTitle().equals("Athlete")) {
+						c = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Athletic sports");	
+					}
+					else if (mapLabel.get(Integer.valueOf(label)).getTitle().equals("Office-holder")) {
+						c = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Office-holders");	
+					}
+					else if (mapLabel.get(Integer.valueOf(label)).getTitle().equals("Plant")) {
+						c = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Plants");
+					}
+					else if (mapLabel.get(Integer.valueOf(label)).getTitle().equals("Animal")) {
+						c = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Animals");
+					}
+					else if (mapLabel.get(Integer.valueOf(label)).getTitle().equals("Artist")) {
+						c = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Artists");
+					}
+					else if (mapLabel.get(Integer.valueOf(label)).getTitle().equals("Album")) {
+						c = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Albums");
+					}
+					else if (mapLabel.get(Integer.valueOf(label)).getTitle().equals("Village")) {
+						c = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Villages");
+					}
+					else {
+						c = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle(mapLabel.get(Integer.valueOf(label)).getTitle());
+					}
+					
+					if (c==null) {
+						System.out.println("Could not find the corresponding cat: "+mapLabel.get(Integer.valueOf(label)).getTitle());
+						System.exit(1);
+					}
+					gtList.add(c);
+					String title = split[1].replace("\"", "");
+					String description = split[2].replace("\"", "").trim();
+					dataset.put(title+" "+description, gtList);
+				}
+				else if (mapLabel.containsKey(Integer.valueOf(label))&&split.length==2) {
+					Category c = null;
+					if (mapLabel.get(Integer.valueOf(label)).getTitle().equals("Company")) {
+						c = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Companies");
+					}
+					else if (mapLabel.get(Integer.valueOf(label)).getTitle().equals("Educational institution")) {
+						c = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Educational institutions");	
+					}
+					else if (mapLabel.get(Integer.valueOf(label)).getTitle().equals("Athlete")) {
+						c = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Athletic sports");	
+					}
+					else if (mapLabel.get(Integer.valueOf(label)).getTitle().equals("Office-holder")) {
+						c = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Office-holders");	
+					}
+					else if (mapLabel.get(Integer.valueOf(label)).getTitle().equals("Plant")) {
+						c = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Plants");	
+					}
+					else if (mapLabel.get(Integer.valueOf(label)).getTitle().equals("Animal")) {
+						c = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Animals");
+					}
+					else if (mapLabel.get(Integer.valueOf(label)).getTitle().equals("Artist")) {
+						c = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Artists");
+					}
+					else if (mapLabel.get(Integer.valueOf(label)).getTitle().equals("Album")) {
+						c = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Albums");
+					}
+					else if (mapLabel.get(Integer.valueOf(label)).getTitle().equals("Village")) {
+						c = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Villages");
+					}
+					else {
+						c = WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle(mapLabel.get(Integer.valueOf(label)).getTitle());
+					}
+					
+					if (c==null) {
+						System.out.println("Could not find the corresponding cat: "+mapLabel.get(Integer.valueOf(label)).getTitle());
+						System.exit(1);
+					}
+					gtList.add(c);
 					String title = split[1].replace("\"", "");
 					dataset.put(title, gtList);
 				}
@@ -289,6 +411,7 @@ public class ReadDataset {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
+			System.out.println("File path: "+fileName);
 		}
 		return dataset;
 	}
@@ -445,6 +568,30 @@ public class ReadDataset {
 		}
 		return null;
 	}
+	public static List<String> read_dataset_Snippets_list(String fName) {
+		String[] arrLines = null;
+		Integer index=0;
+		try {
+			List<String> dataset = new ArrayList<>();
+			List<String> lines = FileUtils.readLines(new File(fName), "utf-8");
+			System.out.println("size of the file "+lines.size());
+			arrLines = new String[lines.size()];
+			arrLines = lines.toArray(arrLines);
+			for (int i = 0; i < arrLines.length; i++) {
+				index=i;
+				String[] split = arrLines[i].split(" ");
+				String label = split[split.length-1];
+				String snippet = arrLines[i].substring(0, arrLines[i].length()-(label).length()).trim();
+				dataset.add(snippet);
+			}
+			System.out.println("Size of the snippets line: "+ dataset.size());
+			return dataset;
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			System.out.println(arrLines[index]);
+		}
+		return null;
+	}
 	public static Map<String,List<Article>> read_dataset_Snippets(String fName) {
 		String[] arrLines = null;
 		Integer index=0;
@@ -474,7 +621,7 @@ public class ReadDataset {
 				}
 				dataset.put(snippet, gtList);
 			}
-			Print.printMap(numberOfSamplesPerCategory);
+			//Print.printMap(numberOfSamplesPerCategory);
 			return dataset;
 		} catch (Exception e) {
 			System.out.println(e.getMessage());

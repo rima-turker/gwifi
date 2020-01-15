@@ -24,6 +24,7 @@ public class Categories {
 		switch (t) {
 		case AG:  return getCategories_Ag();
 		case WEB_SNIPPETS:  return getCategories_Web();
+		case DBpedia:  return LabelsOfTheTexts.getLabels_DBP_category();
 		case YAHOO:  return getCategories_Yahoo();
 		case DBLP: return getCategories_DBLP();
 		case TWENTYNEWS: return getCategories_20News();
@@ -36,18 +37,12 @@ public class Categories {
 		}
 	}
 	private static List<String> getCategories_Web() {
-//		final List<String> dummySeeds = Arrays.asList("Business","Computers","Culture","Arts","Entertainment","Education",
-//				"Science","Engineering","Health","Politics","Society","Sports");
-//		final List<String> dummySeeds = Arrays.asList("Business","Computer hardware","Computer networking","Culture","Arts","Entertainment","Education",
-//				"Science","Engineering","Health","Politics","Society","Sports");
-//		final List<String> dummySeeds = Arrays.asList("Business","Computer hardware","Culture","Arts","Entertainment","Hypotheses",
-//				"Science","Engineering","Health","Politics","Society","Sports");		
-//		final List<String> dummySeeds = Arrays.asList("Business","Computer hardware","Culture","Arts","Entertainment","Education",
-//				"Science","Engineering","Health","Politics","Society","Sports");
-		
-//		final List<String> dummySeeds = Arrays.asList("Business","Software","Music",
-//				"Science","Automotive industry","Health","Politics","Sports");
-		
+/*
+ * KBSTC
+ * final List<String> dummySeeds = Arrays.asList("Business","Computers","Culture","Arts","Entertainment","Education",
+				"Science","Engineering","Health","Politics","Society","Sports");
+ */
+//		********************************
 		final List<String> dummySeeds = Arrays.asList("Business","Computers","Culture","The arts","Entertainment","Education",
 				"Science","Engineering","Health","Politics","Society","Sports");
 		return Collections.unmodifiableList(dummySeeds);
@@ -67,6 +62,27 @@ public class Categories {
 		labels.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Society"));
 		labels.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Sports"));
 		return Collections.unmodifiableList(labels);
+	}
+	
+	public static Map<Integer, Category> getLables_DBpedia_category()
+	{
+		Map<Integer, Category> mapLabel = new HashMap<>();
+		mapLabel.put(1, WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Company"));
+		mapLabel.put(2, WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Educational institutions"));
+		mapLabel.put(3, WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Artist"));
+		mapLabel.put(4, WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Athlete"));
+		mapLabel.put(5, WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Office holders"));
+		mapLabel.put(6, WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Transport"));
+		mapLabel.put(7, WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Building"));
+		mapLabel.put(8, WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Natural environment"));
+		mapLabel.put(9, WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Village"));
+		mapLabel.put(10, WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Animal"));
+		mapLabel.put(11, WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Plant"));
+		mapLabel.put(12, WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Album"));
+		mapLabel.put(13, WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Film"));
+		mapLabel.put(14, WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Writing"));
+		return mapLabel;
+		
 	}
 	private static List<String> getCategories_YOVISTO() {
 		List<String> categoryList = new ArrayList<>(TestBasedonLongTextDatasets.getLstCategory());

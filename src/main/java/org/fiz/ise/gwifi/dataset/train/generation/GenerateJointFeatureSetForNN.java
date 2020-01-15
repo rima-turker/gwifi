@@ -21,6 +21,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.hadoop.mapred.IFile;
 import org.apache.log4j.Logger;
 import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
@@ -50,12 +51,17 @@ public class GenerateJointFeatureSetForNN {
 	private final static NLPAnnotationService service = AnnotationSingleton.getInstance().service;
 	private static final String DATASET_AG_TRAIN_ANNOTATIONS = Config.getString("DATASET_AG_TRAIN_ANNOTATIONS","");//"/home/rtue/eclipse-workspace/Resources/Datasets/ag_news_csv/ag_sentence_cat_entities_redirect_resolved";
 	private static final String DATASET_AG_TEST_ANNOTATIONS = Config.getString("DATASET_AG_TEST_ANNOTATIONS","");//"/home/rtue/eclipse-workspace/Resources/Datasets/ag_news_csv/ag_sentence_cat_entities_redirect_resolved";
-	
+
 	private static final String DATASET_DBP_TRAIN_ANNOTATIONS = Config.getString("DATASET_DBP_TRAIN_ANNOTATIONS","");//"/home/rtue/eclipse-workspace/Resources/Datasets/ag_news_csv/ag_sentence_cat_entities_redirect_resolved";
 	private static final String DATASET_DBP_TEST_ANNOTATIONS = Config.getString("DATASET_DBP_TEST_ANNOTATIONS","");//"/home/rtue/eclipse-workspace/Resources/Datasets/ag_news_csv/ag_sentence_cat_entities_redirect_resolved";
-	
+
 	private static final String DATASET_TEST_AG=Config.getString("DATASET_TEST_AG","");
 	private static final String DATASET_TEST_DBP=Config.getString("DATASET_DBP_TEST","");
+
+	private static final String DATASET_TRAIN_SNIPPETS = Config.getString("DATASET_TRAIN_SNIPPETS","");
+	private static final String DATASET_SNIPPETS_TRAIN_ANNOTATIONS = Config.getString("DATASET_SNIPPETS_TRAIN_ANNOTATIONS_2018","");
+	private static final String DATASET_SNIPPETS_TEST_ANNOTATIONS = Config.getString("DATASET_SNIPPETS_TEST_ANNOTATIONS_2018","");
+
 	private static SynchronizedCounter synCountNumberOfEntityPairs;
 	private static ExecutorService executor;
 	private final static Integer NUMBER_OF_THREADS= Config.getInt("NUMBER_OF_THREADS",-1);
@@ -70,53 +76,68 @@ public class GenerateJointFeatureSetForNN {
 	//	static Set<String,> overlappingPairs = new HashSet<String>();
 
 	public static void main(String[] args) throws Exception {
-		//		String f="/home/rima/playground/GeneralFiles/gwifi/Dataset_ShortTextClassification/ag_news_csv/ag_joint_features/ag_train_joint_features_entIDs";
-		//		List<String> lines = FileUtils.readLines(new File(f), "utf-8");
-		//		Set<String> s = new HashSet<String>();
-		//		for(String line : lines) {
-		//			String[] split = line.split(" ");
-		//			for (int i = 0; i < split.length; i++) {
-		//				s.add(split[i]);
-		//			}
-		//		}
-		//		System.out.println(s.size());
+
+		System.out.println("Running GenerateJointFeatureSetForNN");
 
 		GenerateJointFeatureSetForNN generete = new GenerateJointFeatureSetForNN();
-//		generete.findAllPossibleEntityPairs(DATASET_DBP_TEST_ANNOTATIONS);
-//
-//		Map<String, Integer> sortByValueDescending = MapUtil.sortByValueAscendingGeneric(mapAllEnitityPairs);
-//		System.out.println("mapAllEnitityOccurance train :"+mapAllEnitityPairs.size());
+		//generete.findAllPossibleEntityPairs(DATASET_SNIPPETS_TEST_ANNOTATIONS);
+		//System.out.println("DATASET_SNIPPETS_TRAIN_ANNOTATIONS Train set all possible entity pairs:"+mapAllEnitityPairs.size());
+
+		//FileUtil.writeDataToFile(mapAllEnitityPairs, "mapAllEnitityOccurance_snippets_test_filtered_black_and_numeric_2018.txt");
+
+		//Map<String, Integer> sortByValueDescending = MapUtil.sortByValueAscendingGeneric(mapAllEnitityPairs);
+		//System.out.println("mapAllEnitityOccurance train :"+mapAllEnitityPairs.size());
 		//		System.out.println("mapOverlappingPairs:"+mapOverlappingPairs.size());
 		//		FileUtil.writeDataToFile(sortByValueDescending, "mapAllEnitityOverlaping_ag_train_test_filtered_black_and_numeric");
-		//FileUtil.writeDataToFile(sortByValueDescending, "mapAllEnitityOccurance_dbpedia_test_filtered_black_and_numeric_2018.txt");
 
 
+		//		mapDataFromFileForIndexingMap_test = readDataFromFileForIndexingMap("mapAllEnitityOccurance_dbpedia_test_filtered_black_and_numeric_2018.txt", "\t");
+		//		mapDataFromFileForIndexingMap = readDataFromFileForIndexingMap("mapAllEnitityOccurance_dbpedia_train_filtered_black_and_numeric_2018.txt", "\t");
+
+		//		mapDataFromFileForIndexingMap_test = readDataFromFileForIndexingMap("mapAllEnitityOccurance_dbpedia_test_filtered_black_and_numeric_2018.txt", "\t");
+		//		mapDataFromFileForIndexingMap = readDataFromFileForIndexingMap("mapAllEnitityOccurance_dbpedia_train_filtered_black_and_numeric_2018.txt", "\t");
+
+
+		LINE_modelSingleton.getInstance();
+
+/*		
+		mapDataFromFileForIndexingMap_test = readDataFromFileForIndexingMap("mapAllEnitityOccurance_snippets_test_filtered_black_and_numeric_2018.txt", "\t");
+		mapDataFromFileForIndexingMap = readDataFromFileForIndexingMap("mapAllEnitityOccurance_snippets_train_filtered_black_and_numeric_2018.txt", "\t");
+
+		compare2EntityPairs(mapDataFromFileForIndexingMap,mapDataFromFileForIndexingMap_test );
+		generateJointFeaturesCid_C_Eid_S_Lc_train(Dataset.WEB_SNIPPETS, DATASET_SNIPPETS_TRAIN_ANNOTATIONS);
+
+
+				
 		mapDataFromFileForIndexingMap_test = readDataFromFileForIndexingMap("mapAllEnitityOccurance_dbpedia_test_filtered_black_and_numeric_2018.txt", "\t");
 		mapDataFromFileForIndexingMap = readDataFromFileForIndexingMap("mapAllEnitityOccurance_dbpedia_train_filtered_black_and_numeric_2018.txt", "\t");
 
-//		int countOnes=0;
-//		for(Entry<String, Integer> e: sortByValueDescending.entrySet()) {
-//			if (e.getValue()==1) {
-//				countOnes++;
-//			}
-//		}
-//		System.out.println("ones from test: "+countOnes);
-
-		//		secondLOG.info("countOnes: "+countOnes);
-		//		
-		
 		compare2EntityPairs(mapDataFromFileForIndexingMap,mapDataFromFileForIndexingMap_test );
-		//FileUtil.writeDataToFile(mapOverlappingPairsIndex, "mapAllEnitityOverlaping_ag_train_test_filtered_black_and_numeric");
-		
-		
-//		analyseCoocu();
-		generateJointFeaturesCid_C_Eid_S_Lc(Dataset.DBpedia, DATASET_DBP_TRAIN_ANNOTATIONS);
-//		generateJointFeaturesCid_C_Eid_S_Lc(Dataset.AG_test, DATASET_AG_TEST_ANNOTATIONS);
+		generateJointFeaturesCid_C_Eid_S_Lc_train(Dataset.DBpedia, DATASET_DBP_TRAIN_ANNOTATIONS);
+			
+*/
+ 
+		mapDataFromFileForIndexingMap_test = readDataFromFileForIndexingMap("mapAllEnitityOccurance_ag_test_filtered_black_and_numeric_2018.txt", "\t");
+		mapDataFromFileForIndexingMap = readDataFromFileForIndexingMap("mapAllEnitityOccurance_ag_train_filtered_black_and_numeric_2018.txt", "\t");
+
+		compare2EntityPairs(mapDataFromFileForIndexingMap,mapDataFromFileForIndexingMap_test );
+		generateJointFeaturesCid_C_Eid_S_Lc_train(Dataset.AG, DATASET_AG_TRAIN_ANNOTATIONS);
+
+		System.out.println("Total overlapping pairs: "+mapOverlappingPairsIndex.size());
+		System.out.println("Total overlapping pairs: "+mapOverlappingPairsIndex.size());
+
+		//		FileUtil.writeDataToFile(mapOverlappingPairsIndex, "mapAllEnitityOverlaping_snippets_train_test_filtered_black_and_numeric_2018.txt");
+
+
+		//		analyseCoocu();
+
+		//generateJointFeaturesCid_C_Eid_S_Lc_test(Dataset.WEB_SNIPPETS_test, DATASET_SNIPPETS_TEST_ANNOTATIONS);
+		//		generateJointFeaturesCid_C_Eid_S_Lc(Dataset.AG_test, DATASET_AG_TEST_ANNOTATIONS);
 		////		System.out.println("*****countOnes*******: "+countOnes);
 		////		FileUtil.writeDataToFile(setCountElementEntCooc, "setCountElementEntCooc.txt");
 
 	}
-	public static void analyseCoocu() {
+	public static void analyseCooc() {
 		int count_one_train=0;
 		int count_one_test=0;
 		int count_overlapping=0;
@@ -213,255 +234,291 @@ public class GenerateJointFeatureSetForNN {
 		System.out.println("Total overlapping pairs: "+mapOverlappingPairsIndex.size());
 	}
 
-	public static String getEntityCoocuranceFeature(List<Article> lstentities) {
+	public static String getEntityCoocuranceFeature(List<Article> lstentities, Dataset dName) {
 		StringBuilder strBuild = new StringBuilder();
 		List<Integer> lstId = new ArrayList<Integer>();
 		for(Article a : lstentities) {
-			if (!AnnonatationUtil.getEntityBlackList_AGNews().contains(a.getId())&&!StringUtil.isNumeric(a.getTitle())) {
-				lstId .add(a.getId());
-			}
+			lstId .add(a.getId());
 		}
 		Collections.sort(lstId); 
 		int count=0;
 		for (int i = 0; i < lstId.size(); i++) {
 			for (int j = i+1; j < lstId.size(); j++) {
 				String key = lstId.get(i)+"\t"+lstId.get(j);
-				if (mapOverlappingPairsIndex.containsKey(key)&&mapDataFromFileForIndexingMap_test.get(key)==1
-						&&mapDataFromFileForIndexingMap.get(key)==1) {
-//				if (mapOverlappingPairsIndex.containsKey(key)) {
-					String s=String.valueOf(lstId.get(i));
-					String s2=String.valueOf(lstId.get(j));
-					strBuild.append(s+"_"+s2+" ");
-					count++;
+				if (dName.equals(Dataset.AG) || dName.equals(Dataset.DBpedia) 
+						|| dName.equals(Dataset.AG_test) || dName.equals(Dataset.DBpedia_test)) {
+					if (mapOverlappingPairsIndex.containsKey(key)&&mapDataFromFileForIndexingMap_test.get(key)==1
+							&&mapDataFromFileForIndexingMap.get(key)==1) {
+						String s=String.valueOf(lstId.get(i));
+						String s2=String.valueOf(lstId.get(j));
+						strBuild.append(s+"_"+s2+" ");
+						count++;
+					}
+				}
+				else if (dName.equals(Dataset.WEB_SNIPPETS)||dName.equals(Dataset.WEB_SNIPPETS_test)) {				
+					if (mapOverlappingPairsIndex.containsKey(key)) {
+						String s=String.valueOf(lstId.get(i));
+						String s2=String.valueOf(lstId.get(j));
+						strBuild.append(s+"_"+s2+" ");
+						count++;
+					}
 				}
 			}	
-
 		}
 		setCountElementEntCooc.add(count);
 		return strBuild.toString().trim();
 	}
-	public static void generateJointFeaturesCid_C_Eid_S_Lc(Dataset dName,String fAnotationFile) throws Exception {
-		try {
-			int count=0;
-			int countIgnoredLines=0;
-			int countNoEntity=0;
-			List<String> samples = new LinkedList<String>();
-			List<String> catIds = new LinkedList<String>();
-			List<String> catNames = new LinkedList<String>();
-			List<String> entIDs = new LinkedList<String>();
-			List<String> entVecMean = new LinkedList<String>();
-			List<String> catVecMean = new LinkedList<String>();
-			List<String> entCoOc = new LinkedList<String>();
-			List<String> labels = new LinkedList<String>();
-			StringBuilder strB = null;
-			List<Article> lstentities = null;
 
-			if (dName.equals(Dataset.AG) || dName.equals(Dataset.DBpedia)) {
-				List<String> lines = FileUtils.readLines(new File(fAnotationFile));
-				System.out.println("Size of the file :"+lines.size());
-				long now = TimeUtil.getStart();
-				int countNullEnt=0;
-				for(String line : lines) {
-					String[] split = line.split("\t\t");
-					if (split.length==3) {
-						String sample = split[0];
-						String entities = split[2];
-						String[] splitEntity = entities.split("\t");
-						lstentities = new ArrayList<Article>();
-						strB = new StringBuilder();
-						for (int i = 0; i < splitEntity.length; i++) {
-							Article a = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(splitEntity[i]); 
-							if (a!=null && !AnnonatationUtil.getEntityBlackList_AGNews().contains(a.getId())&&!StringUtil.isNumeric(a.getTitle())) {
-								lstentities.add(a);
-								strB.append(a.getId()+" ");
-							}
-							else {
-								countNullEnt++;
-							}
-						}
-						String entityIDs = strB.toString().trim();
-						String entityCooc = getEntityCoocuranceFeature(lstentities); 
+	public static void generateJointFeaturesCid_C_Eid_S_Lc_train(Dataset dName,String fAnotationFile) throws Exception {
 
-						String categoryIDs = CategoryFeaturesForNN.getCategoryIDs(lstentities);
+		int count=0;
+		int countIgnoredLines=0;
+		int countNoEntity=0;
+		List<String> samples = new LinkedList<String>();
+		List<String> catIds = new LinkedList<String>();
+		List<String> catNames = new LinkedList<String>();
+		List<String> entIDs = new LinkedList<String>();
+		List<String> entVecMean = new LinkedList<String>();
+		List<String> catVecMean = new LinkedList<String>();
+		List<String> entCoOc = new LinkedList<String>();
+		List<String> labels = new LinkedList<String>();
+		StringBuilder strB = null;
+		List<Article> lstentities = null;
+		int countNullEnt=0;
+		List<String> lines = FileUtils.readLines(new File(fAnotationFile));
+		System.out.println("Size of the file for generating the joint features :"+lines.size());
 
-						String categoryNames = CategoryFeaturesForNN.getCategoryNames(lstentities);
+		for(String line : lines) {
+			String[] split = line.split("\t\t");
+			if (split.length==3) {
+				String sample = split[0];
+				String entities = split[2];
+				String[] splitEntity = entities.split("\t");
+				lstentities = new ArrayList<Article>();
+				strB = new StringBuilder();
 
-						String labelStr = AssignLabelsBasedOnConfVecSimilarity.getLabelBasedOnConfidence(dName, sample);
-						String entityVector=getEntityVecMean(lstentities);
-						String categoryVector=CategoryFeaturesForNN.getCategoryVec(lstentities);
-
-						if (labelStr!=null&&entityIDs.length()>1&&entityVector!=null&&categoryVector!=null&&categoryIDs.length()>1) {
-							entIDs.add(entityIDs);
-							samples.add(sample);
-							catIds.add(categoryIDs);
-							catNames.add(categoryNames);
-							labels.add(labelStr);
-							entCoOc.add(entityCooc);
-							entVecMean.add(entityVector);
-							catVecMean.add(categoryVector);
-						}
-						else {
-							//						System.exit(1);
-							//						System.out.println();
-							countIgnoredLines++;
-						}
-						System.out.println("Lines are processed: "+count++);
-						System.out.println("Lines are ignored: "+countIgnoredLines);
-					}
-					else {
-						countNoEntity++;
-					}
-				}
-				System.out.println("No entity:"+countNoEntity);
-				System.out.println("Count null entites: "+countNullEnt);
-				FileUtil.writeDataToFile(catIds, dName.name().toLowerCase()+"_train_joint_features_catIds",false);
-				FileUtil.writeDataToFile(catNames, dName.name().toLowerCase()+"_train_joint_features_catNames",false);
-				FileUtil.writeDataToFile(entIDs, dName.name().toLowerCase()+"_train_joint_features_entIDs",false);
-				FileUtil.writeDataToFile(samples, dName.name().toLowerCase()+"_train_joint_features_samples",false);
-				FileUtil.writeDataToFile(labels, dName.name().toLowerCase()+"_train_joint_features_labels",false);
-				FileUtil.writeDataToFile(entCoOc, dName.name().toLowerCase()+"_train_joint_features_entCooc",false);
-				FileUtil.writeDataToFile(entVecMean, dName.name().toLowerCase()+"_train_joint_features_entVecMean",false);
-				FileUtil.writeDataToFile(catVecMean, dName.name().toLowerCase()+"_train_joint_features_catVecMean",false);
-			} 
-			else if (dName.equals(Dataset.AG_test)){
-				List<String> lines = FileUtils.readLines(new File(fAnotationFile));
-				System.out.println("*********Size of the file******* :"+lines.size());
-				int countNullEnt=0;
-
-				for(String line : lines) {
-					String[] split = line.split("\t\t");
-					if (split.length==3) {
-						String sample = split[0];
-						String entities = split[2];
-						String[] splitEntity = entities.split("\t");
-						lstentities = new ArrayList<Article>();
-						strB = new StringBuilder();
-						for (int i = 0; i < splitEntity.length; i++) {
-							Article a = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(splitEntity[i]); 
-							if (a!=null && !AnnonatationUtil.getEntityBlackList_AGNews().contains(a.getId())&&!StringUtil.isNumeric(a.getTitle())) {
-								lstentities.add(a);
-								strB.append(a.getId()+" ");
-							}
-							else {
-								countNullEnt++;
-							}
-						}
-						String entityIDs = strB.toString().trim();
-
-						String entityCooc = getEntityCoocuranceFeature(lstentities); 
-
-						String categoryIDs = CategoryFeaturesForNN.getCategoryIDs(lstentities);
-
-						String categoryNames = CategoryFeaturesForNN.getCategoryNames(lstentities);
-
-						String labelStr = AssignLabelsBasedOnConfVecSimilarity.getOneHotEncodingLabel(dName,DATASET_TEST_AG, sample);
-
-						String entityVector=getEntityVecMean(lstentities);
-
-						String categoryVector=CategoryFeaturesForNN.getCategoryVec(lstentities);
-
-						if (labelStr!=null&&entityIDs.length()>1&&categoryIDs.length()>1) {
-							entIDs.add(entityIDs);
-							samples.add(sample);
-							catIds.add(categoryIDs);
-							catNames.add(categoryNames);
-							labels.add(labelStr);
-							entCoOc.add(entityCooc);
-							entVecMean.add(entityVector);
-							catVecMean.add(categoryVector);
-						}
-						else {
-							//						System.exit(1);
-							//						System.out.println();
-							countIgnoredLines++;
-						}
-						System.out.println("Lines are processed: "+count++);
-						System.out.println("Lines are ignored: "+countIgnoredLines);
-					}
-					else {
-						countNoEntity++;
-					}
-				}
-				System.out.println("No entity:"+countNoEntity);
-				System.out.println("Count null entites: "+countNullEnt);
-				FileUtil.writeDataToFile(catIds, dName.name().toLowerCase()+"_joint_features_catIds",false);
-				FileUtil.writeDataToFile(catNames, dName.name().toLowerCase()+"_joint_features_catNames",false);
-				FileUtil.writeDataToFile(entIDs, dName.name().toLowerCase()+"_joint_features_entIDs",false);
-				FileUtil.writeDataToFile(samples, dName.name().toLowerCase()+"_joint_features_samples",false);
-				FileUtil.writeDataToFile(labels, dName.name().toLowerCase()+"_joint_features_labels",false);
-				FileUtil.writeDataToFile(entCoOc, dName.name().toLowerCase()+"_joint_features_entCooc",false);
-
-				FileUtil.writeDataToFile(entVecMean, dName.name().toLowerCase()+"_joint_features_entVecMean",false);
-				FileUtil.writeDataToFile(catVecMean, dName.name().toLowerCase()+"_joint_features_catVecMean",false);
-
-			}
-
-			else if ( dName.equals(Dataset.DBpedia_test)) {
-				Map<String, List<Article>> dataset = null;
-				String fName = null;
-				if (dName.equals(Dataset.DBpedia_test)) {
-					dataset = ReadDataset.read_dataset_DBPedia_SampleLabel(DATASET_TEST_DBP);
-					fName = DATASET_TEST_DBP;
-				}
-				else if (dName.equals(Dataset.AG_test)) {
-					dataset = ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION,DATASET_TEST_AG);
-					fName = DATASET_TEST_AG;
-
-				}
-				System.out.println("Dataset size: "+dataset.size());
-				for(Entry<String, List<Article>> e : dataset.entrySet()) {
-					String line= e.getKey();
-					List<Annotation> lstAnnotations = new ArrayList<>();
-					service.annotate(line, lstAnnotations);
-
-					long now = TimeUtil.getStart();
-					lstentities = new ArrayList<Article>();
-					strB = new StringBuilder();
-					for (Annotation ann : lstAnnotations) {
-						Article a = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(ann.getTitle()); 
-						if (a!=null) {
+				//Here you extract entities
+				if (dName.equals(Dataset.AG)) {
+					for (int i = 0; i < splitEntity.length; i++) {
+						Article a = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(splitEntity[i]); 
+						if (a!=null && !AnnonatationUtil.getEntityBlackList_AGNews().contains(a.getId())&&!StringUtil.isNumeric(a.getTitle())) {
 							lstentities.add(a);
 							strB.append(a.getId()+" ");
 						}
+						else {
+							countNullEnt++;
+						}
 					}
-					now = TimeUtil.getStart();
-					String entityIDs = strB.toString().trim();
-					String categoryIDs = CategoryFeaturesForNN.getCategoryIDs(lstentities);
-					String categoryNames = CategoryFeaturesForNN.getCategoryNames(lstentities);
-					String labelStr = AssignLabelsBasedOnConfVecSimilarity.getOneHotEncodingLabel(dName,fName, line);
+				}					
+				else if (dName.equals(Dataset.WEB_SNIPPETS)){
+					for (int i = 0; i < splitEntity.length; i++) {
+						Article a = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(splitEntity[i]); 
+						if (a!=null && !AnnonatationUtil.getEntityBlackList_WebSnippets().contains(a.getId())&&!StringUtil.isNumeric(a.getTitle())) {
+							lstentities.add(a);
+							strB.append(a.getId()+" ");
+						}
+						else {
+							countNullEnt++;
+						}
+					}
+				}
+				else if (dName.equals(Dataset.DBpedia)){ //Cooc entity pairs only once train and test 1,256,881
+					for (int i = 0; i < splitEntity.length; i++) {
+						Article a = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(splitEntity[i]);
+						if (a!=null) {
+							int cleanAnnotation =AnnonatationUtil.getCorrectAnnotation_DBp(a.getId());
+							Article article= WikipediaSingleton.getInstance().wikipedia.getArticleById(cleanAnnotation);
+							if (article!=null&&!AnnonatationUtil.getEntityBlackList_DBp().contains(article.getId())&&!StringUtil.isNumeric(article.getTitle())) {
+								lstentities.add(a);
+								strB.append(a.getId()+" ");
+							}
+							else {
+								countNullEnt++;
+							}
+						}
 
+					}
 
-					if (labelStr!=null&&entityIDs.length()>1&&categoryIDs.length()>1) {
-						entIDs.add(entityIDs);
-						samples.add(line);
-						catIds.add(categoryIDs);
-						catNames.add(categoryNames);
-						labels.add(labelStr);
-					}
-					else {
-						//						System.exit(1);
-						//						System.out.println();
-						countIgnoredLines++;
-					}
-					System.out.println("Lines are processed: "+count++);
+				}
+				String labelStr = AssignLabelsBasedOnConfVecSimilarity.getLabelBasedOnConfidence(dName, sample);
+				//String labelStr = AssignLabelsBasedOnConfVecSimilarity.getBestLabelBasedOnConfidence_all_embeddings(dName, sample);
+				String entityIDs = strB.toString().trim();
+
+				String entityCooc = getEntityCoocuranceFeature(lstentities, dName); 
+
+				String categoryIDs = CategoryFeaturesForNN.getCategoryIDs(lstentities);
+
+				String categoryNames = CategoryFeaturesForNN.getCategoryNames(lstentities);
+				String entityVector=getEntityVecMean(lstentities);
+
+				String categoryVector=CategoryFeaturesForNN.getCategoryVec(lstentities);
+
+				if (labelStr!=null&&!labelStr.contains("NaN")&&entityIDs.length()>1&&entityVector!=null&&categoryVector!=null) {
+					entIDs.add(entityIDs);
+					samples.add(sample);
+					catIds.add(categoryIDs);
+					catNames.add(categoryNames);
+					labels.add(labelStr);
+					entCoOc.add(entityCooc);
+					entVecMean.add(entityVector);
+					catVecMean.add(categoryVector);
+				}
+				else {
+					//						System.exit(1);
+					//						System.out.println();
+					countIgnoredLines++;
 				}
 				System.out.println("Lines are processed: "+count++);
 				System.out.println("Lines are ignored: "+countIgnoredLines);
-
-				FileUtil.writeDataToFile(catIds, dName.name().toLowerCase()+"_test_joint_features_catIds",false);
-				FileUtil.writeDataToFile(catNames, dName.name().toLowerCase()+"_test_joint_features_catNames",false);
-				FileUtil.writeDataToFile(entIDs, dName.name().toLowerCase()+"_test_joint_features_entIDs",false);
-				FileUtil.writeDataToFile(samples, dName.name().toLowerCase()+"_test_joint_features_samples",false);
-				FileUtil.writeDataToFile(labels, dName.name().toLowerCase()+"_test_joint_features_labels",false);
+			}
+			else {
+				countNoEntity++;
 			}
 
-		}catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		}
+		System.out.println("No entity:"+countNoEntity);
+		System.out.println("Count null entites: "+countNullEnt);
+		System.out.println("count Ignored Lines: "+countIgnoredLines);
+
+		FileUtil.writeDataToFile(catIds, dName.name().toLowerCase()+"_train_joint_features_catIds",false);
+		FileUtil.writeDataToFile(catNames, dName.name().toLowerCase()+"_train_joint_features_catNames",false);
+		FileUtil.writeDataToFile(entIDs, dName.name().toLowerCase()+"_train_joint_features_entIDs",false);
+		FileUtil.writeDataToFile(samples, dName.name().toLowerCase()+"_train_joint_features_samples",false);
+		FileUtil.writeDataToFile(labels, dName.name().toLowerCase()+"_train_joint_features_labels",false);
+		FileUtil.writeDataToFile(entCoOc, dName.name().toLowerCase()+"_train_joint_features_entCooc",false);
+		FileUtil.writeDataToFile(entVecMean, dName.name().toLowerCase()+"_train_joint_features_entVecMean",false);
+		FileUtil.writeDataToFile(catVecMean, dName.name().toLowerCase()+"_train_joint_features_catVecMean",false);
+	}
+	public static void generateJointFeaturesCid_C_Eid_S_Lc_test(Dataset dName,String fAnotationFile) throws Exception {
+		int count=0;
+		int countIgnoredLines=0;
+		int countNoEntity=0;
+		List<String> samples = new LinkedList<String>();
+		List<String> catIds = new LinkedList<String>();
+		List<String> catNames = new LinkedList<String>();
+		List<String> entIDs = new LinkedList<String>();
+		List<String> entVecMean = new LinkedList<String>();
+		List<String> catVecMean = new LinkedList<String>();
+		List<String> entCoOc = new LinkedList<String>();
+		List<String> labels = new LinkedList<String>();
+		StringBuilder strB = null;
+		List<Article> lstentities = null;
+		int countNullEnt=0;
+		List<String> lines = FileUtils.readLines(new File(fAnotationFile));
+		System.out.println("Size of the file for generating the joint features: "+lines.size());
+
+		for(String line : lines) {
+			String[] split = line.split("\t\t");
+			if (split.length==3) {
+				String sample = split[0];
+				String entities = split[2];
+				String[] splitEntity = entities.split("\t");
+				lstentities = new ArrayList<Article>();
+				strB = new StringBuilder();
+
+				if (dName.equals(Dataset.WEB_SNIPPETS_test) || dName.equals(Dataset.WEB_SNIPPETS)){
+					for (int i = 0; i < splitEntity.length; i++) {
+						Article a = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(splitEntity[i]); 
+						if (a!=null && !AnnonatationUtil.getEntityBlackList_WebSnippets().contains(a.getId())&&!StringUtil.isNumeric(a.getTitle())) {
+							lstentities.add(a);
+							strB.append(a.getId()+" ");
+						}
+						else {
+							countNullEnt++;
+						}
+					}
+				}
+
+				if (dName.equals(Dataset.DBpedia_test) || dName.equals(Dataset.DBpedia)) {
+					for (int i = 0; i < splitEntity.length; i++) {
+						Article a = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(splitEntity[i]);
+						if (a!=null) {
+							int cleanAnnotation =AnnonatationUtil.getCorrectAnnotation_DBp(a.getId());
+							Article article= WikipediaSingleton.getInstance().wikipedia.getArticleById(cleanAnnotation);
+							if (article!=null&&!AnnonatationUtil.getEntityBlackList_DBp().contains(article.getId())&&!StringUtil.isNumeric(article.getTitle())) {
+								lstentities.add(a);
+								strB.append(a.getId()+" ");
+							}
+							else {
+								countNullEnt++;
+							}
+						}
+
+					}
+				}
+				else if (dName.equals(Dataset.AG_test) || dName.equals(Dataset.AG)) {
+					for (int i = 0; i < splitEntity.length; i++) {
+						Article a = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(splitEntity[i]); 
+						if (a!=null && !AnnonatationUtil.getEntityBlackList_AGNews().contains(a.getId())&&!StringUtil.isNumeric(a.getTitle())) {
+							lstentities.add(a);
+							strB.append(a.getId()+" ");
+						}
+						else {
+							countNullEnt++;
+						}
+					}
+				}
+				String entityIDs = strB.toString().trim();
+
+				String entityCooc = getEntityCoocuranceFeature(lstentities,dName); 
+
+				String categoryIDs = CategoryFeaturesForNN.getCategoryIDs(lstentities);
+
+				String categoryNames = CategoryFeaturesForNN.getCategoryNames(lstentities);
+
+				String labelStr = AssignLabelsBasedOnConfVecSimilarity.getOneHotEncodingLabel(dName, sample);
+
+				String entityVector=getEntityVecMean(lstentities);
+
+				String categoryVector=CategoryFeaturesForNN.getCategoryVec(lstentities);
+
+				if (labelStr!=null&&entityIDs.length()>1&&entityVector!=null&&categoryVector!=null&&categoryIDs.length()>1) {
+					entIDs.add(entityIDs);
+					samples.add(sample);
+					catIds.add(categoryIDs);
+					catNames.add(categoryNames);
+					labels.add(labelStr);
+					entCoOc.add(entityCooc);
+					entVecMean.add(entityVector);
+					catVecMean.add(categoryVector);
+				}
+				else {
+					countIgnoredLines++;
+				}
+				System.out.println("Lines are processed: "+count++);
+				System.out.println("Lines are ignored: "+countIgnoredLines);
+			}
+			else {
+				countNoEntity++;
+
+			}
 		}
 
-	}
+		System.out.println("No entity:"+countNoEntity);
+		System.out.println("Count null entites: "+countNullEnt);
+		System.out.println("count Ignored Lines: "+countIgnoredLines);
 
+		FileUtil.writeDataToFile(catIds, dName.name().toLowerCase()+"_train_original_joint_features_catIds",false);
+		FileUtil.writeDataToFile(catNames, dName.name().toLowerCase()+"_train_original_joint_features_catNames",false);
+		FileUtil.writeDataToFile(entIDs, dName.name().toLowerCase()+"_train_original_joint_features_entIDs",false);
+		FileUtil.writeDataToFile(samples, dName.name().toLowerCase()+"_train_original_joint_features_samples",false);
+		FileUtil.writeDataToFile(labels, dName.name().toLowerCase()+"_train_original_joint_features_labels",false);
+		FileUtil.writeDataToFile(entCoOc, dName.name().toLowerCase()+"_train_original_joint_features_entCooc",false);
+
+		FileUtil.writeDataToFile(entVecMean, dName.name().toLowerCase()+"_train_original_joint_features_entVecMean",false);
+		FileUtil.writeDataToFile(catVecMean, dName.name().toLowerCase()+"_train_original_joint_features_catVecMean",false);
+
+		//		FileUtil.writeDataToFile(catIds, dName.name().toLowerCase()+"_joint_features_catIds",false);
+		//		FileUtil.writeDataToFile(catNames, dName.name().toLowerCase()+"_joint_features_catNames",false);
+		//		FileUtil.writeDataToFile(entIDs, dName.name().toLowerCase()+"_joint_features_entIDs",false);
+		//		FileUtil.writeDataToFile(samples, dName.name().toLowerCase()+"_joint_features_samples",false);
+		//		FileUtil.writeDataToFile(labels, dName.name().toLowerCase()+"_joint_features_labels",false);
+		//		FileUtil.writeDataToFile(entCoOc, dName.name().toLowerCase()+"_joint_features_entCooc",false);
+		//
+		//		FileUtil.writeDataToFile(entVecMean, dName.name().toLowerCase()+"_joint_features_entVecMean",false);
+		//		FileUtil.writeDataToFile(catVecMean, dName.name().toLowerCase()+"_joint_features_catVecMean",false);
+
+	}
 	private  void findAllPossibleEntityPairs(String fAnotationFile) throws Exception {
 		synCountNumberOfEntityPairs= new SynchronizedCounter();
 		executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
@@ -498,7 +555,7 @@ public class GenerateJointFeatureSetForNN {
 				List<Integer> lstId = new ArrayList<Integer>();
 
 				for(Article a : lstentities) {
-					if (!AnnonatationUtil.getEntityBlackList_AGNews().contains(a.getId())&&!StringUtil.isNumeric(a.getTitle())) {
+					if (!StringUtil.isNumeric(a.getTitle())) {
 						lstId.add(a.getId());
 					}
 				}

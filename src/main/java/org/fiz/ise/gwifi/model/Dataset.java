@@ -5,6 +5,7 @@ public enum Dataset {
 	AG_train,
 	AG_test,
 	WEB_SNIPPETS,
+	WEB_SNIPPETS_test,
 	TREC,
 	MR,
 	DBpedia,

@@ -6,6 +6,16 @@ import java.util.Map.Entry;
 
 public class MapUtil {
 	
+	
+	public <K, V> K getKey(Map<K, V> map, V value) {
+	    for (Entry<K, V> entry : map.entrySet()) {
+	        if (entry.getValue().equals(value)) {
+	            return entry.getKey();
+	        }
+	    }
+	    return null;
+	}
+	
 	public static <T, E> T getKeyByValue(Map<T, E> map, E value) {
 	    for (Entry<T, E> entry : map.entrySet()) {
 	        if (Objects.equals(value, entry.getValue())) {

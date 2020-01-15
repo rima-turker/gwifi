@@ -73,7 +73,7 @@ public class HeuristicApproachCIKMPaper {
 				double score = 0.0; 
 				for (Annotation a : lstAnnotations) {
 						score += heuristic.calculateScore(a, mainCat, contextSimilarity);
-				}  
+				} 
 				mapScore.put(mainCat, score);
 			}
 			mainBuilder.append("\n");
@@ -129,6 +129,11 @@ public class HeuristicApproachCIKMPaper {
 		double result = 0.0;
 		final Set<Article> cArticle = new HashSet<>(
 				PageCategorySingleton.getInstance().mapMainCatAndArticles.get(mainCat));
+		
+		if (cArticle.size()==0) {
+			System.out.println("Size of the cArticle is zero: "+cArticle.size());
+			System.exit(1);
+		}
 		final Set<Article> setOfArticleWithCategoryAndEntity = new HashSet<>();
 		for (final Article art : cArticle) {
 			List<Article> linksOutList = TestBasedonSortTextDatasets.CACHE.get(art);

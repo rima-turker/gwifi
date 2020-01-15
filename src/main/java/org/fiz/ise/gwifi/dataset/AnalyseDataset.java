@@ -1,6 +1,7 @@
 package org.fiz.ise.gwifi.dataset;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.util.CharacterUtils;
@@ -27,6 +29,7 @@ import org.fiz.ise.gwifi.Singleton.FilteredWikipediaPagesSingleton;
 import org.fiz.ise.gwifi.Singleton.GoogleModelSingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
+import org.fiz.ise.gwifi.dataset.assignLabels.AssignLabelsBasedOnConfVecSimilarity;
 import org.fiz.ise.gwifi.dataset.category.Categories;
 import org.fiz.ise.gwifi.model.AG_DataType;
 import org.fiz.ise.gwifi.model.Dataset;
@@ -36,6 +39,7 @@ import org.fiz.ise.gwifi.util.AnnonatationUtil;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.FileUtil;
 import org.fiz.ise.gwifi.util.MapUtil;
+import org.fiz.ise.gwifi.util.Print;
 import org.fiz.ise.gwifi.util.SentenceSegmentator;
 import org.fiz.ise.gwifi.util.StopWordRemoval;
 import org.fiz.ise.gwifi.util.StringUtil;
@@ -57,33 +61,171 @@ import edu.stanford.nlp.process.PTBTokenizer;
 
 public class AnalyseDataset {
 	private final static Dataset TEST_DATASET_TYPE= Dataset.WEB_SNIPPETS;//Config.getEnum("TEST_DATASET_TYPE");
+	private static final String DATASET_DBP_TRAIN = Config.getString("DATASET_DBP_TRAIN","");
+	private static final String DATASET_DBP_TRAIN_CATEGORIZED_D2Vec = Config.getString("DATASET_DBP_TRAIN_CATEGORIZED_D2Vec","");
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 	static final Logger resultLog = Logger.getLogger("reportsLogger");
+	private static final String DATASET_TRAIN_SNIPPETS = Config.getString("DATASET_TRAIN_SNIPPETS","");
 	private final static Integer NUMBER_OF_THREADS= Config.getInt("NUMBER_OF_THREADS",-1);
 	public static final Map<String,List<String>> CACHE = new ConcurrentHashMap<>();
 	static Map<String,Integer> result = new ConcurrentHashMap<>();
 	private static ExecutorService executor;
 
+	public static void main(String[] args) throws Exception {
+		Dataset d = Dataset.AG;
+		System.out.println("In Analyse Dataset");
+
+		Map<String,List<Article>> map_categorized = new HashMap<>();
+		Map<String, List<Article>>  map_gt = ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION,Config.getString("DATASET_TRAIN_AG",""));
+		System.out.println("Finished reading the dataset: "+map_gt.size());
+
+
+		//Map<String, List<Article>>  map_gt = ReadDataset.read_dataset_Snippets(DATASET_TRAIN_SNIPPETS);
+
+		//Map<String, List<Article>>  map_gt = ReadDataset.read_dataset_DBPedia_SampleLabel(DATASET_DBP_TRAIN);
+		for(Entry <String, List<Article>> e: map_gt.entrySet()) {
+			List<Article> temp= new ArrayList<Article>();
+			Article articleByTitle = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(AssignLabelsBasedOnConfVecSimilarity.getBestLabelBasedOnConfidence( d, e.getKey()));
+			temp.add(articleByTitle);
+			map_categorized.put(e.getKey(), temp);
+		}
+		//compareTwoDataset( d, DATASET_DBP_TRAIN, map);
+
+
+		//compareTwoDataset(d, DATASET_TRAIN_SNIPPETS, map);
+		System.out.println("Start comparing map_categorized.size: "+map_categorized.size());
+		compareTwoDataset(d, Config.getString("DATASET_TRAIN_AG",""), map_categorized);
+
+		//		compareTwoFiles(d, DATASET_DBP_TRAIN,"data_generated_dbpedia_GOOGLE.txt");
+	}
+
+	public static void compareTwoDataset(Dataset dset, String gtFile, Map<String, List<Article>> map_categorized) {
+		int countCorrect=0;
+		int countWrong=0;
+		int countNotInDataset=0;
+		Map<String, List<Article>> map_gt =  null;
+		Map<String, Integer> map_error_analysis_cat = new HashMap<String, Integer>();
+		List<String> lst_snippets = null;
+		if (dset.equals(Dataset.DBpedia)) {
+			map_gt = ReadDataset.read_dataset_DBPedia_SampleLabel(gtFile);
+		}
+		else if (dset.equals(Dataset.AG)) {
+			map_gt = ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION,Config.getString("DATASET_TRAIN_AG",""));
+		}
+		else if (dset.equals(Dataset.WEB_SNIPPETS)) {
+			map_gt = ReadDataset.read_dataset_Snippets(gtFile);
+			lst_snippets= ReadDataset.read_dataset_Snippets_list(gtFile);
+			for (String s : lst_snippets) {
+				List<Article> list = map_categorized.get(s);
+				if (list==null) {
+					countNotInDataset++;
+				}
+				else if (map_gt.get(s).contains(list.get(0))) {
+					countCorrect++;
+				}
+				else {
+					secondLOG.info(list+ "  "+map_gt.get(s));
+					countWrong++;
+				}
+			}
+		}
+		if (!dset.equals(Dataset.WEB_SNIPPETS)) {
+
+			for(Entry <String, List<Article>> e: map_gt.entrySet()) {
+				List<Article> list = map_categorized.get(e.getKey());
+				if (list.isEmpty()) {
+					countNotInDataset++;
+					continue;
+				}
+				else if (list.contains(e.getValue().get(0))) {
+					countCorrect++;
+				}
+				else {
+					countWrong++;
+					//					String key = dataset_test.get(e.getKey()).get(0)+"->"+e.getValue();
+					if (list.get(0)!=null) {
+						//System.out.println(list.size()+" "+list.get(0));
+						String key = list.get(0).getTitle();
+						map_error_analysis_cat.merge(key, 1, Integer::sum);
+					}
+				}
+			}
+		}
+		System.out.println("Size of the original dataset: "+map_gt.size());
+		System.out.println("Size of the categorized dataset: "+map_categorized.size());
+
+		System.out.println("countCorrect: "+countCorrect);
+		System.out.println("countWrong: "+countWrong);
+		System.out.println("countNotInDataset: "+countNotInDataset);
+		System.out.println("accuracy: "+countCorrect*1.0/(countWrong+countCorrect)*1.0);
+		System.out.println("error rate: "+countWrong*1.0/(countWrong+countCorrect)*1.0);
+		System.out.println("***********************");
+
+		Map<String, Integer> map_sample_size = new HashMap<String, Integer>();
+		for ( Entry <String, List<Article>> e: map_categorized.entrySet() ) {
+			if (e.getValue().get(0)!=null) {
+				map_sample_size.merge(e.getValue().get(0).getTitle(), 1, Integer::sum);
+			}
+		}
+		for ( Entry <String, Integer> e: map_sample_size.entrySet() ) {
+			System.out.println(e.getKey()+" "+(map_error_analysis_cat.get(e.getKey())*1.0)/(e.getValue()*1.0));
+		}
+		System.out.println("***************************************************");
+		System.out.println("***************************************************");
+		for ( Entry <String, Integer> e: map_sample_size.entrySet() ) {
+			System.out.println("error rate: " +e.getKey()+" "+(map_error_analysis_cat.get(e.getKey())*1.0)/(countWrong)*1.0);
+		}
+		System.out.println("***************************************************");
+		Print.printMap(map_sample_size);
+		System.out.println("***************************************************");
+		Print.printMap(map_error_analysis_cat);
+
+	}
 	public static void compareTwoFiles(Dataset dset, String gtFile, String cFile) {
+		int countCorrect=0;
+		int countWrong=0;
+		int countNotInDataset=0;
 		Map<String, List<Article>> map_gt =  null;
 		Map<String, List<Article>> map_categorized = null;
+		List<String> lst_snippets = null;
 		if (dset.equals(Dataset.DBpedia)) {
 			map_gt = ReadDataset.read_dataset_DBPedia_SampleLabel(gtFile);
 			map_categorized = ReadDataset.read_dataset_DBPedia_SampleLabel(cFile);
 		}
-		int countCorrect=0;
-		int countWrong=0;
-		int countNotInDataset=0;
-		for(Entry <String, List<Article>> e: map_gt.entrySet()) {
-			List<Article> list = map_categorized.get(e.getKey());
-			if (list==null) {
-				countNotInDataset++;
+		else if (dset.equals(Dataset.AG)) {
+			map_gt = ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION,Config.getString("DATASET_TRAIN_AG",""));
+			map_categorized =  readLabelAssignment_AG_article("LabelAssignment_AG_GOOGLE");
+		}
+		else if (dset.equals(Dataset.WEB_SNIPPETS)) {
+			map_gt = ReadDataset.read_dataset_Snippets(gtFile);
+			map_categorized = ReadDataset.read_dataset_Snippets(cFile);
+			lst_snippets= ReadDataset.read_dataset_Snippets_list(gtFile);
+			for (String s : lst_snippets) {
+				List<Article> list = map_categorized.get(s);
+				if (list==null) {
+					countNotInDataset++;
+				}
+				else if (list.contains(map_gt.get(s).get(0))) {
+					countCorrect++;
+				}
+				else {
+					countWrong++;
+				}
 			}
-			else if (list.contains(e.getValue().get(0))) {
-				countCorrect++;
-			}
-			else {
-				countWrong++;
+		}
+		if (!dset.equals(Dataset.WEB_SNIPPETS)) {
+
+			for(Entry <String, List<Article>> e: map_gt.entrySet()) {
+				List<Article> list = map_categorized.get(e.getKey());
+				if (list==null) {
+					countNotInDataset++;
+				}
+				else if (list.contains(e.getValue().get(0))) {
+					countCorrect++;
+				}
+				else {
+					countWrong++;
+				}
 			}
 		}
 		System.out.println("File name: "+cFile);
@@ -95,9 +237,28 @@ public class AnalyseDataset {
 		System.out.println("countNotInDataset: "+countNotInDataset);
 		System.out.println("accuracy: "+countCorrect*1.0/(countWrong+countCorrect)*1.0);
 		System.out.println("***********************");
-		
+
 	}
-	
+	public static Map<String, List<Article>> readLabelAssignment_AG_article(String fName) {
+		Map<String,  List<Article>> result = new HashMap<String, List<Article>>();
+		try {	
+			List<String> lines = FileUtils.readLines(new File(fName), "utf-8");
+			for(String line : lines) {
+				String[] split = line.split("\t");
+				Article articleByTitle = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(split[1]);
+				if (articleByTitle==null) {
+					articleByTitle = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(split[1].split(": ")[1]);
+				}
+				List<Article> temp = new ArrayList<Article>();
+				temp.add(articleByTitle);
+				result.put(split[0],temp);
+			}
+			System.out.println("Size of label Ass "+result.size());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
 	public static void compareTwoFiles_d2vec(Dataset dset, String gtFile, String cFile) {
 		Map<String, List<Article>> map_gt =  null;
 		Map<String, List<Article>> map_categorized = null;
@@ -129,13 +290,13 @@ public class AnalyseDataset {
 		System.out.println("countNotInDataset: "+countNotInDataset);
 		System.out.println("accuracy: "+countCorrect*1.0/(countWrong+countCorrect)*1.0);
 		System.out.println("***********************");
-		
+
 	}
 	public static void findMostSimilarEntitesIDsForDatasetBasedOnDatasetVector(List<String> lstAllAnnotation, String fName) {
 		System.out.println("Start running: "+"findMostSimilarEntitesForDatasetBasedOnSentenceVector");
 		Set<Article> articles = FilteredWikipediaPagesSingleton.getInstance().articles;   
 		Map<String,Double> result = new HashMap<>();
-		
+
 		List<String> listWithoutNulls = lstAllAnnotation.parallelStream()
 				.filter(Objects::nonNull)
 				.collect(Collectors.toList());
@@ -190,7 +351,7 @@ public class AnalyseDataset {
 		double[] docVec= VectorUtil.getSentenceVector(words, GoogleModelSingleton.getInstance().google_model);
 		VocabCache<VocabWord> vocab = GoogleModelSingleton.getInstance().google_model.vocab();
 		List<String> stopWords = Arrays.asList(StopWordRemoval.stopwords);
-		
+
 		for (String w : vocab.words()) {
 			if (!stopWords.contains(w)&& !w.contains("_")&& !w.contains("#")) {
 				result.put(w, BasedOnWordsCategorize.getSimilarity(EmbeddingModel.GOOGLE, docVec, w));
@@ -450,11 +611,12 @@ public class AnalyseDataset {
 		FileUtil.writeDataToFile(sortedMap,fileName);
 		System.out.println("Finished one dataset writing: " + fileName);
 	}
-	
+
 	public static void printAvgNumberOfWordsOfDatasets(List<String> dataset) {
 		int totalWord=0;
 		System.out.println("Size of dataset: "+ dataset.size());
 		for(String str: dataset) {
+			str=StringUtil.removePuntionation(str);
 			totalWord+=SentenceSegmentator.wordCount(str);
 		}
 		System.out.println("totalWordCount : "+totalWord);

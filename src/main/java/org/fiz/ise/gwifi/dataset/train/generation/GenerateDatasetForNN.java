@@ -178,6 +178,7 @@ public class GenerateDatasetForNN {
 	}
 	public Map<String, Article> labelAnnotatedTrainSetParalel(EmbeddingModel model,Dataset dname, Map<String, List<String>> mapSentencesAnnotations, List<Article> labels) {
 		try {
+			List<String> lst_snippets =null;
 			Map<String,List<Article>> mapDataset = null;
 			if (dname.equals(Dataset.DBpedia)) {
 				mapDataset = new HashMap<String, List<Article>>(ReadDataset.read_dataset_DBPedia_SampleLabel( DATASET_DBP_TRAIN));
@@ -190,6 +191,7 @@ public class GenerateDatasetForNN {
 			else if (dname.equals(Dataset.WEB_SNIPPETS)) {
 				mapDataset = new HashMap<String, List<Article>>(ReadDataset.read_dataset_Snippets(DATASET_TRAIN_SNIPPETS));
 				System.out.println("Finished reading WebSnippets data set size: "+mapDataset.size());
+				lst_snippets = new ArrayList<String>(ReadDataset.read_dataset_Snippets_list(DATASET_TRAIN_SNIPPETS));
 			}
 			else {
 				System.out.println("The dataset is not in the list");
@@ -198,8 +200,12 @@ public class GenerateDatasetForNN {
 			int count =0;
 			int countFilteredSentences=0;
 			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
-			for(Entry<String, List<String>> e: mapSentencesAnnotations.entrySet()) {
-				executor.execute(findBestMachingArticleAnnotatedList(model,dname,e.getKey(),e.getValue(),mapDataset.get(e.getKey()),++count, labels));
+//			for(Entry<String, List<String>> e: mapSentencesAnnotations.entrySet()) {
+//				executor.execute(findBestMachingArticleAnnotatedList(model,dname,e.getKey(),e.getValue(),mapDataset.get(e.getKey()),++count, labels));
+//			}
+			//(EmbeddingModel model,Dataset dname, String sentence, List<String> lstAnnotations,List<Article> gtList, int i , List<Article> labels) {
+			for (String s : lst_snippets) {
+				executor.execute(findBestMachingArticleAnnotatedList(model,dname,s,mapSentencesAnnotations.get(s),mapDataset.get(s),++count, labels));
 			}
 			executor.shutdown();
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
@@ -257,7 +263,8 @@ public class GenerateDatasetForNN {
 					}
 					
 					listEstimated.add(keyByValue+"\t"+sentence);
-					resultLog.info(keyByValue+",\""+sentence+"\"");
+//					resultLog.info(keyByValue+",\""+sentence+"\"");
+					resultLog.info(sentence.trim()+" "+keyByValue);
 				}
 				else if (dname.equals(Dataset.DBpedia)) {
 					keyByValue = String.valueOf(MapUtil.getKeyByValue(LabelsOfTheTexts.getLables_DBP_article(),bestMatchingCategory));
@@ -289,6 +296,7 @@ public class GenerateDatasetForNN {
 	public Map<String, Article> labelTrainSetParalel(EmbeddingModel model, Dataset dname, List<Article> labels) {
 		try {
 			Map<String, List<Article>> dataset = null;
+			List<String> lst_snippets =null;
 			if (dname.equals(Dataset.TREC)) {
 				dataset = AnalyseTrecDataset.read_trec_dataset_aLabel(Config.getString("DATASET_TRAIN_TREC",""));
 			}
@@ -300,11 +308,15 @@ public class GenerateDatasetForNN {
 			}
 			else if(dname.equals(Dataset.WEB_SNIPPETS)) {
 				dataset = ReadDataset.read_dataset_Snippets(Config.getString("DATASET_TRAIN_SNIPPETS",""));
+				lst_snippets = new ArrayList<String>(ReadDataset.read_dataset_Snippets_list(DATASET_TRAIN_SNIPPETS));
 			}
 			int count =0;
 			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
-			for(Entry<String, List<Article>> e: dataset.entrySet()) {
-				executor.execute(findBestMachingArticle(model,dname,labels, e.getKey(),e.getValue(),++count));
+//			for(Entry<String, List<Article>> e: dataset.entrySet()) {
+//				executor.execute(findBestMachingArticle(model,dname,labels, e.getKey(),e.getValue(),++count));
+//			}
+			for (String s : lst_snippets) {
+				executor.execute(findBestMachingArticle(model,dname,labels, s ,dataset.get(s),++count));
 			}
 			executor.shutdown();
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
@@ -366,7 +378,8 @@ public class GenerateDatasetForNN {
 					}
 					
 					listEstimated.add(keyByValue+"\t"+description);
-					resultLog.info(keyByValue+",\""+description+"\"");
+//					resultLog.info(keyByValue+",\""+description+"\"");
+					resultLog.info(description.trim()+" "+keyByValue);
 				}
 				else if (dname.equals(Dataset.DBpedia)) {
 					keyByValue = String.valueOf(MapUtil.getKeyByValue(LabelsOfTheTexts.getLables_DBP_article(),bestMatchingCategory));

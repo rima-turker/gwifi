@@ -59,26 +59,34 @@ public class PrepareDataForPython {
 
 		mapRedirectPages= new HashMap<>(AnalysisEmbeddingandRedirectDataset.loadRedirectPages());
 		AnnotationSingleton.getInstance();
-//		Map<String, List<Article>> dataset = ReadDataset.read_dataset_Snippets(Config.getString("DATASET_TRAIN_SNIPPETS",""));
+		Map<String, List<Article>> dataset = ReadDataset.read_dataset_Snippets(Config.getString("DATASET_TEST_SNIPPETS",""));
 //		Map<String, List<Article>> dataset = ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION, DATASET_AG_TEST);
 		
-		Map<String, List<Article>> dataset = ReadDataset.read_dataset_DBPedia_SampleLabel(DATASET_DBP_TEST);
+//		Map<String, List<Article>> dataset = ReadDataset.read_dataset_DBPedia_SampleLabel(DATASET_DBP_TEST);
 
 		PrepareDataForPython generate = new PrepareDataForPython();
-		generate.extractEntities(dataset, Dataset.DBpedia);
+		generate.extractEntities(dataset, Dataset.WEB_SNIPPETS);
 		
 		System.out.println("Total time minutes :"+ TimeUnit.SECONDS.toMinutes(TimeUtil.getEnd(TimeUnit.SECONDS, now)));
-
 	}
+	
 	private void extractEntities(Map<String, List<Article>> dataset, Dataset dName ) throws Exception {
 		int count =0;
-		//String str = "Is Google Page Rank Still Important? Is Google Page Rank Still Important?\\\\Since 1998 when Sergey Brin and Larry Page developed the Google search engine, it has relied (and continues to rely) on the Page Rank Algorithm. Googles reasoning behind this is, the higher the number of inbould links pointing to a website, the more valuable that ...\n";
 		executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);		
-		for(Entry<String, List<Article>> e : dataset.entrySet()) {
-			//		List<Article> m = new ArrayList<Article>();
-			//		m.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Business"));
-			//			executor.execute(handleExtractEntities(str, m,count++));
-			executor.execute(handleExtractEntities(dName ,e.getKey(), e.getValue(),count++));
+		
+		if (dName.equals(Dataset.WEB_SNIPPETS)) {
+			System.out.println("Extracting WEB Snippets dataset");
+			List<String> lst_snippets= ReadDataset.read_dataset_Snippets_list(Config.getString("DATASET_TEST_SNIPPETS",""));
+			System.out.println("Size of the file to extract entities: "+lst_snippets.size());
+			for(String s : lst_snippets) {
+				executor.execute(handleExtractEntities(dName ,s, dataset.get(s),count++));
+			}
+		}
+		else {
+			for(Entry<String, List<Article>> e : dataset.entrySet()) {
+				executor.execute(handleExtractEntities(dName ,e.getKey(), e.getValue(),count++));
+			}
+			
 		}
 		executor.shutdown();
 		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
@@ -129,7 +137,7 @@ public class PrepareDataForPython {
 							Article article= WikipediaSingleton.getInstance().wikipedia.getArticleById(a.getId());
 							if (article==null) {
 								article = resolveRedirect(a);
-								if (article!=null) {
+								if (article!=null&& !StringUtil.isNumeric(article.getTitle())) {
 									strBuild.append(a.getTitle()+"\t");
 								}
 							}

@@ -48,10 +48,12 @@ public class AnnotationSingleton {
 //	    				"configs/wikipedia-template-en.xml", "configs/NLPConfig.properties", Language.EN, Language.EN,
 //	    				KB.WIKIPEDIA, NLPModel.NGRAM, DisambiguationModel.PRIOR, MentionMode.NON_OVERLAPPED, ResponseMode.BEST,
 //	    				RepeatMode.FIRST);
+	    		
 //	    		service = new NLPAnnotationService("configs/hub-template.xml",
 //	    				"configs/wikipedia-template-en.xml", "configs/NLPConfig.properties", Language.EN, Language.EN,
-//	    				KB.WIKIPEDIA, NLPModel.NGRAM, DisambiguationModel.PRIOR, MentionMode.NON_OVERLAPPED, ResponseMode.BEST,
+//	    				KB.WIKIPEDIA, NLPModel.NGRAM, DisambiguationModel.PRIOR, MentionMode.OVERLAPPED, ResponseMode.BEST,
 //	    				RepeatMode.ALL);
+	    		
 	    		service = new NLPAnnotationService("configs/hub-template.xml",
 	    				"configs/wikipedia-template-en.xml", "configs/NLPConfig.properties", Language.EN, Language.EN,
 	    				KB.WIKIPEDIA, NLPModel.NGRAM, DisambiguationModel.PRIOR, MentionMode.NON_OVERLAPPED, ResponseMode.BEST,

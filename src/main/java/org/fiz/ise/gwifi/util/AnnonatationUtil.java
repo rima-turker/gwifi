@@ -200,7 +200,7 @@ public class AnnonatationUtil {
 					synCountNumberOfEntityPairs.increment();
 				}
 				listAnnotations.addAll(lstAnnotations);
-				//System.out.println("Number of processed samples:"+count);
+				System.out.println("Number of processed samples:"+count);
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

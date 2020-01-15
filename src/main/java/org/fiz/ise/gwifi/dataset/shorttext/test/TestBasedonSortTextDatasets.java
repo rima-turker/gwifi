@@ -85,6 +85,7 @@ public class TestBasedonSortTextDatasets {
 		counterTruePositive= new SynchronizedCounter();
 		//counterWorldFalsePositive= new SynchronizedCounter();
 
+		AnnotationSingleton.getInstance();
 		TestBasedonSortTextDatasets test = new TestBasedonSortTextDatasets();
 
 		if (TEST_DATASET_TYPE.equals(Dataset.AG)) {
@@ -92,8 +93,13 @@ public class TestBasedonSortTextDatasets {
 			startProcessingData(ReadDataset.read_dataset_AG(AG_DataType.TITLEANDDESCRIPTION));
 		}
 		else if (TEST_DATASET_TYPE.equals(Dataset.WEB_SNIPPETS)) {
+			AnnotationSingleton.getInstance();
 			System.out.println("Start reading WEB data");
 			startProcessingData(test.read_dataset_WEB());
+		}
+		else if (TEST_DATASET_TYPE.equals(Dataset.DBpedia)) {
+			System.out.println("Start reading DBpedia data");
+			startProcessingData(ReadDataset.read_dataset_DBPedia_SampleLabel_with_Categories(Config.getString("DATASET_DBP_TEST","")));
 		}
 		else if (TEST_DATASET_TYPE.equals(Dataset.DBLP)) {
 			test.dataset_DBLP();

@@ -16,6 +16,20 @@ import java.util.Set;
 
 public class FileUtil {
 
+	
+	public static <T, E> T writeFileAsCSV(Map<T, List<E>> map, final String fileName) {
+		try {
+			final FileWriter fw = new FileWriter(fileName, false);
+			for (Entry<T, List<E>> e : map.entrySet()) {
+				fw.write("\""+e.getValue().get(0)+"\",\""+e.getKey()+"\""+"\n");
+		    }
+			fw.close();
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
+	    return null;
+	}
+	
 	public static void writeDataToFile(Set<Integer> data,final String fileName) {
 		try {
 			final FileWriter fw = new FileWriter(fileName, false);

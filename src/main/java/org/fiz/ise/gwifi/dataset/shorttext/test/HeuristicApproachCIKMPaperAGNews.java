@@ -52,7 +52,6 @@ public class HeuristicApproachCIKMPaperAGNews {
 	 * 
 	 */
 	public static Category getBestMatchingCategory(String shortText, List<Category> gtList) {
-		
 		Set<Category> setMainCategories = new HashSet<>(
 				CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories); //get predefined cats
 		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
@@ -140,8 +139,7 @@ public class HeuristicApproachCIKMPaperAGNews {
 	/*
 	 * This function calculates a score for a given annotation and a main category
 	 */
-	private double calculateScore(Annotation a, Category mainCat,
-			Map<Integer, Map<Integer, Double>> contextSimilarity) {
+	private double calculateScore(Annotation a, Category mainCat,Map<Integer, Map<Integer, Double>> contextSimilarity) {
 		//		double P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle(a.getTitle()), mainCat); 
 		//		double P_e_c = get_P_e_c(WikipediaSingleton.getInstance().getArticle(a.getTitle()), mainCat); 
 		double P_e_c=0; 

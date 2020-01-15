@@ -26,9 +26,9 @@ public class ErrorAnalysis {
 	static final Logger resultLog = Logger.getLogger("reportsLogger");
 	Map<String, List<Article>> map_AG_test_gt = null;//ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION,Config.getString("DATASET_TEST_AG",""));
 
-	static final Map<String, String> map_DOC2VEC_AG= new HashMap<String, String>(AssignLabelsBasedOnConfVecSimilarity.readLabelAssignment(Dataset.AG, EmbeddingModel.Doc2Vec));
-	static final Map<String, String> map_GOOGLE_AG = new HashMap<String, String>(AssignLabelsBasedOnConfVecSimilarity.readLabelAssignment(Dataset.AG, EmbeddingModel.GOOGLE));
-	static final Map<String, String> map_LINE_AG = new HashMap<String, String>(AssignLabelsBasedOnConfVecSimilarity.readLabelAssignment(Dataset.AG, EmbeddingModel.LINE_Ent_Ent));
+	static final Map<String, String> map_DOC2VEC_AG= new HashMap<String, String>(AssignLabelsBasedOnConfVecSimilarity.readLabelAssignment_AG(Dataset.AG, EmbeddingModel.Doc2Vec));
+	static final Map<String, String> map_GOOGLE_AG = new HashMap<String, String>(AssignLabelsBasedOnConfVecSimilarity.readLabelAssignment_AG(Dataset.AG, EmbeddingModel.GOOGLE));
+	static final Map<String, String> map_LINE_AG = new HashMap<String, String>(AssignLabelsBasedOnConfVecSimilarity.readLabelAssignment_AG(Dataset.AG, EmbeddingModel.LINE_Ent_Ent));
 	
 	static final Map<String,  List<Article>> map_DOC2VEC_DBp = new HashMap<String,List<Article>>(ReadDataset.read_dataset_Doc2Vec_categorized(Dataset.DBpedia, DATASET_DBP_TRAIN_CATEGORIZED_D2Vec));
 	static final Map<String,  List<Article>> map_GOOGLE_DBp = new HashMap<String,List<Article>>( ReadDataset.read_dataset_DBPedia_SampleLabel(DATASET_DBP_TRAIN_CATEGORIZED_GOOGLE));

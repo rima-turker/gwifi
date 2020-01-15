@@ -47,26 +47,29 @@ public class AnalyseDBPediaDataset {
 	//		    		  WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Building")));
 	public static void main(String[] args) throws Exception {
 		long start = TimeUtil.getStart();
+	
+		List<String> lst_data = new ArrayList<String>(ReadDataset.read_dataset_DBPedia_SampleLabel(DATASET_DBP_TEST).keySet());
+		System.out.println("Total data size: "+lst_data.size());
 		
-		System.out.println("Running DBpedia analyses");
-		lstFilter = new ArrayList<Article>(LabelsOfTheTexts.getLables_DBP_article().values());
-		AssignLabelsBasedOnConfVecSimilarity assign = new AssignLabelsBasedOnConfVecSimilarity();
+		List<Annotation> lst_annotation = AnnonatationUtil.findAnnotationAll(lst_data);
+		System.out.println("Size of all the annotations: "+lst_annotation.size());
 		
-		assign.generateDatasetBasedOnConfidenceForEachModel(Dataset.DBpedia);
-//		assign.generateDatasetOneHotEncoding(Dataset.DBpedia, DATASET_DBP_TRAIN);
+		System.out.println("Avg annotation: "+lst_annotation.size()*1.0/lst_data.size()*1.0);
+		
+		AnalyseDataset.printAvgNumberOfWordsOfDatasets(lst_data);
 		
 		
 		for(Article a : lstFilter) {
-//			findWordFreq(a);
-//			List<String> read_dataset_DBP_BasedOnLabel = ReadDataset.read_dataset_DBP_BasedOnLabel(DATASET_DBP_TRAIN, a);
-//			AnalyseDataset.findMostSimilarWordsForDatasetBasedOnDatasetVector(read_dataset_DBP_BasedOnLabel,"dbpedia_"+a.getTitle()+"mostsimilarwords_datasetVec.txt");
+			//			findWordFreq(a);
+			//			List<String> read_dataset_DBP_BasedOnLabel = ReadDataset.read_dataset_DBP_BasedOnLabel(DATASET_DBP_TRAIN, a);
+			//			AnalyseDataset.findMostSimilarWordsForDatasetBasedOnDatasetVector(read_dataset_DBP_BasedOnLabel,"dbpedia_"+a.getTitle()+"mostsimilarwords_datasetVec.txt");
 		}
-		
-//				AnalyseDataset.compareTwoFiles(Dataset.DBpedia, DATASET_DBP_TRAIN, DATASET_DBP_TRAIN_CATEGORIZED_LINE);
-//				AnalyseDataset.compareTwoFiles(Dataset.DBpedia, DATASET_DBP_TRAIN, DATASET_DBP_TRAIN_CATEGORIZED_GOOGLE);
-//				AnalyseDataset.compareTwoFiles_d2vec(Dataset.DBpedia, DATASET_DBP_TRAIN, DATASET_DBP_TRAIN_CATEGORIZED_D2Vec);
-		
-		
+
+		//				AnalyseDataset.compareTwoFiles(Dataset.DBpedia, DATASET_DBP_TRAIN, DATASET_DBP_TRAIN_CATEGORIZED_LINE);
+		//				AnalyseDataset.compareTwoFiles(Dataset.DBpedia, DATASET_DBP_TRAIN, DATASET_DBP_TRAIN_CATEGORIZED_GOOGLE);
+		//				AnalyseDataset.compareTwoFiles_d2vec(Dataset.DBpedia, DATASET_DBP_TRAIN, DATASET_DBP_TRAIN_CATEGORIZED_D2Vec);
+
+
 		//		AssignLabelsBasedOnVecSimilarity assign = new AssignLabelsBasedOnVecSimilarity();
 		//		assign.obtainLabelForEachSample(Dataset.DBpedia, EmbeddingModel.GOOGLE, new ArrayList<Article>(LabelsOfTheTexts.getLables_DBP_article().values()));
 		//		Article a =LabelsOfTheTexts.getLables_DBP_article().get(6);
@@ -74,9 +77,9 @@ public class AnalyseDBPediaDataset {
 
 
 		//		writeAnnotationsToFile();
-//		categorizeDataset(Dataset.DBpedia, EmbeddingModel.GOOGLE, DATASET_DBP_TRAIN,false, lstFilter);
+		//		categorizeDataset(Dataset.DBpedia, EmbeddingModel.GOOGLE, DATASET_DBP_TRAIN,false, lstFilter);
 		System.out.println("Total time minutes " + TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis() - start));
-	
+
 	}
 	private static void findWordFreq(Article a) {
 		System.out.println("Analysing:"+a.getTitle()+"*************************************");
@@ -134,7 +137,7 @@ public class AnalyseDBPediaDataset {
 	}
 
 	public static void categorizeDataset(Dataset dName, EmbeddingModel model, String fName, boolean filter, List<Article> listFilter) {
-		Map<String, List<String>> map_dbp_annotations_sentences=null;
+		Map<String, List<String>> map_annotations_sentences=null;
 		if (dName.equals(Dataset.DBpedia)) {
 			if (filter) {
 				System.out.println("Start Categorizing DBpedia dataset filtering");
@@ -144,18 +147,18 @@ public class AnalyseDBPediaDataset {
 				}
 				System.out.println("Size of the filtered list:"+lstArticles.size());
 				System.out.println(lstArticles);
-				map_dbp_annotations_sentences = read_annotations_sentences_filter(Dataset.DBpedia, DATASET_DBP_TRAIN_ANNOTATIONS,lstArticles);
+				map_annotations_sentences = read_annotations_sentences_filter(Dataset.DBpedia, DATASET_DBP_TRAIN_ANNOTATIONS,lstArticles);
 
 			}
 			else {
-				map_dbp_annotations_sentences = read_annotations_sentences(Dataset.DBpedia, DATASET_DBP_TRAIN_ANNOTATIONS);
+				map_annotations_sentences = read_annotations_sentences(Dataset.DBpedia, DATASET_DBP_TRAIN_ANNOTATIONS);
 				lstFilter = new ArrayList<Article>(LabelsOfTheTexts.getLables_DBP_article().values());
 			}
 		}
 		else if (dName.equals(Dataset.WEB_SNIPPETS)) {
 			System.out.println("Start Categorizing Web Snippets dataset:"+fName);
-			
-			map_dbp_annotations_sentences = read_annotations_sentences(Dataset.WEB_SNIPPETS, fName);
+
+			map_annotations_sentences = read_annotations_sentences(Dataset.WEB_SNIPPETS, fName);
 			lstFilter = new ArrayList<Article>(Categories.getLabels_Snippets());
 		}
 		GenerateDatasetForNN generate = new GenerateDatasetForNN();
@@ -166,7 +169,7 @@ public class AnalyseDBPediaDataset {
 		}
 		if (model.equals(EmbeddingModel.LINE_Ent_Ent)&&dName.equals(Dataset.WEB_SNIPPETS)) {
 			LINE_modelSingleton.getInstance();
-			generate.labelAnnotatedTrainSetParalel(EmbeddingModel.LINE_Ent_Ent, Dataset.WEB_SNIPPETS, map_dbp_annotations_sentences,lstFilter);
+			generate.labelAnnotatedTrainSetParalel(EmbeddingModel.LINE_Ent_Ent, Dataset.WEB_SNIPPETS, map_annotations_sentences,lstFilter);
 		}
 		else if(model.equals(EmbeddingModel.GOOGLE)&&dName.equals(Dataset.DBpedia)) {
 			System.out.println("The name of the dataset is "+Dataset.DBpedia.name()+" the model: "+EmbeddingModel.GOOGLE.name());
