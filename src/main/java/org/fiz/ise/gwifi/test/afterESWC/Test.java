@@ -1,5 +1,6 @@
 package org.fiz.ise.gwifi.test.afterESWC;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -8,12 +9,15 @@ import java.util.Set;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.log4j.Logger;
+import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
+import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.category.Categories;
 import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.util.Config;
+import org.fiz.ise.gwifi.util.VectorUtil;
 
 import edu.kit.aifb.gwifi.model.Category;
 
@@ -23,11 +27,30 @@ public class Test {
 	static final Logger resultLog = Logger.getLogger("reportsLogger");
 
 	public static void main(String[] args) {
-		Set<Category> setMainCategories = new HashSet<>(
-				CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories); //get predefined cats
-		//LINE_modelSingleton.getInstance();
-		//categoriesExistAsEntity(setMainCategories);
-		categoriesExistAsEntityAnMostSimilarEntities(setMainCategories);
+		
+		Word2Vec lineModel=WordVectorSerializer.readWord2VecModel("/home/rtue/eclipse-workspace/Resources/Models/GoogleNews-vectors-negative300.bin");
+
+		List<String> words = new ArrayList<String>();
+		words.add("A");
+		words.add("l");
+		words.add("b");
+		words.add("e");
+		words.add("r");
+		words.add("t");
+//		words.add("Einstein");
+//		words.add("Germany");
+		double[] sentenceVector = VectorUtil.getSentenceVector(words, lineModel);
+		
+		for (int i = 0; i < sentenceVector.length; i++) {
+			System.out.println(sentenceVector[i]);
+		}
+		
+		
+		//		Set<Category> setMainCategories = new HashSet<>(
+//				CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories); //get predefined cats
+//		//LINE_modelSingleton.getInstance();
+//		//categoriesExistAsEntity(setMainCategories);
+//		categoriesExistAsEntityAnMostSimilarEntities(setMainCategories);
 	}
 
 	private static void categoriesExistAsEntityAnMostSimilarEntities(Set<Category> setMainCategories) {
