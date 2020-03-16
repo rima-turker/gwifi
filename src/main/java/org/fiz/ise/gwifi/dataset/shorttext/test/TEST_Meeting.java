@@ -25,6 +25,7 @@ import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
 import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.Doc2VecModelSingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
+import org.fiz.ise.gwifi.Singleton.PageCategorySingleton;
 import org.fiz.ise.gwifi.Singleton.RedirectSingelton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.ReadDataset;
@@ -64,7 +65,74 @@ public class TEST_Meeting {
 
 	public static void main(String[] args) throws Exception {
 
-		mapRedirectPages= new HashMap<>(AnalysisEmbeddingandRedirectDataset.loadRedirectPages());
+		System.out.println(WikipediaSingleton.getInstance().wikipedia.getCategoryById(6794513));
+		
+		String str = "wikipedia wiki private sector sector wikipedia encyclopedia sector fundamental economy profit controlled enterprises";
+		
+		List<Annotation> tmp = new ArrayList<Annotation>();
+		AnnotationSingleton.getInstance().service.annotate(str, tmp);
+		System.out.println(tmp);
+		
+		List<Article> lstCats = new ArrayList<Article>(Categories.getLabels_Snippets());
+		Map<String, Double> temp= new HashMap<String, Double>();
+		
+		for(Article a : lstCats) {
+			if (!a.getTitle().equalsIgnoreCase("The arts")&& !a.getTitle().equalsIgnoreCase("Entertainment")&&
+					!a.getTitle().equalsIgnoreCase("Science")&& !a.getTitle().equalsIgnoreCase("Society")) {
+				temp.put(a.getTitle(), 0.0);
+			}
+		}
+		double sum = temp.entrySet().stream().mapToDouble //to normalize the final
+				(l->l.getValue()).sum();
+
+		LinkedHashMap<String, Double> sortedMap = new LinkedHashMap<>();
+		temp.entrySet()
+		.stream()
+		.sorted(Map.Entry.comparingByKey())
+		.forEachOrdered(x -> sortedMap.put(x.getKey(), x.getValue()));
+		
+		Print.printMap(sortedMap);
+		StringBuilder labels=new StringBuilder();
+		for(Double s : sortedMap.values()) {
+			labels.append((s*1.)/(sum*1.)+",");
+		}
+		
+		
+		Set<Category> setMainCategories = new HashSet<>(
+				CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories);
+		
+		for (Category mainCat : setMainCategories) { 
+			Article[] cArticle =null;
+			if (mainCat.getTitle().equals("Animal")) {
+				mainCat=WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Animals");
+			}
+			else if (mainCat.getTitle().equals("Artist")) {
+				mainCat=WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Artists");
+			}
+			else if (mainCat.getTitle().equals("Album")) {
+				mainCat=WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Albums");
+
+			}
+			else if (mainCat.getTitle().equals("Village")) {
+				mainCat=WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Villages");
+
+			}
+					
+			cArticle=mainCat.getChildArticles();
+			System.out.println(mainCat+": "+cArticle.length);
+		}
+		Map<Category, Set<Article>> mapMainCatAndArticles = PageCategorySingleton.getInstance().mapMainCatAndArticles;
+		for(Entry <Category, Set<Article>> e : mapMainCatAndArticles.entrySet()) {
+			System.out.println(e.getKey()+" "+e.getValue().size());
+		}
+		//		ArrayList<Article> arrayList = new ArrayList<Article>(Categories.getLabels_Snippets());
+		//		for(Article a : arrayList) {
+		//			System.out.println(a.getTitle());
+		//		}
+
+
+
+		//mapRedirectPages= new HashMap<>(AnalysisEmbeddingandRedirectDataset.loadRedirectPages());
 		//Redirect = beta Realease id:3095107
 
 		//System.out.println(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Glossary of professional wrestling terms"));
@@ -211,7 +279,7 @@ public class TEST_Meeting {
 		//		}	
 
 
-		String str = "Is Google Page Rank Still Important? Is Google Page Rank Still Important?\\\\Since 1998 when Sergey Brin and Larry Page developed the Google search engine, it has relied (and continues to rely) on the Page Rank Algorithm. Googles reasoning behind this is, the higher the number of inbould links pointing to a website, the more valuable that ...\n";
+		str = "Is Google Page Rank Still Important? Is Google Page Rank Still Important?\\\\Since 1998 when Sergey Brin and Larry Page developed the Google search engine, it has relied (and continues to rely) on the Page Rank Algorithm. Googles reasoning behind this is, the higher the number of inbould links pointing to a website, the more valuable that ...\n";
 		List<Annotation> lstAnnotations = new ArrayList<>();
 		try {
 			AnnotationSingleton.getInstance().service.annotate(str, lstAnnotations);
@@ -227,7 +295,7 @@ public class TEST_Meeting {
 								if (article!=null) {
 									System.out.println(article.getTitle()+"\t");
 								}
-								
+
 							}
 						}
 						else {
