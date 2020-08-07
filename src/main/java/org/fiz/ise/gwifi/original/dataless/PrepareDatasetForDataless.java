@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
+import org.fiz.ise.gwifi.dataset.AnalyseTwitterDataset;
 import org.fiz.ise.gwifi.dataset.LabelsOfTheTexts;
 import org.fiz.ise.gwifi.dataset.ReadDataset;
 import org.fiz.ise.gwifi.dataset.category.Categories;
@@ -26,7 +27,10 @@ public class PrepareDatasetForDataless {
 	public static void main(String[] args) {
 		try {
 //			List<String> lines = FileUtils.readLines(new File(Config.getString("DATASET_DBP_TEST","")), "utf-8");
-			Map<String, List<Article>> map_dataset_DBPedia_SampleLabel = ReadDataset.read_dataset_DBPedia_SampleLabel(Config.getString("DATASET_DBP_TEST",""));
+//			Map<String, List<Article>> map_dataset_DBPedia_SampleLabel = ReadDataset.read_dataset_DBPedia_SampleLabel(Config.getString("DATASET_DBP_TEST",""));
+			Map<String, List<Article>> map_dataset_DBPedia_SampleLabel = ReadDataset.read_twitter(Dataset.TWITTER_test);
+			
+			
 			List<String> lstCat = new ArrayList<>(LabelsOfTheTexts.getLabels_DBP());
 			int count =0;
 			for(Entry<String, List<Article>> e : map_dataset_DBPedia_SampleLabel.entrySet()) {

@@ -50,7 +50,7 @@ public class HeuristicApproachCIKMPaperWebSnippets {
 	 * 
 	 */
 	public static Category getBestMatchingCategory(String shortText, List<Category> gtList) {
-		//	shortText="diegomaradona info diego maradona information website dedicated argentine football legend diego maradona";
+			//shortText="description citeseer ist psu edu ziv universal universal algorithm sequential data compression ziv universal algorithm sequential data compres sion performance investigated respect nonprobabilistic model constrained ";
 
 		Set<Category> setMainCategories = new HashSet<>(
 				CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories); //get predefined cats
@@ -143,6 +143,9 @@ public class HeuristicApproachCIKMPaperWebSnippets {
 		return mapContextSimilarity;
 	}
 	private static double get_P_e_c(Article article, Category mainCat) {
+		System.out.println("in get_P_e_c_1 article: "+article);
+		System.out.println("in get_P_e_c_1 mainCat: "+mainCat);
+		
 		double countNonZero = 0;
 		double result = 0.0;
 		final Set<Article> cArticle = new HashSet<>(
@@ -156,6 +159,8 @@ public class HeuristicApproachCIKMPaperWebSnippets {
 				}
 			}else {
 				linksOutList = Arrays.asList(art.getLinksOut());
+				
+				
 				TestBasedonSortTextDatasets.CACHE.put(art,new ArrayList<>(linksOutList));
 				if(linksOutList.contains(article)) {
 					setOfArticleWithCategoryAndEntity.add(art);

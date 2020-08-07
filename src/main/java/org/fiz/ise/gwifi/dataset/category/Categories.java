@@ -23,6 +23,7 @@ public class Categories {
 	{
 		switch (t) {
 		case AG:  return getCategories_Ag();
+		case TWITTER:  return getCategories_Twitter();
 		case WEB_SNIPPETS:  return getCategories_Web();
 		case DBpedia:  return LabelsOfTheTexts.getLabels_DBP_category();
 		case YAHOO:  return getCategories_Yahoo();
@@ -36,15 +37,36 @@ public class Categories {
 			return null;
 		}
 	}
+
+	private static List<String> getCategories_Twitter() {
+		List<String> lstCategories = new ArrayList<String>();
+		List<Article> labels_twitter = LabelsOfTheTexts.getLabels_twitter();
+		
+		for(Article a : labels_twitter) {
+			
+			if (a.getTitle().equals("Sport")) {
+				lstCategories.add("Sports");
+			}
+			else {
+				lstCategories.add(a.getTitle());
+			}
+		}
+		
+		return Collections.unmodifiableList(lstCategories);
+	}
 	private static List<String> getCategories_Web() {
-/*
- * KBSTC
- * final List<String> dummySeeds = Arrays.asList("Business","Computers","Culture","Arts","Entertainment","Education",
+
+		// for KBSTC
+		final List<String> dummySeeds = Arrays.asList("Business","Computers","Culture","Arts","Entertainment","Education",
 				"Science","Engineering","Health","Politics","Society","Sports");
- */
-//		********************************
-		final List<String> dummySeeds = Arrays.asList("Business","Computers","Culture","The arts","Entertainment","Education",
-				"Science","Engineering","Health","Politics","Society","Sports");
+
+		//		********************************
+
+		/*
+		 * WeaklySupervised model:		
+		 */
+		//		final List<String> dummySeeds = Arrays.asList("Business","Computers","Culture","The arts","Entertainment","Education",
+		//				"Science","Engineering","Health","Politics","Society","Sports");
 		return Collections.unmodifiableList(dummySeeds);
 	}
 	public static List<Article> getLabels_Snippets() {
@@ -63,7 +85,7 @@ public class Categories {
 		labels.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Sports"));
 		return Collections.unmodifiableList(labels);
 	}
-	
+
 	public static Map<Integer, Category> getLables_DBpedia_category()
 	{
 		Map<Integer, Category> mapLabel = new HashMap<>();
@@ -82,7 +104,7 @@ public class Categories {
 		mapLabel.put(13, WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Film"));
 		mapLabel.put(14, WikipediaSingleton.getInstance().wikipedia.getCategoryByTitle("Writing"));
 		return mapLabel;
-		
+
 	}
 	private static List<String> getCategories_YOVISTO() {
 		List<String> categoryList = new ArrayList<>(TestBasedonLongTextDatasets.getLstCategory());
@@ -100,14 +122,14 @@ public class Categories {
 		Map<String, List<Category>> categories = new HashMap<>(LabelsOfTheTexts.getLables_20News());
 		List<String> dummySeeds = new ArrayList<>();
 		categories.forEach((key, articles) -> {
-          articles.forEach(a -> {
-        	  dummySeeds.add(a.getTitle());
-          
-          });
+			articles.forEach(a -> {
+				dummySeeds.add(a.getTitle());
+
+			});
 		});
-	return dummySeeds;
+		return dummySeeds;
 	}
-	
+
 	private static List<String> getCategories_Yahoo() {
 		final List<String> dummySeeds = Arrays.asList("Society","Culture","Science","Mathematics","Health","Education",
 				"Reference","Computers","Internet","Sports","Trade","Finance","Entertainment","Music","Family","Intimate relationships","Politics","Government");		
@@ -119,13 +141,13 @@ public class Categories {
 		for(Entry <Integer, Category> e: map.entrySet()) {
 			dummySeeds.add(e.getValue());
 		}
-	//	final List<String> dummySeeds = Arrays.asList("World","Sports","Business","Science","Technology");
-//			final List<String> dummySeeds = Arrays.asList("Sports","Science","Technology","World","Trade");//0.80
-	
-		
+		//	final List<String> dummySeeds = Arrays.asList("World","Sports","Business","Science","Technology");
+		//			final List<String> dummySeeds = Arrays.asList("Sports","Science","Technology","World","Trade");//0.80
+
+
 		//		final List<String> dummySeeds = Arrays.asList("Sports","Science","Technology","World","Business");
 		//	final List<String> dummySeeds = Arrays.asList("World","Business");
-	//	final List<String> dummySeeds = Arrays.asList("Business","World");
+		//	final List<String> dummySeeds = Arrays.asList("Business","World");
 		return Collections.unmodifiableList(dummySeeds);
 	}
 	public static List<String> getCategories_Ag() {
@@ -134,21 +156,21 @@ public class Categories {
 		for(Entry <Integer, Category> e: map.entrySet()) {
 			dummySeeds.add(e.getValue().getTitle());
 		}
-	//	final List<String> dummySeeds = Arrays.asList("World","Sports","Business","Science","Technology");
-//			final List<String> dummySeeds = Arrays.asList("Sports","Science","Technology","World","Trade");//0.80
-	
-		
+		//	final List<String> dummySeeds = Arrays.asList("World","Sports","Business","Science","Technology");
+		//			final List<String> dummySeeds = Arrays.asList("Sports","Science","Technology","World","Trade");//0.80
+
+
 		//		final List<String> dummySeeds = Arrays.asList("Sports","Science","Technology","World","Business");
 		//	final List<String> dummySeeds = Arrays.asList("World","Business");
-	//	final List<String> dummySeeds = Arrays.asList("Business","World");
+		//	final List<String> dummySeeds = Arrays.asList("Business","World");
 		return Collections.unmodifiableList(dummySeeds);
 	}
 	private static List<String> getCategories_DBLP() {
-			final List<String> dummySeeds = Arrays.asList("Databases","Artificial intelligence","Computer hardware",
-					"Systems Network Architecture","Programming languages","Theory of computation","Theoretical computer science");
-			return Collections.unmodifiableList(dummySeeds);
-		}
-	
-	
+		final List<String> dummySeeds = Arrays.asList("Databases","Artificial intelligence","Computer hardware",
+				"Systems Network Architecture","Programming languages","Theory of computation","Theoretical computer science");
+		return Collections.unmodifiableList(dummySeeds);
+	}
+
+
 
 }

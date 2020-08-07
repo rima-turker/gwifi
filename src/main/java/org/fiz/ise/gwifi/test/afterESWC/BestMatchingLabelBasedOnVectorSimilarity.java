@@ -78,7 +78,7 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 	public static Article getBestMatchingArticleFromWordVectorModel(Dataset dname, List<Article> labels, String shortText, List<Article> gtList) {
 		try {
 			Map<Article, Double> mapScore = new HashMap<>();
-			shortText=StopWordRemoval.removeStopWords(StringUtil.removePuntionation(shortText));
+			shortText=StopWordRemoval.removeStopWords(StringUtil.removePunctuation(shortText));
 			List<String> tokensStr = new ArrayList<String>(StringUtil.tokinizeString(shortText));
 			StringBuilder strB = new StringBuilder(shortText+"\n");
 			for (Article amainCat : labels) { //iterate over categories and calculate a score for each of them
@@ -108,7 +108,7 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 	public static Article getBestMatchingArticleFromWordVectorModel_(Dataset dname, List<Article> labels, String shortText, List<Article> gtList) {
 		try {
 			Map<Article, Double> mapScore = new HashMap<>();
-			shortText=StopWordRemoval.removeStopWords(StringUtil.removePuntionation(shortText));
+			shortText=StopWordRemoval.removeStopWords(StringUtil.removePunctuation(shortText));
 			List<String> tokensStr = new ArrayList<String>(StringUtil.tokinizeString(shortText));
 			double[] sentenceVector = VectorUtil.getSentenceVector(tokensStr, GoogleModelSingleton.getInstance().google_model);
 			StringBuilder strB = new StringBuilder(shortText+"\n");
@@ -128,7 +128,7 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 					}
 
 				}
-				tokensStr = new ArrayList<String>(StringUtil.tokinizeString(StringUtil.removePuntionation(amainCatAbstract)));
+				tokensStr = new ArrayList<String>(StringUtil.tokinizeString(StringUtil.removePunctuation(amainCatAbstract)));
 				double[] labelVector = VectorUtil.getSentenceVector(tokensStr, GoogleModelSingleton.getInstance().google_model);
 				double score = VectorUtil.cosineSimilarity(labelVector, sentenceVector);
 				strB.append(amainCat.getTitle()+": "+score+"\n");
@@ -716,6 +716,10 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 			}
 			return score/size;		
 		}
+		if (dSet.equals(Dataset.TWITTER)) {
+			return GoogleModelSingleton.getInstance().google_model.similarity( word.toLowerCase(), label.toLowerCase());
+		}
+		
 		return 0.0;
 	}
 	public static double get_article_similarity_clean(Dataset dSet,int articleID, Article cArticle) {
@@ -955,8 +959,14 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 			if (dname.equals(Dataset.AG)) {
 				labels = new ArrayList<Article>(LabelsOfTheTexts.getLables_AG_article().values());
 			}
-			else if (dname.equals(Dataset.TREC)) {
-				labels = new ArrayList<Article>(LabelsOfTheTexts.getLables_TREC_article().values());
+			else if (dname.equals(Dataset.TWITTER)) {
+				labels = new ArrayList<Article>(LabelsOfTheTexts.getLabels_twitter());
+				ffilteredAnnotations = new ArrayList<>();
+				for(Annotation a : filteredAnnotations) {
+					if (!AnnonatationUtil.getEntityBlackList_Twitter().contains(a.getId())&& !StringUtil.isNumeric(a.getTitle())) {
+						ffilteredAnnotations.add(a);
+					}
+				}
 			}
 			else if (dname.equals(Dataset.DBpedia)) {
 				labels = new ArrayList<Article>(LabelsOfTheTexts.getLables_DBP_article().values());
@@ -977,10 +987,16 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 			for (Article c : gtList) {
 				strBuild.append("Ground Truth"+c + " ");
 			}
+			strBuild.append(ffilteredAnnotations); 
+			
 			mainBuilder.append(strBuild.toString() + "\n" + "\n");
+			
+			
 			for (Article amainCat : labels) { //iterate over categories and calculate a score for each of them
-				double score = 0.0; 
+				double score = 0.0;
+				String str_filtered = "";
 				for (Annotation a : ffilteredAnnotations) {
+					
 					double tempScore=0;
 					if (WikipediaSingleton.getInstance().wikipedia.getArticleById(a.getId())==null) {
 						Page p = new Page(WikipediaSingleton.getInstance().wikipedia.getEnvironment(), a.getId());
@@ -999,9 +1015,7 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 					else {
 						tempScore=get_article_similarity(WikipediaSingleton.getInstance().wikipedia.getArticleById(a.getId()),amainCat);
 					}
-
 					score +=tempScore ;
-
 				}
 				mapScore.put(amainCat, score);
 				mainBuilder.append(amainCat+": "+score+"\n\n");
@@ -1009,7 +1023,11 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 			Map<Article, Double> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(mapScore));
 			Article firstElement = MapUtil.getFirst(sortedMap).getKey();
 			if (sortedMap.get(firstElement)==0.0) {
+				secondLOG.info(mainBuilder.toString());
 				return null;
+			}
+			if (!firstElement.getTitle().equals(gtList.get(0).getTitle())) {
+				secondLOG.info(mainBuilder.toString());
 			}
 			return firstElement;
 		}
@@ -1098,11 +1116,12 @@ public class BestMatchingLabelBasedOnVectorSimilarity {
 			//			mainBuilder.append("predicted:"+firstElement.getTitle());
 			//			if ((firstElement.getTitle().equals("Business")&&gtList.get(0).getTitle().equals("Software"))||
 			//					firstElement.getTitle().equals("Software")&&gtList.get(0).getTitle().equals("Business")) {
-			//				secondLOG.info(mainBuilder.toString()+"\n--------------------------------------------");
+							secondLOG.info(mainBuilder.toString()+"\n--------------------------------------------");
 			//			}
 			if (sortedMap.get(firstElement)==0.0) {
 				return null;
 			}
+			
 			return firstElement;
 		}
 		catch (Exception e) {

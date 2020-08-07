@@ -1,5 +1,6 @@
 package org.fiz.ise.gwifi.Singleton;
 
+import java.io.File;
 import java.util.concurrent.TimeUnit;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.word2vec.Word2Vec;

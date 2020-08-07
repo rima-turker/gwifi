@@ -49,6 +49,53 @@ public class HeuristicApproachCIKMPaper {
 	 * and return the most similar category to given text
 	 * 
 	 */
+	
+	public static Category getBestMatchingCategoryTwitter(String shortText, List<Category> gtList) {
+		//	shortText="diegomaradona info diego maradona information website dedicated argentine football legend diego maradona";
+			
+			Set<Category> setMainCategories = new HashSet<>(
+					CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE)).setMainCategories); //get predefined cats
+			NLPAnnotationService service = AnnotationSingleton.getInstance().service;
+			HeuristicApproachCIKMPaper heuristic = new HeuristicApproachCIKMPaper();
+			StringBuilder mainBuilder = new StringBuilder();
+			try {
+				Map<Category, Double> mapScore = new HashMap<>();
+				mainBuilder.append(shortText + "\n");
+				StringBuilder strBuild = new StringBuilder();
+				for (Category c : gtList) {
+					strBuild.append(c + " ");
+				}
+				List<Annotation> lstAnnotations = new ArrayList<>();
+				service.annotate(shortText, lstAnnotations);//annotate the given text
+				mainBuilder.append(strBuild.toString() + "\n" + "\n");
+				Map<Integer, Map<Integer, Double>> contextSimilarity = new HashMap<>(
+						calculateContextEntitySimilarities(lstAnnotations));//the similarity between entities present in the text are calculated 
+				for (Category mainCat : setMainCategories) { //iterate over categories and calculate a score for each of them
+					double score = 0.0; 
+					for (Annotation a : lstAnnotations) {
+						if (!AnnonatationUtil.getEntityBlackList_Twitter().contains(a.getId())) {
+							score += heuristic.calculateScore(a, mainCat, contextSimilarity);
+						}	
+					} 
+					mapScore.put(mainCat, score);
+				}
+				mainBuilder.append("\n");
+				Map<Category, Double> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(mapScore));
+				Category firstElement = MapUtil.getFirst(sortedMap).getKey();
+
+				for (Entry<Category, Double> e : sortedMap.entrySet()) {
+					mainBuilder.append(e.getKey() + " " + e.getValue() + "\n");
+				}
+				if (!gtList.contains(firstElement)) {
+					secondLOG.info(mainBuilder.toString());
+				}
+				return firstElement;
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return null;
+		}
+	
 	public static Category getBestMatchingCategory(String shortText, List<Category> gtList) {
 	//	shortText="diegomaradona info diego maradona information website dedicated argentine football legend diego maradona";
 		
@@ -130,8 +177,13 @@ public class HeuristicApproachCIKMPaper {
 		final Set<Article> cArticle = new HashSet<>(
 				PageCategorySingleton.getInstance().mapMainCatAndArticles.get(mainCat));
 		
+		
 		if (cArticle.size()==0) {
 			System.out.println("Size of the cArticle is zero: "+cArticle.size());
+			System.out.println(mainCat);
+			System.out.println("cArticle:"+cArticle.size());
+			
+			
 			System.exit(1);
 		}
 		final Set<Article> setOfArticleWithCategoryAndEntity = new HashSet<>();

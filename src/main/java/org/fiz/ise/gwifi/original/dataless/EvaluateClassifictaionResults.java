@@ -13,8 +13,10 @@ import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
+import org.fiz.ise.gwifi.dataset.AnalyseTwitterDataset;
 import org.fiz.ise.gwifi.dataset.LabelsOfTheTexts;
 import org.fiz.ise.gwifi.dataset.ReadDataset;
+import org.fiz.ise.gwifi.model.Dataset;
 import org.fiz.ise.gwifi.util.Config;
 import org.fiz.ise.gwifi.util.Print;
 
@@ -24,13 +26,66 @@ import edu.kit.aifb.gwifi.model.Category;
 public class EvaluateClassifictaionResults 
 {
 	public static void main(String[] args) {
+		String fileName = "/home/rtue/eclipse-workspace/gwifi/DatalessResuts/Twitter.txt";
+//		String fileClassification= "/home/rtue/eclipse-workspace/gwifi/DatalessResuts/results_dataless_BottomUp_w2v.txt";
+		String fileClassification= "/home/rtue/eclipse-workspace/gwifi/DatalessResuts/results_dataless_TopDown_esa.txt";
+		Map<String, List<Article>> read_twitter = ReadDataset.read_twitter(Dataset.TWITTER);
 //		String fileName = "AG_News.txt";
 //		String fileName = "/home/rtue/eclipse-workspace/Resources/DatalessClassificationResults/WebSnippets.txt";
-		String fileName = "DBPedia_samples.txt";
-		String fileClassification= "dabpedia_dataless_bottumUp_categorization_w2v.txt";
+//		String fileName = "DBPedia_samples.txt";
+//		String fileClassification= "dabpedia_dataless_bottumUp_categorization_w2v.txt";
 //		String fileClassification= "/home/rtue/eclipse-workspace/Resources/DatalessClassificationResults/WEB_W2V_TopDown/log";
-		evaluateDBpedia(fileName,fileClassification);
+		evaluate(read_twitter,fileName,fileClassification);
 		//evaluateAGNews(fileName,fileClassification);
+	}
+	
+	public static void evaluate(Map<String, List<Article>> dataset_original, String fileName, String fileClassification) {
+		try {
+			List<String> lines = new ArrayList<>(FileUtils.readLines(new File(fileName), "utf-8"));
+			List<String> linesClassification = new ArrayList<>(FileUtils.readLines(new File(fileClassification), "utf-8"));
+			Map<String, String> mapDataset = new HashMap<>();
+			Map<String, String> mapClassificaton = new HashMap<>();
+		
+			for(String line: lines) {
+				String[] split = line.split("\t");
+				mapDataset.put(split[0], split[1]);
+			}
+			for(String line: linesClassification) {
+				String[] split = line.split(" ");
+				mapClassificaton.put(split[0], split[1]);
+			}
+
+			int countRoot=0;
+			int countTruePositive=0;
+			int countFalsePositive=0;
+			
+			
+			for(Entry<String, String> e : mapDataset.entrySet()) {
+				String textId = e.getKey();
+				String text = e.getValue();
+				
+				String[] split = text.split(" ");
+				String gtLabel = dataset_original.get(text).get(0).getTitle().toLowerCase();
+				
+				String classificationLabel = mapClassificaton.get(textId);
+				if (classificationLabel.equalsIgnoreCase("root")) {
+					countRoot++;
+					continue;
+				}
+				if (gtLabel.equalsIgnoreCase(classificationLabel)) {
+					countTruePositive++;
+				}
+				else {
+					countFalsePositive++;
+				}
+
+			}
+			System.out.println("countRoot: "+countRoot+" countFalsePos: "+countFalsePositive+" countTruePos: "+countTruePositive);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
 	}
 	
 	public static void evaluateDBpedia(String dataset, String classificationResults) {

@@ -56,6 +56,9 @@ public class VectorUtil {
 		}
 		INDArray a = null;
 		try{
+//			System.out.println("I am getting the mean");
+//			
+//			System.out.println(words);
 			a = model.getWordVectorsMean(words);
 		}catch(Exception e) {
 			System.out.println(words);

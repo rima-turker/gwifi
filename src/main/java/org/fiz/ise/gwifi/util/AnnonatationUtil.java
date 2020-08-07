@@ -306,6 +306,26 @@ public class AnnonatationUtil {
 			e.printStackTrace();
 		}
 	}
+	public static Map<Article, Integer> getFreqOfAnnotations(List<Annotation> lstAllAnnotation ) {
+		Map<Article, Integer> resultFreq = new HashMap<>();
+		for(Annotation a :lstAllAnnotation  ) {
+			if (!StringUtil.isNumeric(a.getTitle())) {
+				Article article =WikipediaSingleton.getInstance().wikipedia.getArticleById(a.getId());
+				if (article!=null) {
+					if (resultFreq.containsKey(article)) {
+						int f_= resultFreq.get(article)+1;
+						resultFreq.put(article, f_);
+					}
+					else {
+						resultFreq.put(article, 1);
+					}
+				}
+				//resultFreq.merge(WikipediaSingleton.getInstance().getArticle(a.getTitle()), 1, Integer::sum);
+			}
+		}
+		Map<Article, Integer> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(resultFreq));
+		return sortedMap;
+	}
 	public static void findFreqOfAnnotation(List<Annotation> lstAllAnnotation ,String fileName) {
 		Map<String, Integer> resultFreq = new HashMap<>();
 		for(Annotation a :lstAllAnnotation  ) {
@@ -318,7 +338,7 @@ public class AnnonatationUtil {
 		FileUtil.writeDataToFile(sortedMap,fileName);
 		System.out.println("Finished one dataset writing: " + fileName);
 	}
-	public static int getFreqOfAnnotation(List<String> dataset ,String fileName) {
+	public static int getFreqOfAnnotation(List<String> dataset ) {
 		List<Annotation> lstAllAnnotation = new ArrayList<>(AnnonatationUtil.findAnnotationAll(dataset));
 
 		Map<String, Integer> resultFreq = new HashMap<>();
@@ -327,8 +347,8 @@ public class AnnonatationUtil {
 			resultFreq.merge(key, 1, Integer::sum);
 		}
 		Map<String, Integer> sortedMap = new LinkedHashMap<>(MapUtil.sortByValueDescending(resultFreq));
-		FileUtil.writeDataToFile(sortedMap,fileName);
-		System.out.println("Finished one dataset writing: " + fileName);
+//		FileUtil.writeDataToFile(sortedMap,fileName);
+//		System.out.println("Finished one dataset writing: " + fileName);
 		return sortedMap.size();
 	}
 	public Map<Annotation, Double> analizeWeightOfAnnotations(List<Annotation> lst) {
@@ -351,7 +371,16 @@ public class AnnonatationUtil {
 		return lstidBlack;
 
 	}
-
+	public static List<Integer> getEntityBlackList_Twitter(){
+		List<Integer> lstidBlack = new ArrayList<>(); 
+		lstidBlack.add(5417956);//RT
+		lstidBlack.add(60534); //Shilling
+		lstidBlack.add(772); //Ampere
+		lstidBlack.add(14533); //India
+		lstidBlack.add(167079); //Smartphone
+		return lstidBlack;
+	
+}
 	public static List<Integer> getEntityBlackList_AGNews(){
 		List<Integer> lstidBlack = new ArrayList<>();
 		lstidBlack.add(18935732);

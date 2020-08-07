@@ -18,6 +18,7 @@ import org.fiz.ise.gwifi.Singleton.CategorySingleton;
 import org.fiz.ise.gwifi.Singleton.GoogleModelSingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
+import org.fiz.ise.gwifi.dataset.AnalyseTwitterDataset;
 import org.fiz.ise.gwifi.dataset.ReadDataset;
 import org.fiz.ise.gwifi.dataset.category.Categories;
 import org.fiz.ise.gwifi.model.AG_DataType;
@@ -59,13 +60,17 @@ public class PrepareDataForPython {
 
 		mapRedirectPages= new HashMap<>(AnalysisEmbeddingandRedirectDataset.loadRedirectPages());
 		AnnotationSingleton.getInstance();
-		Map<String, List<Article>> dataset = ReadDataset.read_dataset_Snippets(Config.getString("DATASET_TEST_SNIPPETS",""));
+
+		Map<String, List<Article>> dataset = ReadDataset.read_twitter(Dataset.TWITTER);
+
+		
+		//Map<String, List<Article>> dataset = ReadDataset.read_dataset_Snippets(Config.getString("DATASET_TEST_SNIPPETS",""));
 //		Map<String, List<Article>> dataset = ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION, DATASET_AG_TEST);
 		
 //		Map<String, List<Article>> dataset = ReadDataset.read_dataset_DBPedia_SampleLabel(DATASET_DBP_TEST);
 
 		PrepareDataForPython generate = new PrepareDataForPython();
-		generate.extractEntities(dataset, Dataset.WEB_SNIPPETS);
+		generate.extractEntities(dataset, Dataset.TWITTER);
 		
 		System.out.println("Total time minutes :"+ TimeUnit.SECONDS.toMinutes(TimeUtil.getEnd(TimeUnit.SECONDS, now)));
 	}
@@ -104,6 +109,23 @@ public class PrepareDataForPython {
 						
 						if (!AnnonatationUtil.getEntityBlackList_DBp().contains(cleanAnnotation)) {
 							Article article= WikipediaSingleton.getInstance().wikipedia.getArticleById(cleanAnnotation);
+							if (article==null) {
+								Article rArticle = resolveRedirect(a);
+								if (rArticle!=null && !StringUtil.isNumeric(rArticle.getTitle()))  {
+									strBuild.append(rArticle.getTitle()+"\t");
+								}
+							}
+							else {
+								if (!StringUtil.isNumeric(article.getTitle())) {
+									strBuild.append(article.getTitle()+"\t");
+								}
+							}
+						}
+					}
+					else if (dName.equals(Dataset.TWITTER)) {
+						
+						if (!AnnonatationUtil.getEntityBlackList_Twitter().contains(a.getId())) {
+							Article article= WikipediaSingleton.getInstance().wikipedia.getArticleById(a.getId());
 							if (article==null) {
 								Article rArticle = resolveRedirect(a);
 								if (rArticle!=null && !StringUtil.isNumeric(rArticle.getTitle()))  {

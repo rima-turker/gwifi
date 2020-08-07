@@ -26,6 +26,7 @@ import org.apache.log4j.Logger;
 import org.fiz.ise.gwifi.Singleton.AnnotationSingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
+import org.fiz.ise.gwifi.dataset.AnalyseTwitterDataset;
 import org.fiz.ise.gwifi.dataset.ReadDataset;
 import org.fiz.ise.gwifi.dataset.assignLabels.AssignLabelsBasedOnConfVecSimilarity;
 import org.fiz.ise.gwifi.dataset.category.CategoryFeaturesForNN;
@@ -55,6 +56,10 @@ public class GenerateJointFeatureSetForNN {
 	private static final String DATASET_DBP_TRAIN_ANNOTATIONS = Config.getString("DATASET_DBP_TRAIN_ANNOTATIONS","");//"/home/rtue/eclipse-workspace/Resources/Datasets/ag_news_csv/ag_sentence_cat_entities_redirect_resolved";
 	private static final String DATASET_DBP_TEST_ANNOTATIONS = Config.getString("DATASET_DBP_TEST_ANNOTATIONS","");//"/home/rtue/eclipse-workspace/Resources/Datasets/ag_news_csv/ag_sentence_cat_entities_redirect_resolved";
 
+	private static final String DATASET_TWITTER_TRAIN_ANNOTATIONS = Config.getString("DATASET_TWITTER_TRAIN_ANNOTATIONS","");//"/home/rtue/eclipse-workspace/Resources/Datasets/ag_news_csv/ag_sentence_cat_entities_redirect_resolved";
+	private static final String DATASET_TWITTER_TEST_ANNOTATIONS = Config.getString("DATASET_TWITTER_TEST_ANNOTATIONS","");//"/home/rtue/eclipse-workspace/Resources/Datasets/ag_news_csv/ag_sentence_cat_entities_redirect_resolved";
+
+
 	private static final String DATASET_TEST_AG=Config.getString("DATASET_TEST_AG","");
 	private static final String DATASET_TEST_DBP=Config.getString("DATASET_DBP_TEST","");
 
@@ -73,6 +78,9 @@ public class GenerateJointFeatureSetForNN {
 	static Set<String> set = new HashSet<String>();
 	static Set<Integer> setCountElementEntCooc = new HashSet<Integer>();
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
+	static String PATH_MAPS_ENTCOOC ="/home/rtue/eclipse-workspace/Resources/mapsForEntEntCooc/";
+//	static String PATH_MAPS_ENTCOOC = Config.getString("", "");
+	
 	//	static Set<String,> overlappingPairs = new HashSet<String>();
 
 	public static void main(String[] args) throws Exception {
@@ -80,8 +88,37 @@ public class GenerateJointFeatureSetForNN {
 		System.out.println("Running GenerateJointFeatureSetForNN");
 
 		GenerateJointFeatureSetForNN generete = new GenerateJointFeatureSetForNN();
-		//generete.findAllPossibleEntityPairs(DATASET_SNIPPETS_TEST_ANNOTATIONS);
-		//System.out.println("DATASET_SNIPPETS_TRAIN_ANNOTATIONS Train set all possible entity pairs:"+mapAllEnitityPairs.size());
+
+		
+		//		mapDataFromFileForIndexingMap_test = readDataFromFileForIndexingMap("mapsForEntEntCooc/"+"mapAllEnitityOccurance_snippets_test_filtered_black_and_numeric_2018.txt", "\t");
+		//		mapDataFromFileForIndexingMap = readDataFromFileForIndexingMap("mapsForEntEntCooc/"+"mapAllEnitityOccurance_snippets_train_filtered_black_and_numeric_2018.txt", "\t");
+		//		compare2EntityPairs(mapDataFromFileForIndexingMap,mapDataFromFileForIndexingMap_test );
+
+		mapDataFromFileForIndexingMap_test = readDataFromFileForIndexingMap(PATH_MAPS_ENTCOOC+"mapAllEnitityOccurance_twitter_test_filtered_black_and_numeric_2017.txt", "\t");
+		mapDataFromFileForIndexingMap = readDataFromFileForIndexingMap(PATH_MAPS_ENTCOOC+"mapAllEnitityOccurance_twitter_train_filtered_black_and_numeric_2017.txt", "\t");
+
+		compare2EntityPairs(mapDataFromFileForIndexingMap,mapDataFromFileForIndexingMap_test );
+
+		generateJointFeaturesCid_C_Eid_S_Lc_train(Dataset.TWITTER, DATASET_TWITTER_TRAIN_ANNOTATIONS);
+
+		//generateJointFeaturesCid_C_Eid_S_Lc_train(Dataset.TWITTER, DATASET_TWITTER_TRAIN_ANNOTATIONS);
+		
+		
+		//
+		//		System.out.println("Total overlapping pairs: "+mapOverlappingPairsIndex.size());
+
+		//		FileUtil.writeDataToFile(mapOverlappingPairsIndex, "mapAllEnitityOverlaping_snippets_train_test_filtered_black_and_numeric_2018.txt");
+
+
+
+
+		//		generete.findAllPossibleEntityPairs(new ArrayList<String>(ReadDataset.read_twitter().keySet()));
+		//		System.out.println("Twitter Test set all possible entity pairs:"+mapAllEnitityPairs.size());
+		//		FileUtil.writeDataToFile(mapAllEnitityPairs, "mapAllEnitityOccurance_twitter_test_filtered_black_and_numeric_2017.txt");
+
+
+		//		generete.findAllPossibleEntityPairs(DATASET_SNIPPETS_TEST_ANNOTATIONS);
+		//		System.out.println("DATASET_SNIPPETS_TRAIN_ANNOTATIONS Train set all possible entity pairs:"+mapAllEnitityPairs.size());
 
 		//FileUtil.writeDataToFile(mapAllEnitityPairs, "mapAllEnitityOccurance_snippets_test_filtered_black_and_numeric_2018.txt");
 
@@ -98,9 +135,9 @@ public class GenerateJointFeatureSetForNN {
 		//		mapDataFromFileForIndexingMap = readDataFromFileForIndexingMap("mapAllEnitityOccurance_dbpedia_train_filtered_black_and_numeric_2018.txt", "\t");
 
 
-		LINE_modelSingleton.getInstance();
+		//		LINE_modelSingleton.getInstance();
 
-/*		
+		/*		
 		mapDataFromFileForIndexingMap_test = readDataFromFileForIndexingMap("mapAllEnitityOccurance_snippets_test_filtered_black_and_numeric_2018.txt", "\t");
 		mapDataFromFileForIndexingMap = readDataFromFileForIndexingMap("mapAllEnitityOccurance_snippets_train_filtered_black_and_numeric_2018.txt", "\t");
 
@@ -108,23 +145,22 @@ public class GenerateJointFeatureSetForNN {
 		generateJointFeaturesCid_C_Eid_S_Lc_train(Dataset.WEB_SNIPPETS, DATASET_SNIPPETS_TRAIN_ANNOTATIONS);
 
 
-				
+
 		mapDataFromFileForIndexingMap_test = readDataFromFileForIndexingMap("mapAllEnitityOccurance_dbpedia_test_filtered_black_and_numeric_2018.txt", "\t");
 		mapDataFromFileForIndexingMap = readDataFromFileForIndexingMap("mapAllEnitityOccurance_dbpedia_train_filtered_black_and_numeric_2018.txt", "\t");
 
 		compare2EntityPairs(mapDataFromFileForIndexingMap,mapDataFromFileForIndexingMap_test );
 		generateJointFeaturesCid_C_Eid_S_Lc_train(Dataset.DBpedia, DATASET_DBP_TRAIN_ANNOTATIONS);
-			
-*/
- 
-		mapDataFromFileForIndexingMap_test = readDataFromFileForIndexingMap("mapAllEnitityOccurance_ag_test_filtered_black_and_numeric_2018.txt", "\t");
-		mapDataFromFileForIndexingMap = readDataFromFileForIndexingMap("mapAllEnitityOccurance_ag_train_filtered_black_and_numeric_2018.txt", "\t");
 
-		compare2EntityPairs(mapDataFromFileForIndexingMap,mapDataFromFileForIndexingMap_test );
-		generateJointFeaturesCid_C_Eid_S_Lc_train(Dataset.AG, DATASET_AG_TRAIN_ANNOTATIONS);
+		 */
 
-		System.out.println("Total overlapping pairs: "+mapOverlappingPairsIndex.size());
-		System.out.println("Total overlapping pairs: "+mapOverlappingPairsIndex.size());
+		//		mapDataFromFileForIndexingMap_test = readDataFromFileForIndexingMap("mapAllEnitityOccurance_ag_test_filtered_black_and_numeric_2018.txt", "\t");
+		//		mapDataFromFileForIndexingMap = readDataFromFileForIndexingMap("mapAllEnitityOccurance_ag_train_filtered_black_and_numeric_2018.txt", "\t");
+		//
+		//		compare2EntityPairs(mapDataFromFileForIndexingMap,mapDataFromFileForIndexingMap_test );
+		//		generateJointFeaturesCid_C_Eid_S_Lc_train(Dataset.AG, DATASET_AG_TRAIN_ANNOTATIONS);
+		//
+		//		System.out.println("Total overlapping pairs: "+mapOverlappingPairsIndex.size());
 
 		//		FileUtil.writeDataToFile(mapOverlappingPairsIndex, "mapAllEnitityOverlaping_snippets_train_test_filtered_black_and_numeric_2018.txt");
 
@@ -218,16 +254,18 @@ public class GenerateJointFeatureSetForNN {
 		System.out.println("Size of the map after reading "+map.size());
 		return map;
 	}
+
+
 	public static void compare2EntityPairs(Map<String, Integer> map1, Map<String, Integer> map2) {
 		System.out.println("Will iterate over: "+map2.size());
 		int countOverlap=0;
 		int index=0;
 		for (Entry<String, Integer> e: map2.entrySet()) {
 			if (map1.containsKey(e.getKey())) {
-				//Integer key = e.getValue();
-				//mapOverlappingPairs.merge(key, 1, Integer::sum);
-				mapOverlappingPairsIndex.put(e.getKey(),index++);
-				countOverlap++;
+			//Integer key = e.getValue();
+			//mapOverlappingPairs.merge(key, 1, Integer::sum);
+			mapOverlappingPairsIndex.put(e.getKey(),index++);
+			countOverlap++;
 			}
 		}
 		System.out.println("Total overlapping pairs: "+countOverlap);
@@ -256,6 +294,14 @@ public class GenerateJointFeatureSetForNN {
 					}
 				}
 				else if (dName.equals(Dataset.WEB_SNIPPETS)||dName.equals(Dataset.WEB_SNIPPETS_test)) {				
+					if (mapOverlappingPairsIndex.containsKey(key)) {
+						String s=String.valueOf(lstId.get(i));
+						String s2=String.valueOf(lstId.get(j));
+						strBuild.append(s+"_"+s2+" ");
+						count++;
+					}
+				}
+				else if (dName.equals(Dataset.TWITTER)||dName.equals(Dataset.TWITTER_test)) {				
 					if (mapOverlappingPairsIndex.containsKey(key)) {
 						String s=String.valueOf(lstId.get(i));
 						String s2=String.valueOf(lstId.get(j));
@@ -340,8 +386,21 @@ public class GenerateJointFeatureSetForNN {
 					}
 
 				}
-				String labelStr = AssignLabelsBasedOnConfVecSimilarity.getLabelBasedOnConfidence(dName, sample);
-				//String labelStr = AssignLabelsBasedOnConfVecSimilarity.getBestLabelBasedOnConfidence_all_embeddings(dName, sample);
+				else if (dName.equals(Dataset.TWITTER)){ 
+					for (int i = 0; i < splitEntity.length; i++) {
+						Article a = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(splitEntity[i]); 
+						if (a!=null && !AnnonatationUtil.getEntityBlackList_Twitter().contains(a.getId())&&!StringUtil.isNumeric(a.getTitle())) {
+							lstentities.add(a);
+							strB.append(a.getId()+" ");
+						}
+						else {
+							countNullEnt++;
+						}
+					}
+
+				}
+//				String labelStr = AssignLabelsBasedOnConfVecSimilarity.getLabelBasedOnConfidence(dName, sample);
+				String labelStr = AssignLabelsBasedOnConfVecSimilarity.getBestLabel_all_embeddings(dName, sample);
 				String entityIDs = strB.toString().trim();
 
 				String entityCooc = getEntityCoocuranceFeature(lstentities, dName); 
@@ -378,16 +437,16 @@ public class GenerateJointFeatureSetForNN {
 		}
 		System.out.println("No entity:"+countNoEntity);
 		System.out.println("Count null entites: "+countNullEnt);
-		System.out.println("count Ignored Lines: "+countIgnoredLines);
+		System.out.println("Count Ignored Lines: "+countIgnoredLines);
 
-		FileUtil.writeDataToFile(catIds, dName.name().toLowerCase()+"_train_joint_features_catIds",false);
-		FileUtil.writeDataToFile(catNames, dName.name().toLowerCase()+"_train_joint_features_catNames",false);
-		FileUtil.writeDataToFile(entIDs, dName.name().toLowerCase()+"_train_joint_features_entIDs",false);
-		FileUtil.writeDataToFile(samples, dName.name().toLowerCase()+"_train_joint_features_samples",false);
-		FileUtil.writeDataToFile(labels, dName.name().toLowerCase()+"_train_joint_features_labels",false);
-		FileUtil.writeDataToFile(entCoOc, dName.name().toLowerCase()+"_train_joint_features_entCooc",false);
-		FileUtil.writeDataToFile(entVecMean, dName.name().toLowerCase()+"_train_joint_features_entVecMean",false);
-		FileUtil.writeDataToFile(catVecMean, dName.name().toLowerCase()+"_train_joint_features_catVecMean",false);
+		FileUtil.writeDataToFile(catIds, "JointFeatures/"+dName.name().toLowerCase()+"_train_joint_features_catIds",false);
+		FileUtil.writeDataToFile(catNames, "JointFeatures/"+dName.name().toLowerCase()+"_train_joint_features_catNames",false);
+		FileUtil.writeDataToFile(entIDs, "JointFeatures/"+dName.name().toLowerCase()+"_train_joint_features_entIDs",false);
+		FileUtil.writeDataToFile(samples, "JointFeatures/"+dName.name().toLowerCase()+"_train_joint_features_samples",false);
+		FileUtil.writeDataToFile(labels, "JointFeatures/"+dName.name().toLowerCase()+"_train_joint_features_labels",false);
+		FileUtil.writeDataToFile(entCoOc, "JointFeatures/"+dName.name().toLowerCase()+"_train_joint_features_entCooc",false);
+		FileUtil.writeDataToFile(entVecMean, "JointFeatures/"+dName.name().toLowerCase()+"_train_joint_features_entVecMean",false);
+		FileUtil.writeDataToFile(catVecMean, "JointFeatures/"+dName.name().toLowerCase()+"_train_joint_features_catVecMean",false);
 	}
 	public static void generateJointFeaturesCid_C_Eid_S_Lc_test(Dataset dName,String fAnotationFile) throws Exception {
 		int count=0;
@@ -458,6 +517,19 @@ public class GenerateJointFeatureSetForNN {
 						}
 					}
 				}
+
+				else if (dName.equals(Dataset.TWITTER) || dName.equals(Dataset.TWITTER_test)) {
+					for (int i = 0; i < splitEntity.length; i++) {
+						Article a = WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(splitEntity[i]); 
+						if (a!=null && !AnnonatationUtil.getEntityBlackList_Twitter().contains(a.getId())&&!StringUtil.isNumeric(a.getTitle())) {
+							lstentities.add(a);
+							strB.append(a.getId()+" ");
+						}
+						else {
+							countNullEnt++;
+						}
+					}
+				}
 				String entityIDs = strB.toString().trim();
 
 				String entityCooc = getEntityCoocuranceFeature(lstentities,dName); 
@@ -498,27 +570,54 @@ public class GenerateJointFeatureSetForNN {
 		System.out.println("Count null entites: "+countNullEnt);
 		System.out.println("count Ignored Lines: "+countIgnoredLines);
 
-		FileUtil.writeDataToFile(catIds, dName.name().toLowerCase()+"_train_original_joint_features_catIds",false);
-		FileUtil.writeDataToFile(catNames, dName.name().toLowerCase()+"_train_original_joint_features_catNames",false);
-		FileUtil.writeDataToFile(entIDs, dName.name().toLowerCase()+"_train_original_joint_features_entIDs",false);
-		FileUtil.writeDataToFile(samples, dName.name().toLowerCase()+"_train_original_joint_features_samples",false);
-		FileUtil.writeDataToFile(labels, dName.name().toLowerCase()+"_train_original_joint_features_labels",false);
-		FileUtil.writeDataToFile(entCoOc, dName.name().toLowerCase()+"_train_original_joint_features_entCooc",false);
+//		FileUtil.writeDataToFile(catIds, dName.name().toLowerCase()+"_train_original_joint_features_catIds",false);
+//		FileUtil.writeDataToFile(catNames, dName.name().toLowerCase()+"_train_original_joint_features_catNames",false);
+//		FileUtil.writeDataToFile(entIDs, dName.name().toLowerCase()+"_train_original_joint_features_entIDs",false);
+//		FileUtil.writeDataToFile(samples, dName.name().toLowerCase()+"_train_original_joint_features_samples",false);
+//		FileUtil.writeDataToFile(labels, dName.name().toLowerCase()+"_train_original_joint_features_labels",false);
+//		FileUtil.writeDataToFile(entCoOc, dName.name().toLowerCase()+"_train_original_joint_features_entCooc",false);
+//
+//		FileUtil.writeDataToFile(entVecMean, dName.name().toLowerCase()+"_train_original_joint_features_entVecMean",false);
+//		FileUtil.writeDataToFile(catVecMean, dName.name().toLowerCase()+"_train_original_joint_features_catVecMean",false);
 
-		FileUtil.writeDataToFile(entVecMean, dName.name().toLowerCase()+"_train_original_joint_features_entVecMean",false);
-		FileUtil.writeDataToFile(catVecMean, dName.name().toLowerCase()+"_train_original_joint_features_catVecMean",false);
-
-		//		FileUtil.writeDataToFile(catIds, dName.name().toLowerCase()+"_joint_features_catIds",false);
-		//		FileUtil.writeDataToFile(catNames, dName.name().toLowerCase()+"_joint_features_catNames",false);
-		//		FileUtil.writeDataToFile(entIDs, dName.name().toLowerCase()+"_joint_features_entIDs",false);
-		//		FileUtil.writeDataToFile(samples, dName.name().toLowerCase()+"_joint_features_samples",false);
-		//		FileUtil.writeDataToFile(labels, dName.name().toLowerCase()+"_joint_features_labels",false);
-		//		FileUtil.writeDataToFile(entCoOc, dName.name().toLowerCase()+"_joint_features_entCooc",false);
-		//
-		//		FileUtil.writeDataToFile(entVecMean, dName.name().toLowerCase()+"_joint_features_entVecMean",false);
-		//		FileUtil.writeDataToFile(catVecMean, dName.name().toLowerCase()+"_joint_features_catVecMean",false);
+				FileUtil.writeDataToFile(catIds, "JointFeatures/"+dName.name().toLowerCase()+"_original_joint_features_catIds",false);
+				FileUtil.writeDataToFile(catNames,"JointFeatures/"+ dName.name().toLowerCase()+"_original_joint_features_catNames",false);
+				FileUtil.writeDataToFile(entIDs, "JointFeatures/"+dName.name().toLowerCase()+"_original_joint_features_entIDs",false);
+				FileUtil.writeDataToFile(samples, "JointFeatures/"+dName.name().toLowerCase()+"_original_joint_features_samples",false);
+				FileUtil.writeDataToFile(labels, "JointFeatures/"+dName.name().toLowerCase()+"_original_joint_features_labels",false);
+				FileUtil.writeDataToFile(entCoOc, "JointFeatures/"+dName.name().toLowerCase()+"_original_joint_features_entCooc",false);
+		
+				FileUtil.writeDataToFile(entVecMean, "JointFeatures/"+dName.name().toLowerCase()+"_original_joint_features_entVecMean",false);
+				FileUtil.writeDataToFile(catVecMean, "JointFeatures/"+dName.name().toLowerCase()+"_original_joint_features_catVecMean",false);
 
 	}
+	private  void findAllPossibleEntityPairs(List<String> dataset) throws Exception {
+		synCountNumberOfEntityPairs= new SynchronizedCounter();
+		executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
+		System.out.println("Size of the file :"+dataset.size());
+		List<Article> lstentities = null;
+		int countNullEnt=0;
+		NLPAnnotationService service = AnnotationSingleton.getInstance().service;
+		for(String line : dataset) {
+			List<Annotation> lstAnnotations = new ArrayList<>();
+			service.annotate(line, lstAnnotations);//annotate the given text
+			lstentities = new ArrayList<Article>();
+			for (Annotation annotation : lstAnnotations) {
+				Article a = WikipediaSingleton.getInstance().wikipedia.getArticleById(annotation.getId()); 
+				if (a!=null&&!AnnonatationUtil.getEntityBlackList_Twitter().contains(a.getId())) {
+					lstentities.add(a);
+				}
+				else {
+					countNullEnt++;
+				}
+			}
+			executor.execute(handleEntitiyPairs(lstentities));
+		}
+		executor.shutdown();
+		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		System.out.println("Null entity: "+countNullEnt);
+	}
+
 	private  void findAllPossibleEntityPairs(String fAnotationFile) throws Exception {
 		synCountNumberOfEntityPairs= new SynchronizedCounter();
 		executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);

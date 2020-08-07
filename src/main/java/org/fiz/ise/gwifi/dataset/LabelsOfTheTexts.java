@@ -29,6 +29,19 @@ public class LabelsOfTheTexts {
 		labels.add("sports");
 		return Collections.unmodifiableList(labels);
 	}
+	
+	public static List<Article> getLabels_twitter() {
+		final List<Article> labels = new ArrayList<Article>(); 
+		labels.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Business"));
+		labels.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Film"));
+		labels.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Fashion"));
+		labels.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Politics"));
+		labels.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Sports"));
+		labels.add(WikipediaSingleton.getInstance().wikipedia.getArticleByTitle("Software"));
+		
+		return Collections.unmodifiableList(labels);
+	}
+
 
 	public static Map<Integer, Article> getLables_Yahoo_article()
 	{

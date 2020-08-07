@@ -1,6 +1,9 @@
 package org.fiz.ise.gwifi.model;
 
 public enum Dataset {
+	TWITTER,
+	TWITTER_train,
+	TWITTER_test,
 	AG,
 	AG_train,
 	AG_test,

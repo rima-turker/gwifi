@@ -27,6 +27,7 @@ import org.fiz.ise.gwifi.Singleton.LINE_2modelSingleton;
 import org.fiz.ise.gwifi.Singleton.LINE_modelSingleton;
 import org.fiz.ise.gwifi.Singleton.WikipediaSingleton;
 import org.fiz.ise.gwifi.dataset.AnalyseTrecDataset;
+import org.fiz.ise.gwifi.dataset.AnalyseTwitterDataset;
 import org.fiz.ise.gwifi.dataset.LabelsOfTheTexts;
 import org.fiz.ise.gwifi.dataset.ReadDataset;
 import org.fiz.ise.gwifi.dataset.category.Categories;
@@ -89,47 +90,54 @@ public class GenerateDatasetForNN {
 
 	public static void main(String[] args) throws IOException {
 		long now = TimeUtil.getStart();
+		System.out.println("Start loading embedding model...");
+		LINE_modelSingleton.getInstance();
+		
+		
 		CategorySingleton.getInstance(Categories.getCategoryList(TEST_DATASET_TYPE));
+		
 		AnnotationSingleton.getInstance();
 		mapRedirectPages= new HashMap<>(AnalysisEmbeddingandRedirectDataset.loadRedirectPages());
 
-		//		LINE_modelSingleton.getInstance();
-		//		GoogleModelSingleton.getInstance();
+		//GoogleModelSingleton.getInstance();
 
 
 		GenerateDatasetForNN generate = new GenerateDatasetForNN();
-
+		System.out.println("The embedding model loaded...");
 		ArrayList<String> lst_file_names = new ArrayList<String>();
 
-		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_rsv_dbow_afterCorrecting.txt");
-		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_rsv_dbow_afterCorrecting_2018_redirectionResolved.txt");
+		generate.labelTrainSetParalel(EmbeddingModel.GOOGLE, Dataset.TWITTER, LabelsOfTheTexts.getLabels_twitter());
+//		generate.labelTrainSetParalel(EmbeddingModel.LINE_Ent_Ent, Dataset.TWITTER, LabelsOfTheTexts.getLabels_twitter());
+		//		generate.labelTrainSetParalel(EmbeddingModel.LINE_Ent_Ent, Dataset.AG, new ArrayList<Article>(LabelsOfTheTexts.getArticleValue_AG().keySet()));
 
-		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_rsv_dm_afterCorrecting.txt");
-		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_rsv_dm_afterCorrecting_2018_redirectionResolved.txt");
-
-		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_dbow_afterCorrecting.txt");
-		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_dbow_afterCorrecting_2018_redirectionResolved.txt");
-
-		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_dm_afterCorrecting.txt");
-		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_dm_afterCorrecting_2018_redirectionResolved.txt");
-		for (String file_name : lst_file_names) {
-			//			
-			List<String> lines = FileUtils.readLines(new File(file_name), "utf-8");
-			for(String line : lines) {
-				String[] split = line.split("\t");
-				map_results_doc2vec.put(split[0], WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(split[1]));
-			}
-			generate.labelTrainSetParalel(EmbeddingModel.LINE_Ent_Ent, Dataset.AG, new ArrayList<Article>(LabelsOfTheTexts.getArticleValue_AG().keySet()));
-			//generate.calculate_accuracy_for_doc2Vec(file_name);
-			System.out.println("Total time minutes :"+ TimeUnit.SECONDS.toMinutes(TimeUtil.getEnd(TimeUnit.SECONDS, now)));
-			//			resultLog.info(file_name+":True Positives: "+countCorrectSyn.value());
-			//			resultLog.info(file_name+":False Positives: "+countWrongSyn.value());
-			//			resultLog.info(file_name+":Null: "+countNullSyn.value());
-			//			System.out.println(file_name+":True Positives: "+countCorrectSyn.value());
-			//			System.out.println(file_name+":False Positives: "+countWrongSyn.value());
-			//			System.out.println(file_name+":Null: "+countNullSyn.value());
-
-		}
+		//		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_rsv_dbow_afterCorrecting.txt");
+		//		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_rsv_dbow_afterCorrecting_2018_redirectionResolved.txt");
+		//
+		//		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_rsv_dm_afterCorrecting.txt");
+		//		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_rsv_dm_afterCorrecting_2018_redirectionResolved.txt");
+		//
+		//		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_dbow_afterCorrecting.txt");
+		//		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_dbow_afterCorrecting_2018_redirectionResolved.txt");
+		//
+		//		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_dm_afterCorrecting.txt");
+		//		lst_file_names.add("/home/rima/playground/PyCharProjects/UnsupervisedTextCategorization/LabeledDataGeneration/categorization_iteration_dm_afterCorrecting_2018_redirectionResolved.txt");
+		//		for (String file_name : lst_file_names) {
+		//			//			
+		//			List<String> lines = FileUtils.readLines(new File(file_name), "utf-8");
+		//			for(String line : lines) {
+		//				String[] split = line.split("\t");
+		//				map_results_doc2vec.put(split[0], WikipediaSingleton.getInstance().wikipedia.getArticleByTitle(split[1]));
+		//			}
+		//			//generate.calculate_accuracy_for_doc2Vec(file_name);
+		//			System.out.println("Total time minutes :"+ TimeUnit.SECONDS.toMinutes(TimeUtil.getEnd(TimeUnit.SECONDS, now)));
+		//			//			resultLog.info(file_name+":True Positives: "+countCorrectSyn.value());
+		//			//			resultLog.info(file_name+":False Positives: "+countWrongSyn.value());
+		//			//			resultLog.info(file_name+":Null: "+countNullSyn.value());
+		//			//			System.out.println(file_name+":True Positives: "+countCorrectSyn.value());
+		//			//			System.out.println(file_name+":False Positives: "+countWrongSyn.value());
+		//			//			System.out.println(file_name+":Null: "+countNullSyn.value());
+		//
+		//		}
 
 		/*
 		List<String> lstCat = new ArrayList<>(Categories.getCategoryList(TEST_DATASET_TYPE));
@@ -200,9 +208,9 @@ public class GenerateDatasetForNN {
 			int count =0;
 			int countFilteredSentences=0;
 			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
-//			for(Entry<String, List<String>> e: mapSentencesAnnotations.entrySet()) {
-//				executor.execute(findBestMachingArticleAnnotatedList(model,dname,e.getKey(),e.getValue(),mapDataset.get(e.getKey()),++count, labels));
-//			}
+			//			for(Entry<String, List<String>> e: mapSentencesAnnotations.entrySet()) {
+			//				executor.execute(findBestMachingArticleAnnotatedList(model,dname,e.getKey(),e.getValue(),mapDataset.get(e.getKey()),++count, labels));
+			//			}
 			//(EmbeddingModel model,Dataset dname, String sentence, List<String> lstAnnotations,List<Article> gtList, int i , List<Article> labels) {
 			for (String s : lst_snippets) {
 				executor.execute(findBestMachingArticleAnnotatedList(model,dname,s,mapSentencesAnnotations.get(s),mapDataset.get(s),++count, labels));
@@ -261,9 +269,9 @@ public class GenerateDatasetForNN {
 					else {
 						keyByValue=bestMatchingCategory.getTitle().toLowerCase();
 					}
-					
+
 					listEstimated.add(keyByValue+"\t"+sentence);
-//					resultLog.info(keyByValue+",\""+sentence+"\"");
+					//					resultLog.info(keyByValue+",\""+sentence+"\"");
 					resultLog.info(sentence.trim()+" "+keyByValue);
 				}
 				else if (dname.equals(Dataset.DBpedia)) {
@@ -310,14 +318,18 @@ public class GenerateDatasetForNN {
 				dataset = ReadDataset.read_dataset_Snippets(Config.getString("DATASET_TRAIN_SNIPPETS",""));
 				lst_snippets = new ArrayList<String>(ReadDataset.read_dataset_Snippets_list(DATASET_TRAIN_SNIPPETS));
 			}
+			else if(dname.equals(Dataset.TWITTER)) {
+				System.out.println("Reading Twitter data");
+				dataset = ReadDataset.read_twitter(Dataset.TWITTER);
+			}
 			int count =0;
 			executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
-//			for(Entry<String, List<Article>> e: dataset.entrySet()) {
-//				executor.execute(findBestMachingArticle(model,dname,labels, e.getKey(),e.getValue(),++count));
-//			}
-			for (String s : lst_snippets) {
-				executor.execute(findBestMachingArticle(model,dname,labels, s ,dataset.get(s),++count));
+			for(Entry<String, List<Article>> e: dataset.entrySet()) {
+				executor.execute(findBestMachingArticle(model,dname,labels, e.getKey(),e.getValue(),++count));
 			}
+			//			for (String s : lst_snippets) {
+			//				executor.execute(findBestMachingArticle(model,dname,labels, s ,dataset.get(s),++count));
+			//			}
 			executor.shutdown();
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 			System.out.println("Dataset: "+dname.name()+" Model: "+model.name());
@@ -352,7 +364,6 @@ public class GenerateDatasetForNN {
 			else if (model.equals(EmbeddingModel.GOOGLE)) {
 				bestMatchingCategory = BestMatchingLabelBasedOnVectorSimilarity.getBestMatchingArticleFromWordVectorModel(dname, labels,description, gtList);
 			}
-
 			if(bestMatchingCategory==null) {
 				countNullSyn.increment();
 			}
@@ -361,6 +372,8 @@ public class GenerateDatasetForNN {
 				mapCount.put(bestMatchingCategory.getTitle(), mapCount.getOrDefault(bestMatchingCategory.getTitle(), 0) + 1); 
 				listEstimated.add(bestMatchingCategory.getTitle()+"\t"+description);
 
+				resultLog.info(bestMatchingCategory.getTitle()+"\t"+description);
+				
 				String keyByValue=null;
 				if (dname.equals(Dataset.WEB_SNIPPETS)) {
 					if (bestMatchingCategory.getTitle().equalsIgnoreCase("Culture")||bestMatchingCategory.getTitle().equalsIgnoreCase("Art")||
@@ -376,9 +389,9 @@ public class GenerateDatasetForNN {
 					else {
 						keyByValue=bestMatchingCategory.getTitle().toLowerCase();
 					}
-					
+
 					listEstimated.add(keyByValue+"\t"+description);
-//					resultLog.info(keyByValue+",\""+description+"\"");
+					//					resultLog.info(keyByValue+",\""+description+"\"");
 					resultLog.info(description.trim()+" "+keyByValue);
 				}
 				else if (dname.equals(Dataset.DBpedia)) {
@@ -399,7 +412,7 @@ public class GenerateDatasetForNN {
 				}
 			}
 
-			System.out.println(i+" files are processed. Correctly: "+countCorrectSyn.value()+" Wrongly: "+countWrongSyn.value()+" Null: "+countNullSyn.value());
+			//System.out.println(i+" files are processed. Correctly: "+countCorrectSyn.value()+" Wrongly: "+countWrongSyn.value()+" Null: "+countNullSyn.value());
 		};
 	}
 	private Runnable findBestMachingArticle(String description, List<Article> gtList, int i ) {
@@ -488,7 +501,7 @@ public class GenerateDatasetForNN {
 					lst_result_to_write_file.add(keyByValue+",\""+s+"\"");
 				}
 				else if (dName.equals(Dataset.WEB_SNIPPETS)) {
-					
+
 				}
 				else {
 					if (entry.getKey().getTitle().equals("Sport")) {
@@ -507,40 +520,40 @@ public class GenerateDatasetForNN {
 				}
 			}
 		}
-			//			FileUtil.writeDataToFile(lst_result_to_write_file, file_name,false);
-			int countCorrect=0;
-			int size=0;
-			int wrong=0;
-			String l=null;
-			try {
-				for(Entry<Article, List<String>> e : mapResult.entrySet()) {
-					Article estimatedLabel = e.getKey();
-					size+=e.getValue().size();
-					for(String s : e.getValue()) {
-						l=s;
-						if (groundTruth.containsKey(s)) {
-							Article gtLabel = groundTruth.get(s).get(0);
-							if (estimatedLabel.equals(gtLabel)) {
-								countCorrect++;
-							}
-							else {
-								wrong++;
-							}
+		//			FileUtil.writeDataToFile(lst_result_to_write_file, file_name,false);
+		int countCorrect=0;
+		int size=0;
+		int wrong=0;
+		String l=null;
+		try {
+			for(Entry<Article, List<String>> e : mapResult.entrySet()) {
+				Article estimatedLabel = e.getKey();
+				size+=e.getValue().size();
+				for(String s : e.getValue()) {
+					l=s;
+					if (groundTruth.containsKey(s)) {
+						Article gtLabel = groundTruth.get(s).get(0);
+						if (estimatedLabel.equals(gtLabel)) {
+							countCorrect++;
 						}
-						//System.out.println("Size "+ size+" correct: "+countCorrect+" wrong:"+wrong);
+						else {
+							wrong++;
+						}
 					}
+					//System.out.println("Size "+ size+" correct: "+countCorrect+" wrong:"+wrong);
 				}
-				
-				System.out.println("\n");
-				System.out.println("Size "+ size+" correct: "+countCorrect+" wrong:"+wrong+" total:"+mapResult.size());
-				System.out.println("Accuracy "+ countCorrect*1.0/size*1.);
-				
-			} catch (Exception e) {
-				System.out.println("Exception: "+e.getMessage());
-				System.out.println("Exception: "+l);
 			}
-		
-		
+
+			System.out.println("\n");
+			System.out.println("Size "+ size+" correct: "+countCorrect+" wrong:"+wrong+" total:"+mapResult.size());
+			System.out.println("Accuracy "+ countCorrect*1.0/size*1.);
+
+		} catch (Exception e) {
+			System.out.println("Exception: "+e.getMessage());
+			System.out.println("Exception: "+l);
+		}
+
+
 
 	}
 	/*

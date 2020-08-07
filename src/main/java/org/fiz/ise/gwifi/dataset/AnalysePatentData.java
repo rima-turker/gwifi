@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -22,7 +23,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.types.CommandlineJava.SysProperties;
 import org.fiz.ise.gwifi.util.Config;
+import org.fiz.ise.gwifi.util.FileUtil;
 import org.fiz.ise.gwifi.util.MapUtil;
+import org.fiz.ise.gwifi.util.StopWordRemoval;
+import org.fiz.ise.gwifi.util.StringUtil;
 import org.fiz.ise.gwifi.util.SynchronizedCounter;
 
 import riotcmd.printtokens;
@@ -50,64 +54,234 @@ public class AnalysePatentData {
 	private static SynchronizedCounter count_null_app=new SynchronizedCounter();
 	private static SynchronizedCounter count_null_cpc=new SynchronizedCounter();
 	private static Set<String> setMostCommonCats;
-
+	private static String file_name_patent_pub_abst="patent_publication_abstract_cpc.txt";
 
 	public static void main(String[] args) throws Exception  {
 		//		compareLabels();
-		setMostCommonCats = findMostCommonCats("patent_publication_abstract_cpc.txt", 300);
-		generateTrainandTestData("patent_publication_abstract_cpc.txt");
-	}
-	private static void generate_cpc_hierarchy(String fName, int num) throws Exception {
-		
+		//		setMostCommonCats = findMostCommonCats("patent_publication_abstract_cpc.txt", 5);
+		generateTrainandTestData(file_name_patent_pub_abst);
+
+		//List<String> lines = FileUtils.readLines(new File("/home/rima/playground/Embeddings/PTE/workspace/patent_classification_with_label_info/patent_split_80_train.txt"), "utf-8");
+		//generate_dataset_pte_baseline(lines);
+		//splitTrainandTestData("patent_publication_abstract_cpc.txt",80);
+		//clean_cpc_fulltitle();
 	}
 	
-
-	private static Set<String> findMostCommonCats(String fName, int num) throws Exception {
-		Set<String> set_common_cats= new HashSet<String>();
-		Map<String, Integer> map_result = new HashMap<String, Integer>();
-
-		List<String> lines = FileUtils.readLines(new File(fName), "utf-8");
-		for(String line: lines) {
-			String[] split = line.split("\t");
+	private static void generate_dataset_pte_baseline(List<String> lst) throws Exception {
+		System.out.println("Size of the patent training set is :" +lst.size());
+		
+		Set<String> set_dublicates = new HashSet<String>();
+		for(String str : lst) {
+			String[] split = str.split("\t");
+			String s_abstract=StringUtil.removePunctuation(split[1].replace(".\"@en .", "")).toLowerCase().trim().replaceAll(" +", " ");
 			String label= split[2];
-			String[] split_label = label.split(",");
-			Set<String> set_label = new HashSet<String>();
-			for (int i = 0; i < split_label.length; i++) {
-				String first_Chars=split_label[i].substring(0,4);
-				set_label.add(first_Chars);
-			}
-			for(String c : set_label) {
-				map_result.merge(c, 1, Integer::sum);
-			}
-		}
-		Map<String, Integer> sortByValueDescending = MapUtil.sortByValueDescending(map_result);
-		int count=0;
-		for(Entry<String, Integer> e : sortByValueDescending.entrySet()) {
-			set_common_cats.add(e.getKey());
-			count++;
-			if (count==num) {
-				break;
-			}
-		}
-		System.out.println("Size of the most common cats: "+set_common_cats.size());
-		return set_common_cats;
-	}
+			String key = s_abstract+" "+label;
 
+			if (!set_dublicates.contains(key)) {
+				String[] split_label = label.split(",");
+				Set<String> set_label = new HashSet<String>();
+				for (int i = 0; i < split_label.length; i++) {
+					String first_Chars=split_label[i].substring(0,4);
+					set_label.add(first_Chars);
+				}
+				if (set_label.size()>0) {
+					for (String str_label: set_label) {
+						secondLOG.info(s_abstract);
+						thirdLOG.info(str_label);
+					}
+				}
+				set_dublicates.add(key);
+			}
+		}
+		System.out.println("After converting to set pte dataset: "+set_dublicates.size());
+	}
+	
+	
 	private static void generateTrainandTestData(String fName) throws Exception {
-		List<String> lines = FileUtils.readLines(new File(fName), "utf-8");
-		int lastIndex= (lines.size()*80)/100;
+//		List<String> lines = FileUtils.readLines(new File(fName), "utf-8");
+//		Set<String> set_dublicates = new HashSet<String>();
+//		List<String> lines_no_dublicates = new ArrayList<String>();
+//
+//		for(String str : lines) {
+//			String[] split = str.split("\t");
+//			String s_abstract=StringUtil.removePunctuation(split[1].replace(".\"@en .", "")).toLowerCase().trim().replaceAll(" +", " ");
+//			String label= split[2];
+//			String key = s_abstract+" "+label;
+//			if (!set_dublicates.contains(key)) {
+//				lines_no_dublicates.add(str);
+//				set_dublicates.add(key);
+//			}
+//		}
+//		System.out.println("Original list size :"+ lines.size());
+//		System.out.println("After removing the dublicates list size :"+ lines_no_dublicates.size());
+//		System.out.println("set_dublicates size :"+ set_dublicates.size());
+//
+//		int lastIndex= (lines_no_dublicates.size()*80)/100;
+//
+//		List<String> list_train = new ArrayList<String>(lines_no_dublicates.subList(0, lastIndex));
+//		List<String> list_test = new ArrayList<String>(lines_no_dublicates.subList(lastIndex, lines_no_dublicates.size()));
+		
+		List<String> list_train = FileUtils.readLines(new File("/home/rima/playground/Embeddings/PTE-master/workspace/patent_classification_with_label_info/patent_split_80_train.txt"), "utf-8");
+		List<String> list_test = FileUtils.readLines(new File("/home/rima/playground/Embeddings/PTE-master/workspace/patent_classification_with_label_info/patent_split_80_test.txt"), "utf-8");
 
-		List<String> list_train = new ArrayList<String>(lines.subList(0, lastIndex));
-		List<String> list_test = new ArrayList<String>(lines.subList(lastIndex, lines.size()));
+		//System.out.println("Size the lines_no_dublicates size: " + list_train.size()+list_test.size());
+		System.out.println("Size the  list_train: " + list_train.size());
+		System.out.println("Size the  list_test: " + list_test.size());
+		System.out.println("Size the total: " + (list_test.size()+list_train.size()));
 
-		System.out.println("Size the original list: " + lines.size());
-//		System.out.println("Size the  list_train: " + list_train.size());
-//		System.out.println("Size the  list_test: " + list_test.size());
-//		System.out.println("Size the total: " + (list_test.size()+list_train.size()));
-
-		writeDataToFile_filter(lines);
+		//generateDatasetPatentForBinaryClassification_train(list_train,5);
+		//generateDatasetPatentForBinaryClassification_test(list_test);
+		writeDataToFile(list_train);
 	}
+	/*
+	 * Generated a dataset set for test a bun classification model no negative samples
+	 * s1 l1 1
+	 * s1 l2 1 and so on
+	 */
+	
+	private static  void generateDatasetPatentForBinaryClassification_test(List<String> lst){
+		
+		System.out.println("I am in generateDatasetPatentForBinaryClassification_test"+lst.size());
+		int count=0;
+		Set<String> set_dublicates = new HashSet<String>();
+		for(String str : lst) {
+			String[] split = str.split("\t");
+			String s_abstract=StringUtil.removePunctuation(split[1].replace(".\"@en .", "")).toLowerCase().trim().replaceAll(" +", " ");
+			String label= split[2];
+			String key = s_abstract+" "+label;
+			if (!set_dublicates.contains(key)) {
+				String[] split_label = label.split(",");
+				Set<String> set_label = new HashSet<String>();
+				for (int i = 0; i < split_label.length; i++) {
+					String first_Chars=split_label[i].substring(0,4);
+					set_label.add(first_Chars);
+				}
+				for (String str_label: set_label) {
+					thirdLOG.info(s_abstract+"\t\t"+str_label+"\t\t"+"1");
+				}
+				set_dublicates.add(key);
+			}
+		}
+		System.out.println("Size of the dataset after dublicates removed test: "+set_dublicates.size());
+		System.out.println("Size of the dataset original test: "+lst.size());
+	}
+	/*
+	 * Generated a dataset set for training a bin classification model with negative samples
+	 * s1 l1 1
+	 * s1 l2 1 
+	 * s1 l3 0 
+	 * s1 l4 0 
+	 * s1 l5 0 and so on (3 negatieve samples only)
+	 * 
+	 */
+	private static  void generateDatasetPatentForBinaryClassification_train(List<String> lst, int negativeSamples) throws IOException {
+		Set<String> set_dublicates = new HashSet<String>();
+		Set<String> set_allLabels = new HashSet<String>(getAllLabelsOfPatents());
+		int count_lines=0;
+		
+		for(String str : lst) {
+			String[] split = str.split("\t");
+			String s_abstract=StringUtil.removePunctuation(split[1].replace(".\"@en .", "")).toLowerCase().trim().replaceAll(" +", " ");
+			String label= split[2];
+			String key = s_abstract+" "+label;
+			if (!set_dublicates.contains(key)) {
+				String[] split_label = label.split(",");
+				Set<String> set_label = new HashSet<String>();
+				for (int i = 0; i < split_label.length; i++) {
+					String first_Chars=split_label[i].substring(0,4);
+					set_label.add(first_Chars);
+				}
+				count_lines+=set_label.size();
+				for (String str_label: set_label) {
+					secondLOG.info(s_abstract+"\t\t"+str_label+"\t\t"+"1");
+					//thirdLOG.info("1");
+				}
+				Set<String> set_temp_remove_labels = new HashSet<String>(set_allLabels);
+				set_temp_remove_labels.removeAll(set_label);
+				List<String> lst_temp = new ArrayList<String>(set_temp_remove_labels);
+				
+				for (int i = 0; i < negativeSamples; i++) {
+					Random rand = new Random();
+					int int_random = rand.nextInt(lst_temp.size()); 
+					secondLOG.info(s_abstract+"\t\t"+lst_temp.get(int_random)+"\t\t"+"0");
+					//thirdLOG.info("0");
+				}
+				count_lines+=5;
+				set_dublicates.add(key);
+			}
+		}
+		System.out.println("Size of the dataset after dublicates removed: "+set_dublicates.size());
+		System.out.println("Size of the dataset original: "+lst.size());
+		System.out.println("Total number of the lines: "+count_lines);
+	}
+	private static void writeDataToFile(List<String> lst) {
+		int count_num_samples_one_cat=0;
+		Set<String> set_dublicates = new HashSet<String>();
+		for(String str : lst) {
+			String[] split = str.split("\t");
+			String s_abstract=StringUtil.removePunctuation(split[1].replace(".\"@en .", "")).toLowerCase().trim().replaceAll(" +", " ");
+			String label= split[2];
+			String key = s_abstract+" "+label;
+			if (!set_dublicates.contains(key)) {
+				String[] split_label = label.split(",");
+				Set<String> set_label = new HashSet<String>();
+				for (int i = 0; i < split_label.length; i++) {
+					String first_Chars=split_label[i].substring(0,4);
+					set_label.add(first_Chars);
+				}
+				StringBuilder strBuild = new StringBuilder();
+				count_num_samples_one_cat+=set_label.size();
+				for (String str_label: set_label) {
+					strBuild.append(str_label+" ");
+				}
+				if (set_abstracts.contains(s_abstract)) {
+					System.out.println(str);
+				}
+				secondLOG.info(s_abstract);
+				thirdLOG.info(strBuild.substring(0, strBuild.length()-1));
 
+				set_dublicates.add(key);
+			}
+		}
+		System.out.println("*********After converting to set********: "+set_dublicates.size());
+		System.out.println("count_num_samples_one_cat : "+count_num_samples_one_cat);
+	}
+	/*
+	 * This function have been used to generate train and test slit general no preprocessing whatsoever included
+	 * Also to train PTE I used the 80% of the dataset - train set 
+	 */
+	private static void splitTrainandTestData(String fName, int percentage) throws Exception {
+		List<String> lines = FileUtils.readLines(new File(fName), "utf-8");
+		Set<String> set_dublicates = new HashSet<String>();
+		List<String> lines_no_dublicates = new ArrayList<String>();
+
+		for(String str : lines) {
+			String[] split = str.split("\t");
+			String s_abstract=StringUtil.removePunctuation(split[1].replace(".\"@en .", "")).toLowerCase().trim().replaceAll(" +", " ");
+			String label= split[2];
+			String key = s_abstract+" "+label;
+			if (!set_dublicates.contains(key)) {
+				lines_no_dublicates.add(str);
+				set_dublicates.add(key);
+			}
+		}
+		System.out.println("Original list size :"+ lines.size());
+		System.out.println("After removing the dublicates list size :"+ lines_no_dublicates.size());
+		System.out.println("set_dublicates size :"+ set_dublicates.size());
+
+		int lastIndex= (lines_no_dublicates.size()*percentage)/100;
+
+		List<String> list_train = new ArrayList<String>(lines_no_dublicates.subList(0, lastIndex));
+		List<String> list_test = new ArrayList<String>(lines_no_dublicates.subList(lastIndex, lines_no_dublicates.size()));
+
+		System.out.println("Size the lines_no_dublicates size: " + lines_no_dublicates.size());
+		System.out.println("Size the  list_train: " + list_train.size());
+		System.out.println("Size the  list_test: " + list_test.size());
+		System.out.println("Size the total: " + (list_test.size()+list_train.size()));
+
+		FileUtil.writeDataToFile(list_train, "patent_split_80_train.txt");
+		FileUtil.writeDataToFile(list_test, "patent_split_80_test.txt");
+	}
 	private static void compareLabels() throws IOException {
 		List<String> labels_train  = FileUtils.readLines(new File("/home/rima/playground/Datasets/Features/LabelInformation/patent/patent_train_labels_no_dublicate.txt"), "utf-8");
 		List<String> labels_test  = FileUtils.readLines(new File("/home/rima/playground/Datasets/Features/LabelInformation/patent/patent_test_labels_no_dublicate.txt"), "utf-8");
@@ -167,35 +341,23 @@ public class AnalysePatentData {
 		}
 		System.out.println("After converting to set: "+set_dublicates.size());
 	}
-	private static void writeDataToFile(List<String> lst) {
-		Set<String> set_dublicates = new HashSet<String>();
+	private static Set<String> getAllLabelsOfPatents() throws IOException {
+		List<String> lst = FileUtils.readLines(new File(file_name_patent_pub_abst), "utf-8");
+		Set<String> set_label = new HashSet<String>();
 		for(String str : lst) {
 			String[] split = str.split("\t");
-			String s_abstract=split[1];
 			String label= split[2];
-
-			String key = s_abstract+" "+label;
-			if (!set_dublicates.contains(key)) {
-				String[] split_label = label.split(",");
-				Set<String> set_label = new HashSet<String>();
-				for (int i = 0; i < split_label.length; i++) {
-					String first_Chars=split_label[i].substring(0,4);
-					set_label.add(first_Chars);
-				}
-				StringBuilder strBuild = new StringBuilder();
-				for (String str_label: set_label) {
-					strBuild.append(str_label+" ");
-				}
-				if (set_abstracts.contains(s_abstract)) {
-					System.out.println(str);
-				}
-				secondLOG.info(s_abstract);
-				thirdLOG.info(strBuild.substring(0, strBuild.length()-1));
-				set_dublicates.add(key);
+			String[] split_label = label.split(",");
+			for (int i = 0; i < split_label.length; i++) {
+				String first_Chars=split_label[i].substring(0,4);
+				set_label.add(first_Chars);
 			}
-		}
-		System.out.println("After converting to set: "+set_dublicates.size());
+		}	
+		System.out.println("Total size of the labels: "+set_label.size());
+		return set_label;
 	}
+
+	
 	private static void analyseExtractedResults(String fName) throws Exception {
 		Set<String> set_first_chars= new HashSet<String>();
 		Map<String, Set<String>> map_dataset = new HashMap<>();
@@ -400,6 +562,55 @@ public class AnalysePatentData {
 				}
 			}
 		};
+	}
+	private static Set<String> findMostCommonCats(String fName, int num) throws Exception {
+		Set<String> set_common_cats= new HashSet<String>();
+		Map<String, Integer> map_result = new HashMap<String, Integer>();
+
+		List<String> lines = FileUtils.readLines(new File(fName), "utf-8");
+		for(String line: lines) {
+			String[] split = line.split("\t");
+			String label= split[2];
+			String[] split_label = label.split(",");
+			Set<String> set_label = new HashSet<String>();
+			for (int i = 0; i < split_label.length; i++) {
+				String first_Chars=split_label[i].substring(0,4);
+				set_label.add(first_Chars);
+			}
+			for(String c : set_label) {
+				map_result.merge(c, 1, Integer::sum);
+			}
+		}
+		Map<String, Integer> sortByValueDescending = MapUtil.sortByValueDescending(map_result);
+		int count=0;
+		for(Entry<String, Integer> e : sortByValueDescending.entrySet()) {
+			set_common_cats.add(e.getKey());
+			count++;
+			if (count==num) {
+				break;
+			}
+		}
+		System.out.println("Size of the most common cats: "+set_common_cats.size());
+		return set_common_cats;
+	}
+	private static void clean_cpc_fulltitle_doc2vec_dataset() throws Exception { 
+		Set<String> set_cpc_4_char = new HashSet<String>();
+
+		List<String> lines = FileUtils.readLines(new File("cpc_4_char_title.txt"), "utf-8");
+		for(String line: lines) {
+			String[] split = line.split(" <http://data.epo.org/linked-data/def/cpc/fullTitle> ");
+			String cpc_4_char = split[0].substring(split[0].length()-5,split[0].length()).replace(">", "");
+			set_cpc_4_char.add(cpc_4_char);
+
+			if (cpc_4_char.length()!=4) {
+				System.out.println("The length is not equal to 4"+line);
+				System.exit(0);
+			}
+			String full_title = StringUtil.removePunctuation(split[1].toLowerCase().trim().replaceAll(" +", " "));
+			//secondLOG.info(cpc_4_char+"\t"+full_title);
+		}
+		System.out.println("set_cpc_4_char: "+set_cpc_4_char.size());
+
 	}
 	private static void extractPublications() throws IOException, InterruptedException {
 		executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);

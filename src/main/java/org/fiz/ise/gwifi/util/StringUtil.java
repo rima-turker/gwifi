@@ -16,15 +16,15 @@ public class StringUtil {
 	public static boolean isNumeric(final String str) {
         return NumberUtils.isDigits(str);
     }
-	public static String removePuntionation(String str)
+	public static String removePunctuation(String str)
 	{
-		return str.replaceAll("[^\\w\\s]", "").replaceAll("[\\d]", "");
+		return str.replaceAll("[^\\w\\s]", " ").replaceAll("[\\d]", " ");
 	}
 	public static List<String> tokinizeString(String shortText) {
 		List<String> tokensStr = new ArrayList<String>();
 		final LexedTokenFactory<CoreLabel> tokenFactory = new CoreLabelTokenFactory();
 
-		final PTBTokenizer<CoreLabel> tokenizer = new PTBTokenizer<CoreLabel>(new StringReader(removePuntionation(shortText)), tokenFactory,
+		final PTBTokenizer<CoreLabel> tokenizer = new PTBTokenizer<CoreLabel>(new StringReader(removePunctuation(shortText)), tokenFactory,
 				"untokenizable=noneDelete");
 		while (tokenizer.hasNext()) {
 			tokensStr.add(tokenizer.next().toString());

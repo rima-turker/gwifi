@@ -336,7 +336,7 @@ public class MergeTwoFiles {
 					//					}
 				}
 			}
-			FileUtil.writeDataToFile(result, new File(fileResult));
+			FileUtil.writeDataToFile(result, fileResult);
 			System.out.println("Finished writing to a file");
 		} catch (Exception e) {
 			// TODO: handle exception

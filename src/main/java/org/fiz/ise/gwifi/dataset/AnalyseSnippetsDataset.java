@@ -68,9 +68,9 @@ public class AnalyseSnippetsDataset {
 //		for(String file: files) {
 //			AnalyseDataset.compareTwoFiles(Dataset.WEB_SNIPPETS, DATASET_TRAIN_WEB, file);
 //		}
-		
+//		
 //		AssignLabelsBasedOnConfVecSimilarity assign = new AssignLabelsBasedOnConfVecSimilarity();
-		
+//		
 //		assign.calculateConfidenceForEachModel(Dataset.WEB_SNIPPETS);
 	}
 	

@@ -21,6 +21,8 @@ applicationDefaultJvmArgs = ["-Xmx50g", "-d64", "-XX:+UseParallelGC", "-server"]
 description = """Graph-based Wikifier"""
 
 
+mainClassName="org.fiz.ise.gwifi.dataset.train.generation.GenerateJointFeatureSetForNN"
+
 //mainClassName="org.fiz.ise.gwifi.test.afterESWC.DatasetGenerationBasedOnVector"
 //mainClassName="org.fiz.ise.gwifi.dataset.train.generation.GenerateDatasetForNN"
 //mainClassName="org.fiz.ise.gwifi.dataset.train.generation.Analysis_Embedding_and_Redirect_Dataset"
@@ -37,7 +39,8 @@ description = """Graph-based Wikifier"""
 //mainClassName="org.fiz.ise.gwifi.dataset.LINE.Category.CategoryHieararcyAnalysis"
 //mainClassName="org.fiz.ise.gwifi.dataset.AnalyseDataset"
 //mainClassName="org.fiz.ise.gwifi.dataset.Snorkel"
-mainClassName="org.fiz.ise.gwifi.dataset.train.generation.GenerateFeatureswithLabelInformation"
+//mainClassName="org.fiz.ise.gwifi.dataset.train.generation.GenerateFeatureswithLabelInformation"
+//mainClassName="org.fiz.ise.gwifi.dataset/AnalysePatentData"
 //mainClassName="org.fiz.ise.gwifi.dataset.train.generation.GenerateJointFeatureSetForNN"
 
 
@@ -48,6 +51,8 @@ targetCompatibility = 1.8
 repositories {
     jcenter()
 }
+
+//configurations.all { exclude module: 'slf4j-log4j12' }
 
 dependencies {
 	compile fileTree(dir: 'lib', include: ['*.jar'])

@@ -42,7 +42,7 @@ public class FileUtil {
 		}
 	}
 	
-	public static void writeDataToFile(List<String> data,final File file) {
+	public static void writeDataToFile(List<String> data,final String file) {
 		try {
 			final FileWriter fw = new FileWriter(file);
 			for(String s:data) {

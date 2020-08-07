@@ -42,49 +42,63 @@ public class AssignLabelsBasedOnConfVecSimilarity {
 	private static final String DATASET_DBP_TRAIN_CATEGORIZED_LINE = Config.getString("DATASET_DBP_TRAIN_CATEGORIZED_LINE","");
 	private static final String DATASET_DBP_TRAIN_CATEGORIZED_D2Vec = Config.getString("DATASET_DBP_TRAIN_CATEGORIZED_D2Vec","");
 	private static final String DATASET_DBP_TRAIN_CATEGORIZED_GOOGLE = Config.getString("DATASET_DBP_TRAIN_CATEGORIZED_GOOGLE","");
-
+	
+	
+	private static final String DATASET_TWITTER_TRAIN_CATEGORIZED_LINE = Config.getString("DATASET_TWITTER_TRAIN_CATEGORIZED_LINE","");
+	private static final String DATASET_TWITTER_TRAIN_CATEGORIZED_D2Vec = Config.getString("DATASET_TWITTER_TRAIN_CATEGORIZED_D2Vec","");
+	private static final String DATASET_TWITTER_TRAIN_CATEGORIZED_GOOGLE = Config.getString("DATASET_TWITTER_TRAIN_CATEGORIZED_GOOGLE","");
+	
 	private static final String DATASET_TEST_AG=Config.getString("DATASET_TEST_AG","");
 
 	static final Logger secondLOG = Logger.getLogger("debugLogger");
 	static final Logger resultLog = Logger.getLogger("reportsLogger");
 	Map<String, List<Article>> map_AG_test_gt =  ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION,Config.getString("DATASET_TEST_AG",""));
 
-	private static final String DATASET_SNIPPETS_TRAIN_CATEGORIZED_LINE = Config.getString("DATASET_SNIPPETS_TRAIN_CATEGORIZED_LINE","");
-	private static final String DATASET_SNIPPETS_TRAIN_CATEGORIZED_D2Vec = Config.getString("DATASET_SNIPPETS_TRAIN_CATEGORIZED_D2Vec","");
-	private static final String DATASET_SNIPPETS_TRAIN_CATEGORIZED_GOOGLE = Config.getString("DATASET_SNIPPETS_TRAIN_CATEGORIZED_GOOGLE","");
+	private static final String DATASET_SNIPPETS_TRAIN_CATEGORIZED_LINE = null;//Config.getString("DATASET_SNIPPETS_TRAIN_CATEGORIZED_LINE","");
+	private static final String DATASET_SNIPPETS_TRAIN_CATEGORIZED_D2Vec =null;// Config.getString("DATASET_SNIPPETS_TRAIN_CATEGORIZED_D2Vec","");
+	private static final String DATASET_SNIPPETS_TRAIN_CATEGORIZED_GOOGLE =null;// Config.getString("DATASET_SNIPPETS_TRAIN_CATEGORIZED_GOOGLE","");
 
-	static final Map<String, String> map_DOC2VEC_AG= new HashMap<String, String>(readLabelAssignment_AG(Dataset.AG, EmbeddingModel.Doc2Vec));
-	static final Map<String, String> map_GOOGLE_AG = new HashMap<String, String>(readLabelAssignment_AG(Dataset.AG, EmbeddingModel.GOOGLE));
-	static final Map<String, String> map_LINE_AG = new HashMap<String, String>(readLabelAssignment_AG(Dataset.AG, EmbeddingModel.LINE_Ent_Ent));
+	static final Map<String, String> map_DOC2VEC_AG= null;//new HashMap<String, String>(readLabelAssignment_AG(Dataset.AG, EmbeddingModel.Doc2Vec));
+	static final Map<String, String> map_GOOGLE_AG = null;//new HashMap<String, String>(readLabelAssignment_AG(Dataset.AG, EmbeddingModel.GOOGLE));
+	static final Map<String, String> map_LINE_AG = null;//new HashMap<String, String>(readLabelAssignment_AG(Dataset.AG, EmbeddingModel.LINE_Ent_Ent));
 
-	static final Map<String,  List<Article>> map_DOC2VEC_DBp = new HashMap<String,List<Article>>(ReadDataset.read_dataset_Doc2Vec_categorized(Dataset.DBpedia, DATASET_DBP_TRAIN_CATEGORIZED_D2Vec));
-	static final Map<String,  List<Article>> map_GOOGLE_DBp = new HashMap<String,List<Article>>( ReadDataset.read_dataset_DBPedia_SampleLabel(DATASET_DBP_TRAIN_CATEGORIZED_GOOGLE));
-	static final Map<String,  List<Article>> map_LINE_DBp = new HashMap<String,List<Article>>(ReadDataset.read_dataset_DBPedia_SampleLabel(DATASET_DBP_TRAIN_CATEGORIZED_LINE));
+	static final Map<String,  List<Article>> map_DOC2VEC_DBp =null;// new HashMap<String,List<Article>>(ReadDataset.read_dataset_Doc2Vec_categorized(Dataset.DBpedia, DATASET_DBP_TRAIN_CATEGORIZED_D2Vec));
+	static final Map<String,  List<Article>> map_GOOGLE_DBp = null;//new HashMap<String,List<Article>>( ReadDataset.read_dataset_DBPedia_SampleLabel(DATASET_DBP_TRAIN_CATEGORIZED_GOOGLE));
+	static final Map<String,  List<Article>> map_LINE_DBp = null;//new HashMap<String,List<Article>>(ReadDataset.read_dataset_DBPedia_SampleLabel(DATASET_DBP_TRAIN_CATEGORIZED_LINE));
 
-	static final Map<String,  List<Article>> dataset_dbp_test = ReadDataset.read_dataset_DBPedia_SampleLabel(Config.getString("DATASET_DBP_TEST",""));
-	static final Map<String,  List<Article>> dataset_dbp_train = ReadDataset.read_dataset_DBPedia_SampleLabel(Config.getString("DATASET_DBP_TRAIN",""));
-	static final Map<String,  List<Article>> dataset_ag_test = ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION,DATASET_TEST_AG);
-	static final Map<String,  List<Article>> dataset_ag_train = ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION,Config.getString("DATASET_TRAIN_AG",""));
+	static final Map<String,  List<Article>> dataset_dbp_test = null;//ReadDataset.read_dataset_DBPedia_SampleLabel(Config.getString("DATASET_DBP_TEST",""));
+	static final Map<String,  List<Article>> dataset_dbp_train = null;//ReadDataset.read_dataset_DBPedia_SampleLabel(Config.getString("DATASET_DBP_TRAIN",""));
+	static final Map<String,  List<Article>> dataset_ag_test = null;//ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION,DATASET_TEST_AG);
+	static final Map<String,  List<Article>> dataset_ag_train = null;//ReadDataset.read_dataset_AG_LabelArticle(AG_DataType.TITLEANDDESCRIPTION,Config.getString("DATASET_TRAIN_AG",""));
+	
+	static final Map<String,  List<Article>> dataset_twitter_test= ReadDataset.read_twitter(Dataset.TWITTER_test);
+	static final Map<String,  List<Article>> dataset_twitter_train= ReadDataset.read_twitter(Dataset.TWITTER);
+	
 
-	static final Map<String,  List<Article>> dataset_snippest_test = ReadDataset.read_dataset_Snippets(DATASET_TEST_SNIPPETS);
-	static final Map<String,  List<Article>> dataset_snippest_train = ReadDataset.read_dataset_Snippets(DATASET_TRAIN_SNIPPETS);
+	static final Map<String,  List<Article>> dataset_snippest_test = null;//ReadDataset.read_dataset_Snippets(DATASET_TEST_SNIPPETS);
+	static final Map<String,  List<Article>> dataset_snippest_train = null;//ReadDataset.read_dataset_Snippets(DATASET_TRAIN_SNIPPETS);
 
-	static final Map<String,  List<Article>> map_DOC2VEC_SNIPPETS = new HashMap<String,List<Article>>(ReadDataset.read_dataset_Snippets(DATASET_SNIPPETS_TRAIN_CATEGORIZED_D2Vec));
-	static final Map<String,  List<Article>> map_GOOGLE_SNIPPETS = new HashMap<String,List<Article>>(ReadDataset.read_dataset_Snippets(DATASET_SNIPPETS_TRAIN_CATEGORIZED_GOOGLE));
-	static final Map<String,  List<Article>> map_LINE_SNIPPETS = new HashMap<String,List<Article>>(ReadDataset.read_dataset_Snippets(DATASET_SNIPPETS_TRAIN_CATEGORIZED_LINE));
-
+	static final Map<String,  List<Article>> map_DOC2VEC_SNIPPETS = null;//new HashMap<String,List<Article>>(ReadDataset.read_dataset_Snippets(DATASET_SNIPPETS_TRAIN_CATEGORIZED_D2Vec));
+	static final Map<String,  List<Article>> map_GOOGLE_SNIPPETS = null;//new HashMap<String,List<Article>>(ReadDataset.read_dataset_Snippets(DATASET_SNIPPETS_TRAIN_CATEGORIZED_GOOGLE));
+	static final Map<String,  List<Article>> map_LINE_SNIPPETS = null;//new HashMap<String,List<Article>>(ReadDataset.read_dataset_Snippets(DATASET_SNIPPETS_TRAIN_CATEGORIZED_LINE));
+	
+	static final Map<String,  List<Article>> map_DOC2VEC_TWITTER = new HashMap<String,List<Article>>(ReadDataset.read_twitter_embedding_labeled(DATASET_TWITTER_TRAIN_CATEGORIZED_D2Vec));
+	static final Map<String,  List<Article>> map_GOOGLE_TWITTER = new HashMap<String,List<Article>>(ReadDataset.read_twitter_embedding_labeled(DATASET_TWITTER_TRAIN_CATEGORIZED_GOOGLE));
+	static final Map<String,  List<Article>> map_LINE_TWITTER = new HashMap<String,List<Article>>(ReadDataset.read_twitter_embedding_labeled(DATASET_TWITTER_TRAIN_CATEGORIZED_LINE));
 	static{
-		System.out.println("Size of the maps:"+ map_GOOGLE_AG.size());
-		System.out.println("Size of the maps:"+ map_LINE_AG.size());
-		System.out.println("Size of the maps:"+ map_DOC2VEC_AG.size());
+//		System.out.println("Size of the maps:"+ map_GOOGLE_AG.size());
+//		System.out.println("Size of the maps:"+ map_LINE_AG.size());
+//		System.out.println("Size of the maps:"+ map_DOC2VEC_AG.size());
 	}
 	public static void main(String[] args) throws Exception {
 		AssignLabelsBasedOnConfVecSimilarity assign = new AssignLabelsBasedOnConfVecSimilarity();
+		//assign.calculateConfidenceForEachModel(Dataset.TWITTER);
+		
 		//assign.obtainLabelForEachSample(Dataset.DBpedia, EmbeddingModel.LINE_Ent_Ent, new ArrayList<Article>(LabelsOfTheTexts.getLables_DBP_article().values()));
 		//assign.generateDatasetOneHotEncoding(Dataset.AG,Config.getString("DATASET_TEST_AG",""));
 
 
-		assign.generateDatasetBasedOnConfidenceForEachModel(Dataset.AG);
+		//assign.generateDatasetBasedOnConfidenceForEachModel(Dataset.AG);
 		//		assign.getIntersectedLabel(Dataset.AG);
 
 	}
@@ -106,6 +120,14 @@ public class AssignLabelsBasedOnConfVecSimilarity {
 		else if (dname.equals(Dataset.DBpedia)) {
 			dataset =dataset_dbp_train;
 			lstCats = new ArrayList<Article>(LabelsOfTheTexts.getLables_DBP_article().values());
+		}
+		else if (dname.equals(Dataset.TWITTER_test)) {
+			dataset =dataset_twitter_test;
+			lstCats = new ArrayList<Article>(LabelsOfTheTexts.getLabels_twitter());
+		}
+		else if (dname.equals(Dataset.TWITTER)) {
+			dataset =dataset_twitter_train;
+			lstCats = new ArrayList<Article>(LabelsOfTheTexts.getLabels_twitter());
 		}
 		else if (dname.equals(Dataset.WEB_SNIPPETS_test)) {
 			dataset =dataset_snippest_test;
@@ -429,8 +451,164 @@ public class AssignLabelsBasedOnConfVecSimilarity {
 		}
 		return null;
 	}
+	public static String get_majority_vote_label(Dataset dname, String sentence) {
+		try {
+			int countTempSize_0=0;
 
-	public static String getBestLabelBasedOnConfidence_all_embeddings(Dataset dname, String sentence) {
+			String str_DOC2VEC = null;
+			String str_LINE = null;
+			String str_GOOGLE = null;
+
+			Map<String, Double> temp= new HashMap<String, Double>();
+			List<Article> lstCats = null;
+			
+			if (dname.equals(Dataset.AG)) {
+				str_DOC2VEC = map_DOC2VEC_AG.get(sentence);
+				str_LINE = map_LINE_AG.get(sentence);
+				str_GOOGLE = map_GOOGLE_AG.get(sentence);
+				
+				if (map_DOC2VEC_AG.size()==0||map_LINE_AG.size()==0||map_GOOGLE_AG.size()==0) {
+					System.out.println("Could not read the files");
+					System.exit(1);
+				}
+				
+				lstCats = new ArrayList<Article>(LabelsOfTheTexts.getLables_AG_article().values());
+				for(Article a : lstCats) {
+					temp.put(a.getTitle(), 0.0);
+				}
+				countTempSize_0=temp.size();
+			}
+			
+			else if (dname.equals(Dataset.TWITTER)) {
+				str_DOC2VEC = map_DOC2VEC_TWITTER.get(sentence).get(0).getTitle();
+				str_LINE = map_LINE_TWITTER.get(sentence).get(0).getTitle();
+				str_GOOGLE = map_GOOGLE_TWITTER.get(sentence).get(0).getTitle();
+				
+				if (map_DOC2VEC_TWITTER.size()==0||map_LINE_TWITTER.size()==0||map_GOOGLE_TWITTER.size()==0) {
+					System.out.println("Could not read the files");
+					System.exit(1);
+				}
+				
+				lstCats = new ArrayList<Article>(LabelsOfTheTexts.getLabels_twitter());
+				for(Article a : lstCats) {
+					temp.put(a.getTitle(), 0.0);
+				}
+				countTempSize_0=temp.size();
+			}
+			else if (dname.equals(Dataset.DBpedia)) {
+				
+				if (map_DOC2VEC_DBp.size()==0||map_LINE_DBp.size()==0||map_GOOGLE_DBp.size()==0) {
+					System.out.println("Could not read the files");
+					System.exit(1);
+				}
+				if (map_DOC2VEC_DBp.containsKey(sentence)) {
+					str_DOC2VEC = map_DOC2VEC_DBp.get(sentence).get(0).getTitle();
+				}
+				if (map_LINE_DBp.containsKey(sentence)) {
+					str_LINE = map_LINE_DBp.get(sentence).get(0).getTitle();
+				}
+				if (map_GOOGLE_DBp.containsKey(sentence)) {
+					str_GOOGLE = map_GOOGLE_DBp.get(sentence).get(0).getTitle();
+				}
+				
+				lstCats = new ArrayList<Article>(LabelsOfTheTexts.getLables_DBP_article().values());
+				for(Article a : lstCats) {
+					temp.put(a.getTitle(), 0.0);
+				}
+				countTempSize_0=temp.size();
+			}
+			else if (dname.equals(Dataset.WEB_SNIPPETS)) {
+
+				lstCats = new ArrayList<Article>(Categories.getLabels_Snippets());
+				for(Article a : lstCats) {
+					if (!a.getTitle().equalsIgnoreCase("The arts")&& !a.getTitle().equalsIgnoreCase("Entertainment")&&
+							!a.getTitle().equalsIgnoreCase("Science")&& !a.getTitle().equalsIgnoreCase("Society")) {
+						temp.put(a.getTitle(), 0.0);
+					}
+				}
+				
+				if (map_DOC2VEC_SNIPPETS.containsKey(sentence)) {
+					str_DOC2VEC = map_DOC2VEC_SNIPPETS.get(sentence).get(0).getTitle();
+					if (str_DOC2VEC.equalsIgnoreCase("The arts")||str_DOC2VEC.equalsIgnoreCase("Entertainment")) {
+						str_DOC2VEC="Culture";
+					}
+					else if (str_DOC2VEC.equalsIgnoreCase("Science")) {
+						str_DOC2VEC="Education";
+					}
+					else if (str_DOC2VEC.equalsIgnoreCase("Society")) {
+						str_DOC2VEC="Politics";
+					}
+				}
+				if (map_LINE_SNIPPETS.containsKey(sentence)) {
+					str_LINE = map_LINE_SNIPPETS.get(sentence).get(0).getTitle();
+
+					if (str_LINE.equalsIgnoreCase("The arts")||str_LINE.equalsIgnoreCase("Entertainment")) {
+						str_LINE="Culture";
+					}
+					else if (str_LINE.equalsIgnoreCase("Science")) {
+						str_LINE="Education";
+					}
+					else if (str_LINE.equalsIgnoreCase("Society")) {
+						str_LINE="Politics";
+					}
+				}
+				if (map_GOOGLE_SNIPPETS.containsKey(sentence)) {
+					str_GOOGLE = map_GOOGLE_SNIPPETS.get(sentence).get(0).getTitle();
+					if (str_GOOGLE.equalsIgnoreCase("The arts")||str_GOOGLE.equalsIgnoreCase("Entertainment")) {
+						str_GOOGLE="Culture";
+					}
+					else if (str_GOOGLE.equalsIgnoreCase("Science")) {
+						str_GOOGLE="Education";
+					}
+					else if (str_GOOGLE.equalsIgnoreCase("Society")) {
+						str_GOOGLE="Politics";
+					}
+				}
+				countTempSize_0=temp.size();
+			}
+			if ((str_DOC2VEC!=null&&str_LINE!=null&&str_GOOGLE!=null )&& str_DOC2VEC.equals(str_GOOGLE)&&str_DOC2VEC.equals(str_LINE)) {
+				if (!temp.containsKey(str_GOOGLE)) {
+					System.out.println("Temp does not contain the string"+str_GOOGLE);
+					System.exit(1);
+				}
+				return str_GOOGLE;
+			}
+			else if(str_DOC2VEC!=null&&str_LINE!=null&&(str_DOC2VEC.equals(str_LINE))) { //D2Vec=LINE
+				if (!temp.containsKey(str_LINE)) {
+					System.out.println("Temp does not contain the string: "+str_LINE);
+					System.exit(1);
+				}
+				return str_DOC2VEC;
+			}
+			else if(str_DOC2VEC!=null&&str_GOOGLE!=null&&str_DOC2VEC.equals(str_GOOGLE)) {//D2Vec=GOOGLE
+				if (!temp.containsKey(str_DOC2VEC)) {
+					System.out.println("Temp does not contain the string: "+str_DOC2VEC);
+					System.exit(1);
+				}
+				return str_DOC2VEC;
+			}
+			else if(str_LINE!=null&&str_GOOGLE!=null&&str_LINE.equals(str_GOOGLE)) {//LINE=GOOGLE
+
+				if (!temp.containsKey(str_LINE)) {
+					System.out.println("Temp does not contain the string: "+str_LINE);
+					System.exit(1);
+				}
+
+				return str_LINE;
+			}
+			else { //none of the embedding models agreed the default then LINE
+
+				if (str_LINE!=null) {
+					return str_LINE;
+				}
+			}
+			
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+		return null;
+	}
+	public static String getBestLabel_all_embeddings(Dataset dname, String sentence) {
 		try {
 			int countTempSize_0=0;
 
@@ -479,6 +657,27 @@ public class AssignLabelsBasedOnConfVecSimilarity {
 				}
 				countTempSize_0=temp.size();
 			}
+			else if (dname.equals(Dataset.TWITTER)) {
+				
+				if (map_DOC2VEC_TWITTER.size()==0||map_LINE_TWITTER.size()==0||map_GOOGLE_TWITTER.size()==0) {
+					System.out.println("Could not read the files");
+					System.exit(1);
+				}
+				if (map_DOC2VEC_TWITTER.containsKey(sentence)) {
+					str_DOC2VEC = map_DOC2VEC_TWITTER.get(sentence).get(0).getTitle();
+				}
+				if (map_LINE_TWITTER.containsKey(sentence)) {
+					str_LINE = map_LINE_TWITTER.get(sentence).get(0).getTitle();
+				}
+				if (map_GOOGLE_TWITTER.containsKey(sentence)) {
+					str_GOOGLE = map_GOOGLE_TWITTER.get(sentence).get(0).getTitle();
+				}
+				lstCats = new ArrayList<Article>(LabelsOfTheTexts.getLabels_twitter());
+				for(Article a : lstCats) {
+					temp.put(a.getTitle(), 0.0);
+				}
+				countTempSize_0=temp.size();
+			}
 			else if (dname.equals(Dataset.WEB_SNIPPETS)) {
 
 				lstCats = new ArrayList<Article>(Categories.getLabels_Snippets());
@@ -488,7 +687,6 @@ public class AssignLabelsBasedOnConfVecSimilarity {
 						temp.put(a.getTitle(), 0.0);
 					}
 				}
-				
 				if (map_DOC2VEC_SNIPPETS.containsKey(sentence)) {
 					str_DOC2VEC = map_DOC2VEC_SNIPPETS.get(sentence).get(0).getTitle();
 					if (str_DOC2VEC.equalsIgnoreCase("The arts")||str_DOC2VEC.equalsIgnoreCase("Entertainment")) {
@@ -711,6 +909,30 @@ public class AssignLabelsBasedOnConfVecSimilarity {
 				}
 
 			}
+			else if (dname.equals(Dataset.TWITTER)) {
+				conf_LINE=0.8616;
+				conf_GOOGLE=0.7923;
+				conf_Doc2Vec=0.8016;
+
+				if (map_DOC2VEC_TWITTER.size()==0||map_LINE_TWITTER.size()==0||map_GOOGLE_TWITTER.size()==0) {
+					System.out.println("Could not read the files DBpedia files");
+					System.exit(1);
+				}
+				
+				str_DOC2VEC = map_DOC2VEC_TWITTER.get(sentence).get(0).getTitle();
+				str_LINE = map_LINE_TWITTER.get(sentence).get(0).getTitle();
+				str_GOOGLE = map_GOOGLE_TWITTER.get(sentence).get(0).getTitle();
+
+				lstCats = new ArrayList<Article>(LabelsOfTheTexts.getLabels_twitter());
+				for(Article a : lstCats) {
+					temp.put(a.getTitle(), 0.0);
+				}
+				countTempSize_0=temp.size();
+
+			}
+			
+		
+
 			if ((str_DOC2VEC!=null&&str_LINE!=null&&str_GOOGLE!=null )&& str_DOC2VEC.equals(str_GOOGLE)&&str_DOC2VEC.equals(str_LINE)) {
 				if (!temp.containsKey(str_GOOGLE)) {
 					System.out.println("Temp does not contain the string"+str_GOOGLE);
@@ -962,6 +1184,14 @@ public class AssignLabelsBasedOnConfVecSimilarity {
 			map_DOC2VEC = new HashMap<String,List<Article>>(ReadDataset.read_dataset_Snippets(DATASET_SNIPPETS_TRAIN_CATEGORIZED_D2Vec));
 			map_GOOGLE = new HashMap<String,List<Article>>(ReadDataset.read_dataset_Snippets(DATASET_SNIPPETS_TRAIN_CATEGORIZED_GOOGLE));
 			map_LINE = new HashMap<String,List<Article>>(ReadDataset.read_dataset_Snippets(DATASET_SNIPPETS_TRAIN_CATEGORIZED_LINE));
+		}
+		
+		else if (dname.equals(Dataset.TWITTER)) {
+			dataset = ReadDataset.read_twitter(Dataset.TWITTER);
+
+			map_DOC2VEC = new HashMap<String,List<Article>>(ReadDataset.read_twitter_embedding_labeled(DATASET_TWITTER_TRAIN_CATEGORIZED_D2Vec));
+			map_GOOGLE = new HashMap<String,List<Article>>(ReadDataset.read_twitter_embedding_labeled(DATASET_TWITTER_TRAIN_CATEGORIZED_GOOGLE));
+			map_LINE = new HashMap<String,List<Article>>(ReadDataset.read_twitter_embedding_labeled(DATASET_TWITTER_TRAIN_CATEGORIZED_LINE));
 		}
 		int index=0;
 		for(Entry<String, List<Article>> e : dataset.entrySet()) {
